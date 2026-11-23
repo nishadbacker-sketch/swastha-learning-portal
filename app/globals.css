@@ -223,3 +223,36 @@ footer {
     font-size: 32px;
   }
 }
+
+/* Homepage navigation login button */
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-login {
+  display: inline-block;
+  padding: 11px 17px;
+  border-radius: 5px;
+  background: var(--green);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nav-login:hover {
+  background: #125342;
+}
+
+@media (max-width: 480px) {
+  .nav-actions {
+    gap: 10px;
+  }
+
+  .nav-login {
+    padding: 9px 11px;
+    font-size: 11px;
+  }
+}
