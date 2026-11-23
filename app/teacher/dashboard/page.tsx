@@ -1,8 +1,12 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+
+type Level = "LP" | "UP" | "HS" | "HSS";
+type Tab = "overview" | "assessments" | "activities" | "students";
 
 type Student = {
   id: string;
@@ -38,8 +42,6 @@ type ActivityAssignment = {
   assigned_at: string;
 };
 
-type Level = "LP" | "UP" | "HS" | "HSS";
-
 type Assessment = {
   id: string;
   student_id: string;
@@ -49,27 +51,54 @@ type Assessment = {
   assigned_at: string;
 };
 
-const LEVELS: { value: Level; label: string; short: string; color: string }[] = [
-  { value: "LP", label: "LP — Classes 1–4", short: "Classes 1–4", color: "#176b58" },
-  { value: "UP", label: "UP — Classes 5–7", short: "Classes 5–7", color: "#2563eb" },
-  { value: "HS", label: "HS — Classes 8–10", short: "Classes 8–10", color: "#7c3aed" },
-  { value: "HSS", label: "HSS — Classes 11–12", short: "Classes 11–12", color: "#d97706" },
+const LEVELS: {
+  value: Level;
+  label: string;
+  color: string;
+}[] = [
+  { value: "LP", label: "Classes 1–4", color: "#176b58" },
+  { value: "UP", label: "Classes 5–7", color: "#2563eb" },
+  { value: "HS", label: "Classes 8–10", color: "#7c3aed" },
+  { value: "HSS", label: "Classes 11–12", color: "#d97706" },
 ];
 
-const roman: Record<string, number> = {
-  I: 1, II: 2, III: 3, IV: 4,
-  V: 5, VI: 6, VII: 7, VIII: 8,
-  IX: 9, X: 10, XI: 11, XII: 12,
+const ROMAN: Record<string, number> = {
+  I: 1,
+  II: 2,
+  III: 3,
+  IV: 4,
+  V: 5,
+  VI: 6,
+  VII: 7,
+  VIII: 8,
+  IX: 9,
+  X: 10,
+  XI: 11,
+  XII: 12,
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  assigned: "#2563eb",
+  in_progress: "#d97706",
+  submitted: "#7c3aed",
+  reviewed: "#16805d",
+  pending: "#d97706",
+  completed: "#16805d",
+  active: "#16805d",
 };
 
 function getLevel(value: string | null): Level | null {
   if (!value) return null;
+
   const cleaned = value
     .trim()
     .toUpperCase()
     .replace(/^(CLASS|GRADE|STD|STANDARD)\s*[-:]?\s*/, "");
 
-  const number = /^\d{1,2}$/.test(cleaned) ? Number(cleaned) : roman[cleaned];
+  const number = /^\d{1,2}$/.test(cleaned)
+    ? Number(cleaned)
+    : ROMAN[cleaned];
+
   if (!number || number < 1 || number > 12) return null;
   if (number <= 4) return "LP";
   if (number <= 7) return "UP";
@@ -80,119 +109,227 @@ function getLevel(value: string | null): Level | null {
 function formatDate(value: string | null) {
   if (!value) return "Not available";
   const parts = value.slice(0, 10).split("-");
-  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+  if (parts.length !== 3) return value;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-function StatusBadge({ value }: { value: string }) {
-  const styles: Record<string, string> = {
-    assigned: "bg-blue-50 text-blue-700 ring-blue-600/20",
-    in_progress: "bg-amber-50 text-amber-700 ring-amber-600/20",
-    submitted: "bg-purple-50 text-purple-700 ring-purple-600/20",
-    reviewed: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-    pending: "bg-amber-50 text-amber-700 ring-amber-600/20",
-    completed: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-    active: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-  };
+function phoneDigits(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return digits.length === 10 ? `91${digits}` : digits;
+}
 
+const panel: React.CSSProperties = {
+  background: "#ffffff",
+  border: "1px solid #dce8e1",
+  borderRadius: 16,
+  padding: 22,
+  boxShadow: "0 3px 14px rgba(24,58,53,0.04)",
+};
+
+const field: React.CSSProperties = {
+  display: "block",
+  width: "100%",
+  padding: 12,
+  marginTop: 7,
+  border: "1px solid #dce8e1",
+  borderRadius: 9,
+  background: "#ffffff",
+  color: "#183a35",
+  boxSizing: "border-box",
+  fontSize: 14,
+};
+
+const primaryButton: React.CSSProperties = {
+  border: "none",
+  borderRadius: 10,
+  background: "#176b58",
+  color: "#ffffff",
+  padding: "12px 18px",
+  fontSize: 14,
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
+const grid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+  gap: 18,
+};
+
+function StatusBadge({ value }: { value: string }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ring-1 ring-inset ${
-        styles[value] || "bg-slate-100 text-slate-700 ring-slate-500/20"
-      }`}
+      style={{
+        display: "inline-block",
+        padding: "5px 10px",
+        borderRadius: 20,
+        background: STATUS_COLORS[value] || "#64748b",
+        color: "#ffffff",
+        fontSize: 12,
+        fontWeight: 700,
+        textTransform: "capitalize",
+      }}
     >
       {value.replace(/_/g, " ")}
     </span>
   );
 }
 
+function Metric({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <div style={{ ...panel, borderTop: `4px solid ${color}` }}>
+      <div style={{ color: "#667a74", fontSize: 13, fontWeight: 700 }}>
+        {label}
+      </div>
+      <div style={{ color, fontSize: 34, fontWeight: 800, marginTop: 8 }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
 function DonutChart({
   segments,
-  centerLabel,
-  centerValue,
+  label,
 }: {
   segments: { label: string; value: number; color: string }[];
-  centerLabel: string;
-  centerValue: number;
+  label: string;
 }) {
   const total = segments.reduce((sum, s) => sum + s.value, 0);
-  const radius = 54;
+  const radius = 52;
   const circumference = 2 * Math.PI * radius;
-  let cumulativePercent = 0;
+  let offset = 0;
 
   return (
-    <div className="flex flex-col items-center gap-6 sm:flex-row">
-      <div className="relative h-40 w-40 shrink-0">
-        <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 22, alignItems: "center" }}>
+      <div style={{ width: 170, height: 170, position: "relative" }}>
+        <svg viewBox="0 0 140 140" style={{ width: "100%", height: "100%" }}>
           <circle
             cx="70"
             cy="70"
             r={radius}
-            fill="transparent"
+            fill="none"
             stroke="#e9efeb"
-            strokeWidth="16"
+            strokeWidth="17"
           />
-          {total > 0 &&
-            segments.map((seg) => {
-              if (seg.value === 0) return null;
-              const percent = seg.value / total;
-              const strokeDasharray = `${percent * circumference} ${circumference}`;
-              const strokeDashoffset = -cumulativePercent * circumference;
-              cumulativePercent += percent;
+          <g transform="rotate(-90 70 70)">
+            {total > 0 &&
+              segments.map((segment) => {
+                const fraction = segment.value / total;
+                const currentOffset = offset;
+                offset += fraction * circumference;
 
-              return (
-                <circle
-                  key={seg.label}
-                  cx="70"
-                  cy="70"
-                  r={radius}
-                  fill="transparent"
-                  stroke={seg.color}
-                  strokeWidth="16"
-                  strokeDasharray={strokeDasharray}
-                  strokeDashoffset={strokeDashoffset}
-                />
-              );
-            })}
+                return (
+                  <circle
+                    key={segment.label}
+                    cx="70"
+                    cy="70"
+                    r={radius}
+                    fill="none"
+                    stroke={segment.color}
+                    strokeWidth="17"
+                    strokeDasharray={`${fraction * circumference} ${circumference}`}
+                    strokeDashoffset={-currentOffset}
+                  />
+                );
+              })}
+          </g>
+          <text
+            x="70"
+            y="67"
+            textAnchor="middle"
+            fontSize="26"
+            fontWeight="800"
+            fill="#183a35"
+          >
+            {total}
+          </text>
+          <text
+            x="70"
+            y="85"
+            textAnchor="middle"
+            fontSize="11"
+            fill="#667a74"
+          >
+            {label}
+          </text>
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-2xl font-extrabold text-[#183a35]">
-            {centerValue}
-          </span>
-          <span className="text-[11px] font-medium uppercase tracking-wider text-[#667a74]">
-            {centerLabel}
-          </span>
-        </div>
       </div>
 
-      <div className="grid w-full grid-cols-2 gap-3">
-        {segments.map((seg) => {
-          const pct = total > 0 ? Math.round((seg.value / total) * 100) : 0;
-          return (
-            <div
-              key={seg.label}
-              className="rounded-xl border border-[#dce8e1] bg-[#f8faf7] p-3"
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: seg.color }}
-                />
-                <span className="text-xs font-medium text-[#667a74]">
-                  {seg.label}
-                </span>
-              </div>
-              <div className="mt-1 flex items-baseline justify-between">
-                <span className="text-lg font-bold text-[#183a35]">
-                  {seg.value}
-                </span>
-                <span className="text-xs font-medium text-[#667a74]">
-                  {pct}%
-                </span>
-              </div>
-            </div>
-          );
-        })}
+      <div style={{ flex: 1, minWidth: 170 }}>
+        {segments.map((s) => (
+          <div
+            key={s.label}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "8px 0",
+              borderBottom: "1px solid #edf2ee",
+              fontSize: 13,
+            }}
+          >
+            <span>
+              <span style={{ color: s.color, marginRight: 8 }}>●</span>
+              {s.label}
+            </span>
+            <strong>{s.value}</strong>
+          </div>
+        ))}
       </div>
+    </div>
+  );
+}
+
+function BarChart({
+  items,
+}: {
+  items: { label: string; value: number; color: string }[];
+}) {
+  const maximum = Math.max(1, ...items.map((item) => item.value));
+
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      {items.map((item) => (
+        <div key={item.label}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 7,
+              fontSize: 13,
+            }}
+          >
+            <strong>{item.label}</strong>
+            <strong>{item.value}</strong>
+          </div>
+          <div
+            style={{
+              height: 14,
+              borderRadius: 20,
+              overflow: "hidden",
+              background: "#e9efeb",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${(item.value / maximum) * 100}%`,
+                background: item.color,
+                borderRadius: 20,
+              }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -201,14 +338,17 @@ export default function TeacherDashboard() {
   const router = useRouter();
 
   const [userId, setUserId] = useState("");
-  const [teacherName, setTeacherName] = useState("");
+  const [teacherName, setTeacherName] = useState("Teacher");
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
+
   const [students, setStudents] = useState<Student[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
-  const [profileId, setProfileId] = useState("");
-
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [activityAssignments, setActivityAssignments] = useState<ActivityAssignment[]>([]);
+  const [activityAssignments, setActivityAssignments] =
+    useState<ActivityAssignment[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+
+  const [profileId, setProfileId] = useState("");
 
   const [level, setLevel] = useState<Level>("LP");
   const [assessmentStudent, setAssessmentStudent] = useState("");
@@ -220,17 +360,13 @@ export default function TeacherDashboard() {
   const [selectedActivity, setSelectedActivity] = useState("");
   const [activityDue, setActivityDue] = useState("");
 
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "assessments" | "activities" | "students"
-  >("overview");
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function loadDashboard(uid: string) {
-    if (!supabase) return;
+  const loadDashboard = useCallback(async (uid: string) => {
+    if (!supabase) throw new Error("Supabase is not configured.");
 
     const { data: teacher, error: teacherError } = await supabase
       .from("teachers")
@@ -238,66 +374,19 @@ export default function TeacherDashboard() {
       .eq("user_id", uid)
       .single();
 
-    if (teacherError || !teacher || teacher.status !== "active") {
+    if (teacherError) throw teacherError;
+    if (!teacher || teacher.status !== "active") {
       throw new Error("Your teacher account is not active.");
     }
 
-    const { data: links, error: linksError } = await supabase
+    const { data: links, error: linkError } = await supabase
       .from("teacher_assignments")
       .select("student_id")
       .eq("teacher_id", teacher.id);
 
-    if (linksError) throw linksError;
+    if (linkError) throw linkError;
 
-    const ids = [...new Set((links || []).map((x) => x.student_id))];
-
-    if (ids.length) {
-      const [
-        studentResult,
-        guardianResult,
-        activityAssignmentResult,
-        assessmentResult,
-      ] = await Promise.all([
-        supabase
-          .from("students")
-          .select(
-            "id, full_name, current_class, date_of_birth, student_code, preferred_language, status"
-          )
-          .in("id", ids),
-        supabase.rpc("get_assigned_student_guardians"),
-        supabase
-          .from("student_activity_assignments")
-          .select("id, student_id, activity_id, status, due_date, assigned_at")
-          .in("student_id", ids)
-          .eq("assigned_by", uid)
-          .order("assigned_at", { ascending: false }),
-        supabase
-          .from("assessment_assignments")
-          .select("id, student_id, assessment_level, status, due_date, assigned_at")
-          .in("student_id", ids)
-          .order("assigned_at", { ascending: false }),
-      ]);
-
-      if (studentResult.error) throw studentResult.error;
-      if (guardianResult.error) throw guardianResult.error;
-      if (activityAssignmentResult.error) throw activityAssignmentResult.error;
-      if (assessmentResult.error) throw assessmentResult.error;
-
-      setStudents(studentResult.data || []);
-      setGuardians(
-        ((guardianResult.data || []) as Guardian[]).filter((g) =>
-          ids.includes(g.student_id)
-        )
-      );
-      setActivityAssignments(activityAssignmentResult.data || []);
-      setAssessments((assessmentResult.data || []) as Assessment[]);
-    } else {
-      setStudents([]);
-      setGuardians([]);
-      setActivityAssignments([]);
-      setAssessments([]);
-      setProfileId("");
-    }
+    const ids = [...new Set((links || []).map((link) => link.student_id))];
 
     const { data: activityData, error: activityError } = await supabase
       .from("learning_activities")
@@ -307,14 +396,70 @@ export default function TeacherDashboard() {
 
     if (activityError) throw activityError;
     setActivities(activityData || []);
-  }
+
+    if (ids.length === 0) {
+      setStudents([]);
+      setGuardians([]);
+      setActivityAssignments([]);
+      setAssessments([]);
+      setProfileId("");
+      return;
+    }
+
+    const [
+      studentResult,
+      guardianResult,
+      assignmentResult,
+      assessmentResult,
+    ] = await Promise.all([
+      supabase
+        .from("students")
+        .select(
+          "id, full_name, current_class, date_of_birth, student_code, preferred_language, status"
+        )
+        .in("id", ids),
+      supabase.rpc("get_assigned_student_guardians"),
+      supabase
+        .from("student_activity_assignments")
+        .select(
+          "id, student_id, activity_id, status, due_date, assigned_at"
+        )
+        .in("student_id", ids)
+        .eq("assigned_by", uid)
+        .order("assigned_at", { ascending: false }),
+      supabase
+        .from("assessment_assignments")
+        .select(
+          "id, student_id, assessment_level, status, due_date, assigned_at"
+        )
+        .in("student_id", ids)
+        .order("assigned_at", { ascending: false }),
+    ]);
+
+    if (studentResult.error) throw studentResult.error;
+    if (guardianResult.error) throw guardianResult.error;
+    if (assignmentResult.error) throw assignmentResult.error;
+    if (assessmentResult.error) throw assessmentResult.error;
+
+    setStudents(studentResult.data || []);
+    setGuardians(
+      ((guardianResult.data || []) as Guardian[]).filter((g) =>
+        ids.includes(g.student_id)
+      )
+    );
+    setActivityAssignments(assignmentResult.data || []);
+    setAssessments((assessmentResult.data || []) as Assessment[]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
     async function initialize() {
       if (!supabase) {
-        router.replace("/login");
+        if (!cancelled) {
+          setErrorMessage("Supabase is not configured.");
+          setLoading(false);
+        }
         return;
       }
 
@@ -322,42 +467,45 @@ export default function TeacherDashboard() {
         const { data, error } = await supabase.auth.getUser();
 
         if (cancelled) return;
+
         if (error || !data.user) {
           router.replace("/login");
           return;
         }
 
-        const user = data.user;
+        const uid = data.user.id;
 
-        const { data: role, error: roleError } = await supabase
+        const { data: roleData, error: roleError } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", user.id)
+          .eq("user_id", uid)
           .single();
 
         if (cancelled) return;
-        if (roleError || !role) {
-          router.replace("/login");
-          return;
+
+        if (roleError || !roleData) {
+          throw new Error("Unable to verify your account role.");
         }
 
-        if (role.role !== "teacher") {
+        if (roleData.role !== "teacher") {
           router.replace(
-            role.role === "admin"
+            roleData.role === "admin"
               ? "/admin/dashboard"
-              : role.role === "parent"
+              : roleData.role === "parent"
               ? "/parent/dashboard"
               : "/login"
           );
           return;
         }
 
-        setUserId(user.id);
+        setUserId(uid);
         setTeacherName(
-          user.user_metadata?.full_name || user.email || "Teacher"
+          data.user.user_metadata?.full_name ||
+            data.user.email ||
+            "Teacher"
         );
 
-        await loadDashboard(user.id);
+        await loadDashboard(uid);
       } catch (err) {
         if (!cancelled) {
           setErrorMessage(
@@ -369,12 +517,23 @@ export default function TeacherDashboard() {
       }
     }
 
-    initialize();
+    void initialize();
 
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, loadDashboard]);
+
+  async function refresh() {
+    if (!userId) return;
+    try {
+      await loadDashboard(userId);
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Unable to refresh dashboard."
+      );
+    }
+  }
 
   async function createActivity(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -385,18 +544,20 @@ export default function TeacherDashboard() {
     setErrorMessage("");
 
     try {
-      const { error } = await supabase.from("learning_activities").insert({
-        title: title.trim(),
-        description: description.trim() || null,
-        created_by: userId,
-      });
+      const { error } = await supabase
+        .from("learning_activities")
+        .insert({
+          title: title.trim(),
+          description: description.trim() || null,
+          created_by: userId,
+        });
 
       if (error) throw error;
 
       setTitle("");
       setDescription("");
       setMessage("Learning activity created successfully.");
-      await loadDashboard(userId);
+      await refresh();
     } catch (err) {
       setErrorMessage(
         err instanceof Error ? err.message : "Unable to create activity."
@@ -408,8 +569,16 @@ export default function TeacherDashboard() {
 
   async function assignActivity(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!supabase || !userId || !activityStudent || !selectedActivity || saving)
+
+    if (
+      !supabase ||
+      !userId ||
+      !activityStudent ||
+      !selectedActivity ||
+      saving
+    ) {
       return;
+    }
 
     setSaving(true);
     setMessage("");
@@ -432,7 +601,7 @@ export default function TeacherDashboard() {
       setSelectedActivity("");
       setActivityDue("");
       setMessage("Learning activity assigned successfully.");
-      await loadDashboard(userId);
+      await refresh();
     } catch (err) {
       setErrorMessage(
         err instanceof Error ? err.message : "Unable to assign activity."
@@ -444,12 +613,13 @@ export default function TeacherDashboard() {
 
   async function assignAssessment(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     if (!supabase || !userId || !assessmentStudent || saving) return;
 
     const student = students.find((s) => s.id === assessmentStudent);
 
     if (!student || getLevel(student.current_class) !== level) {
-      setErrorMessage("Student class does not match the assessment level.");
+      setErrorMessage("Student class does not match assessment level.");
       return;
     }
 
@@ -473,7 +643,7 @@ export default function TeacherDashboard() {
       setAssessmentStudent("");
       setAssessmentDue("");
       setMessage("Assessment assigned successfully.");
-      await loadDashboard(userId);
+      await refresh();
     } catch (err) {
       setErrorMessage(
         err instanceof Error ? err.message : "Unable to assign assessment."
@@ -497,118 +667,134 @@ export default function TeacherDashboard() {
     return activities.find((a) => a.id === id)?.title || "Activity";
   }
 
-  const profile = students.find((s) => s.id === profileId);
-  const profileGuardians = guardians.filter((g) => g.student_id === profileId);
-  const eligible = students.filter((s) => getLevel(s.current_class) === level);
+  const eligibleStudents = students.filter(
+    (s) => getLevel(s.current_class) === level
+  );
 
-  const assessmentStatuses = [
-    { key: "assigned", label: "Assigned", color: "#2563eb" },
-    { key: "in_progress", label: "In Progress", color: "#d97706" },
-    { key: "submitted", label: "Submitted", color: "#7c3aed" },
-    { key: "reviewed", label: "Reviewed", color: "#16805d" },
+  const selectedProfile = students.find((s) => s.id === profileId);
+
+  const profileGuardians = guardians.filter(
+    (g) => g.student_id === profileId
+  );
+
+  const assessmentSegments = [
+    { label: "Assigned", value: assessments.filter((a) => a.status === "assigned").length, color: "#2563eb" },
+    { label: "In Progress", value: assessments.filter((a) => a.status === "in_progress").length, color: "#d97706" },
+    { label: "Submitted", value: assessments.filter((a) => a.status === "submitted").length, color: "#7c3aed" },
+    { label: "Reviewed", value: assessments.filter((a) => a.status === "reviewed").length, color: "#16805d" },
   ];
 
-  const assessmentDonutSegments = assessmentStatuses.map((s) => ({
-    label: s.label,
-    value: assessments.filter((a) => a.status === s.key).length,
-    color: s.color,
+  const gradeBars = LEVELS.map((l) => ({
+    label: `${l.value} — ${l.label}`,
+    value: students.filter((s) => getLevel(s.current_class) === l.value).length,
+    color: l.color,
   }));
 
-  const levelDistribution = LEVELS.map((l) => ({
-    ...l,
-    count: students.filter((s) => getLevel(s.current_class) === l.value).length,
-  }));
-  const maxLevelCount = Math.max(...levelDistribution.map((l) => l.count), 1);
-
-  const activityCompletedCount = activityAssignments.filter(
+  const completedActivities = activityAssignments.filter(
     (a) => a.status === "completed" || a.status === "reviewed"
   ).length;
-  const activityPendingCount = activityAssignments.length - activityCompletedCount;
 
-  const languageCounts = students.reduce<Record<string, number>>((acc, s) => {
-    const lang = s.preferred_language?.trim() || "Unspecified";
-    acc[lang] = (acc[lang] || 0) + 1;
-    return acc;
-  }, {});
+  const pendingActivities = activityAssignments.length - completedActivities;
+
+  const completionPercent = activityAssignments.length
+    ? Math.round((completedActivities / activityAssignments.length) * 100)
+    : 0;
+
+  const languageCounts = students.reduce<Record<string, number>>(
+    (acc, student) => {
+      const language = student.preferred_language?.trim() || "Unspecified";
+      acc[language] = (acc[language] || 0) + 1;
+      return acc;
+    },
+    {}
+  );
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8faf7] text-[#183a35]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#176b58] border-t-transparent" />
-          <p className="text-sm font-medium text-[#667a74]">
-            Loading Swastha Teacher Workspace...
-          </p>
-        </div>
-      </div>
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          background: "#f8faf7",
+          color: "#183a35",
+        }}
+      >
+        Loading Swastha Teacher Workspace...
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8faf7] text-[#183a35]">
-      <header className="sticky top-0 z-20 border-b border-[#dce8e1] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#176b58] font-bold text-white shadow-sm">
-              S
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f8faf7",
+        color: "#183a35",
+        fontFamily: "Arial, Helvetica, sans-serif",
+      }}
+    >
+      <header
+        style={{
+          background: "#ffffff",
+          borderBottom: "1px solid #dce8e1",
+          padding: "18px 5%",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1160,
+            margin: "auto",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 18,
+          }}
+        >
+          <div>
+            <strong style={{ color: "#176b58", letterSpacing: 1 }}>
+              SWASTHA LEARNING CLINIC
+            </strong>
+            <div style={{ fontSize: 12, color: "#667a74", marginTop: 5 }}>
+              LEARN • GROW • THRIVE
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-extrabold tracking-wide text-[#183a35]">
-                  SWASTHA LEARNING CLINIC
-                </span>
-                <span className="hidden rounded-full bg-[#e4f5ea] px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-[#176b58] sm:inline-block">
-                  LEARN • GROW • THRIVE
-                </span>
-              </div>
-              <p className="text-xs text-[#667a74]">
-                Welcome back, <strong className="text-[#183a35]">{teacherName}</strong>
-              </p>
+            <div style={{ fontSize: 13, marginTop: 5 }}>
+              Welcome, {teacherName}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <nav className="flex rounded-xl border border-[#dce8e1] bg-[#f8faf7] p-1">
-              {[
-                { id: "overview", label: "Analytics" },
-                { id: "assessments", label: "Assessments" },
-                { id: "activities", label: "Activities" },
-                { id: "students", label: "Students" },
-              ].map((tab) => {
-                const active = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition sm:text-sm ${
-                      active
-                        ? "bg-[#176b58] text-white shadow-sm"
-                        : "text-[#667a74] hover:text-[#183a35]"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </nav>
-
-            <button
-              type="button"
-              onClick={signOut}
-              className="rounded-xl border border-[#dce8e1] bg-white px-3.5 py-2 text-xs font-semibold text-[#183a35] transition hover:bg-[#f2f8f4]"
-            >
-              Sign out
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={signOut}
+            style={{
+              ...primaryButton,
+              background: "#ffffff",
+              color: "#183a35",
+              border: "1px solid #dce8e1",
+            }}
+          >
+            Sign out
+          </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-5 py-8">
+      <main style={{ maxWidth: 1160, margin: "auto", padding: "30px 20px 70px" }}>
+        <h1 style={{ marginBottom: 6 }}>Teacher Dashboard</h1>
+        <p style={{ color: "#667a74", marginTop: 0 }}>
+          Student development, assessments and learning activities
+        </p>
+
         {message && (
           <div
             role="status"
-            className="mb-6 rounded-xl border border-emerald-200 bg-[#e4f5ea] px-4 py-3 text-sm font-medium text-[#176b42]"
+            style={{
+              padding: 15,
+              borderRadius: 10,
+              background: "#e4f5ea",
+              color: "#176b42",
+              marginBottom: 18,
+            }}
           >
             {message}
           </div>
@@ -617,744 +803,597 @@ export default function TeacherDashboard() {
         {errorMessage && (
           <div
             role="alert"
-            className="mb-6 rounded-xl border border-red-200 bg-[#fff0ed] px-4 py-3 text-sm font-medium text-[#b42318]"
+            style={{
+              padding: 15,
+              borderRadius: 10,
+              background: "#fff0ed",
+              color: "#b42318",
+              marginBottom: 18,
+            }}
           >
             {errorMessage}
           </div>
         )}
 
-        <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <div className="rounded-2xl border border-[#dce8e1] border-t-4 border-t-[#176b58] bg-white p-5 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wider text-[#667a74]">
-              Assigned Students
-            </div>
-            <div className="mt-2 text-3xl font-extrabold text-[#176b58]">
-              {students.length}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[#dce8e1] border-t-4 border-t-[#2563eb] bg-white p-5 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wider text-[#667a74]">
-              Learning Activities
-            </div>
-            <div className="mt-2 text-3xl font-extrabold text-[#2563eb]">
-              {activities.length}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[#dce8e1] border-t-4 border-t-[#7c3aed] bg-white p-5 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wider text-[#667a74]">
-              Assessments
-            </div>
-            <div className="mt-2 text-3xl font-extrabold text-[#7c3aed]">
-              {assessments.length}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[#dce8e1] border-t-4 border-t-[#d97706] bg-white p-5 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wider text-[#667a74]">
-              Pending Reviews
-            </div>
-            <div className="mt-2 text-3xl font-extrabold text-[#d97706]">
-              {assessments.filter((a) => a.status === "submitted").length}
-            </div>
-          </div>
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 14,
+            marginBottom: 25,
+          }}
+        >
+          <Metric label="Assigned Students" value={students.length} color="#176b58" />
+          <Metric label="Learning Activities" value={activities.length} color="#2563eb" />
+          <Metric label="Assessments" value={assessments.length} color="#7c3aed" />
+          <Metric
+            label="Pending Reviews"
+            value={assessments.filter((a) => a.status === "submitted").length}
+            color="#d97706"
+          />
         </section>
 
+        <nav
+          aria-label="Teacher dashboard sections"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            marginBottom: 25,
+            padding: 7,
+            border: "1px solid #dce8e1",
+            borderRadius: 13,
+            background: "#ffffff",
+          }}
+        >
+          {([
+            ["overview", "Analytics"],
+            ["assessments", "Assessments"],
+            ["activities", "Activities"],
+            ["students", "Students"],
+          ] as [Tab, string][]).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              aria-current={activeTab === id ? "page" : undefined}
+              style={{
+                ...primaryButton,
+                background: activeTab === id ? "#176b58" : "#f8faf7",
+                color: activeTab === id ? "#ffffff" : "#183a35",
+                flex: "1 1 130px",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
         {activeTab === "overview" && (
-          <div className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm">
-                <div className="mb-5">
-                  <h2 className="text-base font-bold text-[#183a35]">
-                    Assessment Pipeline Breakdown
-                  </h2>
-                  <p className="text-xs text-[#667a74]">
-                    Assignment counts by workflow stage (private scores excluded)
-                  </p>
-                </div>
+          <section>
+            <h2>Analytics & Charts Overview</h2>
+            <p style={{ color: "#667a74" }}>
+              Live counts from your assigned students and activities.
+              Assessment scores are not included in these charts.
+            </p>
 
-                <DonutChart
-                  segments={assessmentDonutSegments}
-                  centerLabel="Total"
-                  centerValue={assessments.length}
-                />
+            <div style={grid}>
+              <div style={panel}>
+                <h3>Assessment Pipeline Breakdown</h3>
+                <DonutChart segments={assessmentSegments} label="Total" />
               </div>
 
-              <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm">
-                <div className="mb-5">
-                  <h2 className="text-base font-bold text-[#183a35]">
-                    Students by Grade Level
-                  </h2>
-                  <p className="text-xs text-[#667a74]">
-                    Distribution across LP, UP, HS, and HSS cohorts
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {levelDistribution.map((lvl) => {
-                    const widthPct =
-                      students.length > 0
-                        ? Math.max(
-                            (lvl.count / maxLevelCount) * 100,
-                            lvl.count > 0 ? 8 : 0
-                          )
-                        : 0;
-                    return (
-                      <div key={lvl.value}>
-                        <div className="mb-1.5 flex items-center justify-between text-xs">
-                          <span className="font-bold text-[#183a35]">
-                            {lvl.value}{" "}
-                            <span className="font-normal text-[#667a74]">
-                              ({lvl.short})
-                            </span>
-                          </span>
-                          <span className="font-bold text-[#183a35]">
-                            {lvl.count} {lvl.count === 1 ? "student" : "students"}
-                          </span>
-                        </div>
-                        <div className="h-3.5 w-full overflow-hidden rounded-full bg-[#e9efeb]">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${widthPct}%`,
-                              backgroundColor: lvl.color,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div style={panel}>
+                <h3>Students by Grade Level</h3>
+                <BarChart items={gradeBars} />
               </div>
-            </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm">
-                <h2 className="text-base font-bold text-[#183a35]">
-                  Learning Activity Completion Rate
-                </h2>
-                <p className="mb-5 text-xs text-[#667a74]">
-                  Tracks assigned modules completed vs. pending across your roster
+              <div style={panel}>
+                <h3>Learning Activity Completion Rate</h3>
+                <div
+                  style={{
+                    fontSize: 38,
+                    fontWeight: 800,
+                    color: "#176b58",
+                    marginBottom: 12,
+                  }}
+                >
+                  {completionPercent}%
+                </div>
+                <div
+                  style={{
+                    height: 18,
+                    background: "#e9efeb",
+                    borderRadius: 20,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${completionPercent}%`,
+                      background: "#176b58",
+                    }}
+                  />
+                </div>
+                <p style={{ color: "#667a74" }}>
+                  Completed: {completedActivities} / {activityAssignments.length}
                 </p>
-
-                <div className="mb-3 flex items-end justify-between">
-                  <div>
-                    <span className="text-3xl font-extrabold text-[#176b58]">
-                      {activityAssignments.length > 0
-                        ? Math.round(
-                            (activityCompletedCount /
-                              activityAssignments.length) *
-                              100
-                          )
-                        : 0}
-                      %
-                    </span>
-                    <span className="ml-2 text-xs text-[#667a74]">
-                      completed ({activityCompletedCount} of{" "}
-                      {activityAssignments.length})
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex h-4 w-full overflow-hidden rounded-full bg-[#e9efeb]">
-                  {activityAssignments.length > 0 && (
-                    <>
-                      <div
-                        className="bg-[#176b58] transition-all duration-500"
-                        style={{
-                          width: `${
-                            (activityCompletedCount /
-                              activityAssignments.length) *
-                            100
-                          }%`,
-                        }}
-                      />
-                      <div
-                        className="bg-amber-400 transition-all duration-500"
-                        style={{
-                          width: `${
-                            (activityPendingCount /
-                              activityAssignments.length) *
-                            100
-                          }%`,
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-6 text-xs text-[#667a74]">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#176b58]" />
-                    Completed / Reviewed ({activityCompletedCount})
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                    Pending / Active ({activityPendingCount})
-                  </span>
-                </div>
+                <p style={{ color: "#667a74" }}>
+                  Pending / Active: {pendingActivities}
+                </p>
               </div>
 
-              <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm">
-                <div className="mb-4">
-                  <h2 className="text-base font-bold text-[#183a35]">
-                    Student Preferred Languages
-                  </h2>
-                  <p className="text-xs text-[#667a74]">
-                    Helps tailor bilingual instructions and parent communication
-                  </p>
-                </div>
-
+              <div style={panel}>
+                <h3>Student Preferred Languages</h3>
                 {Object.keys(languageCounts).length === 0 ? (
-                  <p className="text-sm text-[#667a74]">No student data yet.</p>
+                  <p>No student data yet.</p>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {Object.entries(languageCounts).map(([lang, count]) => (
-                      <div
-                        key={lang}
-                        className="rounded-xl border border-[#dce8e1] bg-[#f2f8f4] p-3.5"
-                      >
-                        <div className="text-xs font-semibold text-[#667a74]">
-                          {lang}
-                        </div>
-                        <div className="mt-1 text-2xl font-extrabold text-[#176b58]">
-                          {count}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <BarChart
+                    items={Object.entries(languageCounts).map(
+                      ([language, count], index) => ({
+                        label: language,
+                        value: count,
+                        color: ["#176b58", "#2563eb", "#7c3aed", "#d97706"][
+                          index % 4
+                        ],
+                      })
+                    )}
+                  />
                 )}
               </div>
             </div>
-          </div>
+          </section>
         )}
 
         {activeTab === "assessments" && (
-          <div className="grid gap-6 lg:grid-cols-5">
-            <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm lg:col-span-2">
-              <h2 className="text-base font-bold text-[#183a35]">
-                Assign Grade-Based Assessment
-              </h2>
-              <p className="mb-5 text-xs text-[#667a74]">
-                Select a cohort level to filter eligible students automatically.
-              </p>
+          <section>
+            <h2>Grade-Based Assessments</h2>
 
-              <form onSubmit={assignAssessment} className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-[#667a74]">
-                    Assessment Level *
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {LEVELS.map((l) => {
-                      const selected = level === l.value;
-                      return (
-                        <button
-                          key={l.value}
-                          type="button"
-                          onClick={() => {
-                            setLevel(l.value);
-                            setAssessmentStudent("");
-                          }}
-                          className={`rounded-xl border p-3 text-left transition ${
-                            selected
-                              ? "border-[#176b58] bg-[#e4f5ea]/60 ring-2 ring-[#176b58]/20"
-                              : "border-[#dce8e1] bg-white hover:bg-[#f8faf7]"
-                          }`}
-                        >
-                          <div className="text-sm font-extrabold text-[#183a35]">
-                            {l.value}
-                          </div>
-                          <div className="text-[11px] text-[#667a74]">
-                            {l.short}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+            <div style={grid}>
+              <div style={panel}>
+                <h3>Assign Grade-Based Assessment</h3>
+                <p style={{ color: "#667a74", fontSize: 13 }}>
+                  Select the assessment level and an eligible student.
+                </p>
 
-                <div>
-                  <label
-                    htmlFor="assessment-student"
-                    className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#667a74]"
+                <form onSubmit={assignAssessment}>
+                  <label htmlFor="assessment-level">Assessment level *</label>
+                  <select
+                    id="assessment-level"
+                    value={level}
+                    onChange={(e) => {
+                      setLevel(e.target.value as Level);
+                      setAssessmentStudent("");
+                    }}
+                    style={field}
                   >
-                    Select Eligible Student *
-                  </label>
+                    {LEVELS.map((l) => (
+                      <option key={l.value} value={l.value}>
+                        {l.value} — {l.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div style={{ height: 18 }} />
+
+                  <label htmlFor="assessment-student">Select student *</label>
                   <select
                     id="assessment-student"
                     value={assessmentStudent}
                     onChange={(e) => setAssessmentStudent(e.target.value)}
+                    style={field}
                     required
-                    className="w-full rounded-xl border border-[#dce8e1] bg-white px-3.5 py-2.5 text-sm text-[#183a35] focus:border-[#176b58] focus:outline-none focus:ring-2 focus:ring-[#176b58]/20"
                   >
-                    <option value="">Choose a student...</option>
-                    {eligible.map((s) => (
+                    <option value="">Choose a student</option>
+                    {eligibleStudents.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.full_name} — {s.current_class}
                       </option>
                     ))}
                   </select>
-                  {eligible.length === 0 && (
-                    <p className="mt-1.5 text-xs font-medium text-amber-700">
+
+                  {eligibleStudents.length === 0 && (
+                    <p style={{ color: "#a16207", fontSize: 13 }}>
                       No assigned students match {level}.
                     </p>
                   )}
-                </div>
 
-                <div>
-                  <label
-                    htmlFor="assessment-due"
-                    className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#667a74]"
-                  >
-                    Due Date (Optional)
-                  </label>
+                  <div style={{ height: 18 }} />
+
+                  <label htmlFor="assessment-due">Due date (optional)</label>
                   <input
                     id="assessment-due"
                     type="date"
                     value={assessmentDue}
                     onChange={(e) => setAssessmentDue(e.target.value)}
-                    className="w-full rounded-xl border border-[#dce8e1] bg-white px-3.5 py-2.5 text-sm text-[#183a35] focus:border-[#176b58] focus:outline-none focus:ring-2 focus:ring-[#176b58]/20"
+                    style={field}
                   />
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={saving || !assessmentStudent}
-                  className="w-full rounded-xl bg-[#176b58] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#125546] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {saving ? "Assigning..." : `Assign ${level} Assessment`}
-                </button>
-              </form>
-            </div>
-
-            <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm lg:col-span-3">
-              <h2 className="mb-4 text-base font-bold text-[#183a35]">
-                Assessment Assignment History ({assessments.length})
-              </h2>
-
-              {assessments.length === 0 ? (
-                <p className="rounded-xl bg-[#f8faf7] p-6 text-center text-sm text-[#667a74]">
-                  No assessments assigned yet.
-                </p>
-              ) : (
-                <div className="divide-y divide-[#dce8e1]">
-                  {assessments.map((a) => (
-                    <div
-                      key={a.id}
-                      className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0 last:pb-0"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#183a35]">
-                            {studentName(a.student_id)}
-                          </span>
-                          <span className="rounded-md bg-[#f2f8f4] px-2 py-0.5 text-xs font-bold text-[#176b58]">
-                            {a.assessment_level}
-                          </span>
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-3 text-xs text-[#667a74]">
-                          <span>Assigned: {formatDate(a.assigned_at)}</span>
-                          <span>•</span>
-                          <span>Due: {formatDate(a.due_date)}</span>
-                        </div>
-                        {a.status === "submitted" && (
-                          <p className="mt-1.5 text-xs font-medium text-purple-700">
-                            Awaiting teacher review. Review controls will be added next.
-                          </p>
-                        )}
-                      </div>
-                      <StatusBadge value={a.status} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === "activities" && (
-          <div className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm">
-                <h2 className="text-base font-bold text-[#183a35]">
-                  Create Learning Activity
-                </h2>
-                <p className="mb-5 text-xs text-[#667a74]">
-                  Build a reusable activity module in your library.
-                </p>
-
-                <form onSubmit={createActivity} className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="activity-title"
-                      className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#667a74]"
-                    >
-                      Activity Title *
-                    </label>
-                    <input
-                      id="activity-title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g., Reading Comprehension — Level 2"
-                      required
-                      className="w-full rounded-xl border border-[#dce8e1] bg-white px-3.5 py-2.5 text-sm text-[#183a35] focus:border-[#176b58] focus:outline-none focus:ring-2 focus:ring-[#176b58]/20"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="activity-description"
-                      className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#667a74]"
-                    >
-                      Activity Description
-                    </label>
-                    <textarea
-                      id="activity-description"
-                      rows={3}
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Instructions for the student and parent..."
-                      className="w-full rounded-xl border border-[#dce8e1] bg-white px-3.5 py-2.5 text-sm text-[#183a35] focus:border-[#176b58] focus:outline-none focus:ring-2 focus:ring-[#176b58]/20"
-                    />
-                  </div>
+                  <div style={{ height: 20 }} />
 
                   <button
                     type="submit"
+                    style={primaryButton}
+                    disabled={saving || !assessmentStudent}
+                  >
+                    {saving ? "Assigning..." : `Assign ${level} Assessment`}
+                  </button>
+                </form>
+              </div>
+
+              <div style={panel}>
+                <h3>Assessment Assignment History ({assessments.length})</h3>
+
+                {assessments.length === 0 ? (
+                  <p>No assessments assigned yet.</p>
+                ) : (
+                  assessments.map((a) => (
+                    <div
+                      key={a.id}
+                      style={{
+                        borderBottom: "1px solid #dce8e1",
+                        padding: "15px 0",
+                      }}
+                    >
+                      <strong>{studentName(a.student_id)}</strong>
+                      <p>Level: {a.assessment_level}</p>
+                      <p>Assigned: {formatDate(a.assigned_at)}</p>
+                      <p>Due: {formatDate(a.due_date)}</p>
+                      <StatusBadge value={a.status} />
+                      {a.status === "submitted" && (
+                        <p style={{ color: "#7c3aed", fontSize: 13 }}>
+                          Awaiting teacher review. Review controls are not
+                          implemented in this dashboard yet.
+                        </p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "activities" && (
+          <section>
+            <h2>Learning Activities</h2>
+
+            <div style={grid}>
+              <div style={panel}>
+                <h3>Create Learning Activity</h3>
+
+                <form onSubmit={createActivity}>
+                  <label htmlFor="activity-title">Activity title *</label>
+                  <input
+                    id="activity-title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    style={field}
+                    placeholder="Enter activity title"
+                    required
+                  />
+
+                  <div style={{ height: 18 }} />
+
+                  <label htmlFor="activity-description">
+                    Activity description
+                  </label>
+                  <textarea
+                    id="activity-description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    style={field}
+                    rows={4}
+                    placeholder="Instructions for student and parent"
+                  />
+
+                  <div style={{ height: 20 }} />
+
+                  <button
+                    type="submit"
+                    style={primaryButton}
                     disabled={saving || !title.trim()}
-                    className="w-full rounded-xl bg-[#176b58] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#125546] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {saving ? "Saving..." : "Create Activity"}
                   </button>
                 </form>
               </div>
 
-              <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm">
-                <h2 className="text-base font-bold text-[#183a35]">
-                  Assign Learning Activity
-                </h2>
-                <p className="mb-5 text-xs text-[#667a74]">
-                  Assign any saved activity to a student with an optional due date.
-                </p>
+              <div style={panel}>
+                <h3>Assign Learning Activity</h3>
 
-                <form onSubmit={assignActivity} className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="activity-student"
-                      className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#667a74]"
-                    >
-                      Select Student *
-                    </label>
-                    <select
-                      id="activity-student"
-                      value={activityStudent}
-                      onChange={(e) => setActivityStudent(e.target.value)}
-                      required
-                      className="w-full rounded-xl border border-[#dce8e1] bg-white px-3.5 py-2.5 text-sm text-[#183a35] focus:border-[#176b58] focus:outline-none focus:ring-2 focus:ring-[#176b58]/20"
-                    >
-                      <option value="">Choose a student...</option>
-                      {students.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.full_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <form onSubmit={assignActivity}>
+                  <label htmlFor="activity-student">Select student *</label>
+                  <select
+                    id="activity-student"
+                    value={activityStudent}
+                    onChange={(e) => setActivityStudent(e.target.value)}
+                    style={field}
+                    required
+                  >
+                    <option value="">Choose a student</option>
+                    {students.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.full_name}
+                      </option>
+                    ))}
+                  </select>
 
-                  <div>
-                    <label
-                      htmlFor="selected-activity"
-                      className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#667a74]"
-                    >
-                      Select Activity *
-                    </label>
-                    <select
-                      id="selected-activity"
-                      value={selectedActivity}
-                      onChange={(e) => setSelectedActivity(e.target.value)}
-                      required
-                      className="w-full rounded-xl border border-[#dce8e1] bg-white px-3.5 py-2.5 text-sm text-[#183a35] focus:border-[#176b58] focus:outline-none focus:ring-2 focus:ring-[#176b58]/20"
-                    >
-                      <option value="">Choose an activity...</option>
-                      {activities.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <div style={{ height: 18 }} />
 
-                  <div>
-                    <label
-                      htmlFor="activity-due"
-                      className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#667a74]"
-                    >
-                      Due Date (Optional)
-                    </label>
-                    <input
-                      id="activity-due"
-                      type="date"
-                      value={activityDue}
-                      onChange={(e) => setActivityDue(e.target.value)}
-                      className="w-full rounded-xl border border-[#dce8e1] bg-white px-3.5 py-2.5 text-sm text-[#183a35] focus:border-[#176b58] focus:outline-none focus:ring-2 focus:ring-[#176b58]/20"
-                    />
-                  </div>
+                  <label htmlFor="activity-select">Select activity *</label>
+                  <select
+                    id="activity-select"
+                    value={selectedActivity}
+                    onChange={(e) => setSelectedActivity(e.target.value)}
+                    style={field}
+                    required
+                  >
+                    <option value="">Choose an activity</option>
+                    {activities.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.title}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div style={{ height: 18 }} />
+
+                  <label htmlFor="activity-due">Due date (optional)</label>
+                  <input
+                    id="activity-due"
+                    type="date"
+                    value={activityDue}
+                    onChange={(e) => setActivityDue(e.target.value)}
+                    style={field}
+                  />
+
+                  <div style={{ height: 20 }} />
 
                   <button
                     type="submit"
+                    style={primaryButton}
                     disabled={saving || !activityStudent || !selectedActivity}
-                    className="w-full rounded-xl bg-[#176b58] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#125546] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {saving ? "Assigning..." : "Assign Activity"}
                   </button>
                 </form>
               </div>
-            </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm">
-                <h2 className="mb-4 text-base font-bold text-[#183a35]">
-                  My Learning Activities ({activities.length})
-                </h2>
+              <div style={panel}>
+                <h3>My Learning Activities ({activities.length})</h3>
+
                 {activities.length === 0 ? (
-                  <p className="text-sm text-[#667a74]">
-                    No activities created yet.
-                  </p>
+                  <p>No activities created yet.</p>
                 ) : (
-                  <div className="divide-y divide-[#dce8e1]">
-                    {activities.map((a) => (
-                      <div key={a.id} className="py-3.5 first:pt-0 last:pb-0">
-                        <div className="font-bold text-[#183a35]">{a.title}</div>
-                        <p className="mt-1 text-xs text-[#667a74]">
-                          {a.description || "No description"}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                  activities.map((a) => (
+                    <div
+                      key={a.id}
+                      style={{
+                        padding: "14px 0",
+                        borderBottom: "1px solid #dce8e1",
+                      }}
+                    >
+                      <strong>{a.title}</strong>
+                      <p style={{ color: "#667a74" }}>
+                        {a.description || "No description"}
+                      </p>
+                    </div>
+                  ))
                 )}
               </div>
 
-              <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm">
-                <h2 className="mb-4 text-base font-bold text-[#183a35]">
+              <div style={panel}>
+                <h3>
                   Activity Assignment History ({activityAssignments.length})
-                </h2>
+                </h3>
+
                 {activityAssignments.length === 0 ? (
-                  <p className="text-sm text-[#667a74]">
-                    No activities assigned yet.
-                  </p>
+                  <p>No activities assigned yet.</p>
                 ) : (
-                  <div className="divide-y divide-[#dce8e1]">
-                    {activityAssignments.map((a) => (
-                      <div
-                        key={a.id}
-                        className="flex items-center justify-between gap-3 py-3.5 first:pt-0 last:pb-0"
-                      >
-                        <div>
-                          <div className="font-bold text-[#183a35]">
-                            {activityTitle(a.activity_id)}
-                          </div>
-                          <p className="mt-0.5 text-xs text-[#667a74]">
-                            Student: {studentName(a.student_id)} • Due:{" "}
-                            {formatDate(a.due_date)}
-                          </p>
-                        </div>
-                        <StatusBadge value={a.status} />
-                      </div>
-                    ))}
-                  </div>
+                  activityAssignments.map((a) => (
+                    <div
+                      key={a.id}
+                      style={{
+                        padding: "14px 0",
+                        borderBottom: "1px solid #dce8e1",
+                      }}
+                    >
+                      <strong>{activityTitle(a.activity_id)}</strong>
+                      <p>Student: {studentName(a.student_id)}</p>
+                      <p>Assigned: {formatDate(a.assigned_at)}</p>
+                      <p>Due: {formatDate(a.due_date)}</p>
+                      <StatusBadge value={a.status} />
+                    </div>
+                  ))
                 )}
               </div>
             </div>
-          </div>
+          </section>
         )}
 
         {activeTab === "students" && (
-          <div className="grid gap-6 lg:grid-cols-5">
-            <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm lg:col-span-2">
-              <h2 className="mb-4 text-base font-bold text-[#183a35]">
-                My Assigned Students ({students.length})
-              </h2>
+          <section>
+            <h2>Students & Guardian Contacts</h2>
 
-              {students.length === 0 ? (
-                <p className="text-sm text-[#667a74]">
-                  No students assigned yet.
-                </p>
-              ) : (
-                <div className="space-y-2.5">
-                  {students.map((s) => {
-                    const selected = profileId === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setProfileId(s.id)}
-                        className={`flex w-full items-center justify-between rounded-xl border p-3.5 text-left transition ${
-                          selected
-                            ? "border-[#176b58] bg-[#f2f8f4] ring-2 ring-[#176b58]/20"
-                            : "border-[#dce8e1] bg-white hover:bg-[#f8faf7]"
-                        }`}
-                      >
-                        <div>
-                          <div className="font-bold text-[#183a35]">
-                            {s.full_name}
-                          </div>
-                          <div className="mt-0.5 text-xs text-[#667a74]">
-                            {s.current_class || "Class not set"} • Level:{" "}
-                            <strong className="text-[#176b58]">
-                              {getLevel(s.current_class) || "Unknown"}
-                            </strong>
-                          </div>
-                        </div>
+            <div style={grid}>
+              <div style={panel}>
+                <h3>My Assigned Students ({students.length})</h3>
+
+                {students.length === 0 ? (
+                  <p>No students assigned yet.</p>
+                ) : (
+                  students.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setProfileId(s.id)}
+                      style={{
+                        width: "100%",
+                        display: "block",
+                        textAlign: "left",
+                        padding: 15,
+                        marginBottom: 10,
+                        borderRadius: 12,
+                        border:
+                          profileId === s.id
+                            ? "2px solid #176b58"
+                            : "1px solid #dce8e1",
+                        background:
+                          profileId === s.id ? "#f2f8f4" : "#ffffff",
+                        color: "#183a35",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <strong>{s.full_name}</strong>
+                      <div style={{ fontSize: 13, marginTop: 6 }}>
+                        Class: {s.current_class || "Not available"}
+                      </div>
+                      <div style={{ fontSize: 13, marginTop: 5 }}>
+                        Level: {getLevel(s.current_class) || "Unknown"}
+                      </div>
+                      <div style={{ marginTop: 9 }}>
                         <StatusBadge value={s.status} />
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-[#dce8e1] bg-white p-6 shadow-sm lg:col-span-3">
-              <div className="mb-4">
-                <h2 className="text-base font-bold text-[#183a35]">
-                  Student Profile & Guardian Contact Details
-                </h2>
-                <p className="text-xs text-[#667a74]">
-                  Select a student from the list or dropdown to inspect details.
-                </p>
+                      </div>
+                    </button>
+                  ))
+                )}
               </div>
 
-              <select
-                id="profile-student"
-                value={profileId}
-                onChange={(e) => setProfileId(e.target.value)}
-                className="mb-6 w-full rounded-xl border border-[#dce8e1] bg-white px-3.5 py-2.5 text-sm text-[#183a35] focus:border-[#176b58] focus:outline-none focus:ring-2 focus:ring-[#176b58]/20"
-              >
-                <option value="">Choose a student...</option>
-                {students.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.full_name} — {s.current_class || "Class not set"}
-                  </option>
-                ))}
-              </select>
+              <div style={panel}>
+                <h3>Student Profile & Guardian Contact Details</h3>
 
-              {!profile ? (
-                <div className="rounded-2xl border border-dashed border-[#dce8e1] bg-[#f8faf7] py-12 text-center">
-                  <p className="text-sm font-medium text-[#667a74]">
-                    Pick any student to view their academic & guardian records.
+                <label htmlFor="profile-student">Select student</label>
+                <select
+                  id="profile-student"
+                  value={profileId}
+                  onChange={(e) => setProfileId(e.target.value)}
+                  style={field}
+                >
+                  <option value="">Choose a student</option>
+                  {students.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.full_name} — {s.current_class}
+                    </option>
+                  ))}
+                </select>
+
+                {!selectedProfile ? (
+                  <p style={{ color: "#667a74", marginTop: 25 }}>
+                    Select a student to view their profile and guardian
+                    contact details.
                   </p>
-                </div>
-              ) : (
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-extrabold text-[#183a35]">
-                      {profile.full_name}
+                ) : (
+                  <div style={{ marginTop: 22 }}>
+                    <h3>{selectedProfile.full_name}</h3>
+
+                    <div
+                      style={{
+                        background: "#f2f8f4",
+                        borderRadius: 12,
+                        padding: 16,
+                      }}
+                    >
+                      <p>
+                        <strong>Student code:</strong>{" "}
+                        {selectedProfile.student_code || "Not available"}
+                      </p>
+                      <p>
+                        <strong>Date of birth:</strong>{" "}
+                        {formatDate(selectedProfile.date_of_birth)}
+                      </p>
+                      <p>
+                        <strong>Current class:</strong>{" "}
+                        {selectedProfile.current_class || "Not available"}
+                      </p>
+                      <p>
+                        <strong>Assessment level:</strong>{" "}
+                        {getLevel(selectedProfile.current_class) ||
+                          "Not available"}
+                      </p>
+                      <p>
+                        <strong>Preferred language:</strong>{" "}
+                        {selectedProfile.preferred_language || "Not available"}
+                      </p>
+                      <p>
+                        <strong>Status:</strong> {selectedProfile.status}
+                      </p>
+                    </div>
+
+                    <h3 style={{ marginTop: 24 }}>
+                      Parent / Guardian Details
                     </h3>
-                    <StatusBadge value={profile.status} />
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3 rounded-2xl bg-[#f2f8f4] p-4 sm:grid-cols-3">
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#667a74]">
-                        Student Code
-                      </span>
-                      <p className="mt-0.5 text-sm font-semibold text-[#183a35]">
-                        {profile.student_code || "Not available"}
+                    {profileGuardians.length === 0 ? (
+                      <p style={{ color: "#667a74" }}>
+                        No linked guardian details available for this student.
                       </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#667a74]">
-                        Date of Birth
-                      </span>
-                      <p className="mt-0.5 text-sm font-semibold text-[#183a35]">
-                        {formatDate(profile.date_of_birth)}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#667a74]">
-                        Current Class
-                      </span>
-                      <p className="mt-0.5 text-sm font-semibold text-[#183a35]">
-                        {profile.current_class || "Not available"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#667a74]">
-                        Assessment Level
-                      </span>
-                      <p className="mt-0.5 text-sm font-semibold text-[#176b58]">
-                        {getLevel(profile.current_class) || "Not available"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#667a74]">
-                        Preferred Language
-                      </span>
-                      <p className="mt-0.5 text-sm font-semibold text-[#183a35]">
-                        {profile.preferred_language || "Not available"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <h4 className="mb-3 mt-6 text-xs font-bold uppercase tracking-wider text-[#667a74]">
-                    Parent / Guardian Details
-                  </h4>
-
-                  {profileGuardians.length === 0 ? (
-                    <p className="text-sm text-[#667a74]">
-                      No linked guardian details available for this student.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {profileGuardians.map((g) => (
+                    ) : (
+                      profileGuardians.map((g) => (
                         <div
                           key={g.parent_user_id}
-                          className="rounded-xl border border-[#dce8e1] bg-white p-4"
+                          style={{
+                            border: "1px solid #dce8e1",
+                            borderRadius: 12,
+                            padding: 16,
+                            marginBottom: 12,
+                          }}
                         >
-                          <div className="font-bold text-[#183a35]">
-                            {g.guardian_name || "Guardian Name Not Available"}
-                          </div>
-                          <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                            {g.whatsapp_number ? (
-                              <a
-                                href={`https://wa.me/${g.whatsapp_number.replace(
-                                  /[^0-9]/g,
-                                  ""
-                                )}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center rounded-lg bg-[#e4f5ea] px-3 py-1.5 font-semibold text-[#176b58] transition hover:bg-[#d2eedc]"
-                              >
-                                WhatsApp: {g.whatsapp_number}
-                              </a>
-                            ) : (
-                              <span className="text-[#667a74]">
-                                WhatsApp: Not available
-                              </span>
-                            )}
+                          <p>
+                            <strong>Guardian:</strong>{" "}
+                            {g.guardian_name || "Not available"}
+                          </p>
 
-                            {g.additional_contact_number && (
-                              <a
-                                href={`tel:${g.additional_contact_number}`}
-                                className="inline-flex items-center rounded-lg border border-[#dce8e1] px-3 py-1.5 font-semibold text-[#183a35] hover:bg-[#f8faf7]"
-                              >
-                                Alt: {g.additional_contact_number}
-                              </a>
-                            )}
-                          </div>
-                          <p className="mt-2 text-xs text-[#667a74]">
-                            Separate contact number:{" "}
-                            <strong>
-                              {g.contact_number_differs ? "Yes" : "No"}
-                            </strong>
+                          <p>
+                            <strong>WhatsApp:</strong>{" "}
+                            {g.whatsapp_number || "Not available"}
+                          </p>
+
+                          {g.whatsapp_number && (
+                            <a
+                              href={`https://wa.me/${phoneDigits(
+                                g.whatsapp_number
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "inline-block",
+                                color: "#176b58",
+                                fontWeight: 700,
+                                marginBottom: 12,
+                              }}
+                            >
+                              Open WhatsApp
+                            </a>
+                          )}
+
+                          <p>
+                            <strong>Additional contact:</strong>{" "}
+                            {g.additional_contact_number || "Not provided"}
+                          </p>
+
+                          {g.additional_contact_number && (
+                            <a
+                              href={`tel:${g.additional_contact_number}`}
+                              style={{ color: "#176b58" }}
+                            >
+                              Call additional number
+                            </a>
+                          )}
+
+                          <p>
+                            <strong>Separate contact number:</strong>{" "}
+                            {g.contact_number_differs ? "Yes" : "No"}
                           </p>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </section>
         )}
       </main>
     </div>
