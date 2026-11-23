@@ -2,6 +2,9 @@
   "name": "swastha-learning-portal",
   "version": "1.0.0",
   "private": true,
+  "overrides": {
+  "postcss": "8.5.33"
+},
   "scripts": {
     "dev": "next dev",
     "build": "next build",
