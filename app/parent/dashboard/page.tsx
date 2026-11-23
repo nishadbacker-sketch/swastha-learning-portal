@@ -20,6 +20,17 @@ type ParentProfile = {
   additional_contact_number: string | null;
 };
 
+type Activity = {
+  id: string;
+  assigned_at: string;
+  due_date: string | null;
+  status: string;
+  learning_activities: {
+    title: string;
+    description: string | null;
+  } | null;
+};
+
 export default function ParentDashboard() {
   const router = useRouter();
 
@@ -27,6 +38,7 @@ export default function ParentDashboard() {
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<ParentProfile | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -76,7 +88,7 @@ export default function ParentDashboard() {
       );
       setEmail(user.email || "");
 
-      // Load parent profile.
+      // Load parent profile
       const { data: profileData, error: profileError } =
         await supabase
           .from("profiles")
@@ -92,7 +104,7 @@ export default function ParentDashboard() {
         setProfile(profileData);
       }
 
-      // Load linked children.
+      // Load linked children
       const { data: links, error: linksError } = await supabase
         .from("parent_student_links")
         .select("student_id")
@@ -122,6 +134,29 @@ export default function ParentDashboard() {
         } else {
           setStudents(studentData || []);
         }
+
+        // Load activities assigned to these children
+        const { data: activityData, error: activityError } =
+          await supabase
+            .from("student_activity_assignments")
+            .select(`
+              id,
+              assigned_at,
+              due_date,
+              status,
+              learning_activities (
+                title,
+                description
+              )
+            `)
+            .in("student_id", studentIds)
+            .order("assigned_at", { ascending: false });
+
+        if (activityError) {
+          setLoadError("Unable to load learning activities.");
+        } else {
+          setActivities((activityData || []) as Activity[]);
+        }
       }
 
       setLoading(false);
@@ -145,6 +180,10 @@ export default function ParentDashboard() {
     if (parts.length !== 3) return date;
 
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  function formatDateTime(date: string) {
+    return new Date(date).toLocaleDateString("en-IN");
   }
 
   if (loading) {
@@ -254,13 +293,8 @@ export default function ParentDashboard() {
         >
           <h2>My Child</h2>
 
-          {loadError ? (
-            <p style={{ color: "#b42318" }}>{loadError}</p>
-          ) : students.length === 0 ? (
-            <p>
-              No child information was found for your account.
-              Please contact the clinic administrator.
-            </p>
+          {students.length === 0 ? (
+            <p>No child information was found for your account.</p>
           ) : (
             students.map((student) => (
               <div
@@ -294,6 +328,71 @@ export default function ParentDashboard() {
               </div>
             ))
           )}
+        </div>
+
+        {/* Learning Activities */}
+        <div
+          style={{
+            marginTop: 24,
+            padding: 28,
+            background: "#ffffff",
+            border: "1px solid #dce8e1",
+            borderRadius: 16,
+            maxWidth: 750,
+          }}
+        >
+          <h2>Learning Activities</h2>
+
+          {activities.length === 0 ? (
+            <p>
+              No learning activities have been assigned yet.
+              Your teacher's assigned activities will appear here.
+            </p>
+          ) : (
+            activities.map((activity) => (
+              <div
+                key={activity.id}
+                style={{
+                  marginTop: 20,
+                  padding: 20,
+                  background: "#f8faf7",
+                  border: "1px solid #dce8e1",
+                  borderRadius: 12,
+                }}
+              >
+                <h3 style={{ marginTop: 0 }}>
+                  {activity.learning_activities?.title ||
+                    "Untitled activity"}
+                </h3>
+
+                <p>
+                  {activity.learning_activities?.description ||
+                    "No description provided."}
+                </p>
+
+                <p>
+                  <strong>Assigned date:</strong>{" "}
+                  {formatDateTime(activity.assigned_at)}
+                </p>
+
+                <p>
+                  <strong>Due date:</strong>{" "}
+                  {formatDate(activity.due_date)}
+                </p>
+
+                <p>
+                  <strong>Status:</strong>{" "}
+                  {activity.status === "completed"
+                    ? "Completed"
+                    : "Pending"}
+                </p>
+              </div>
+            ))
+          )}
+
+          <p style={{ color: "#667a74", fontSize: 13 }}>
+            Learning activities are displayed for viewing only.
+          </p>
         </div>
 
         {loadError && (
