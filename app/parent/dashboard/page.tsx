@@ -13,10 +13,19 @@ type Student = {
   status: string;
 };
 
+type ParentProfile = {
+  full_name: string | null;
+  phone: string | null;
+  contact_number_differs: boolean;
+  additional_contact_number: string | null;
+};
+
 export default function ParentDashboard() {
   const router = useRouter();
 
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [profile, setProfile] = useState<ParentProfile | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -65,8 +74,25 @@ export default function ParentDashboard() {
       setName(
         user.user_metadata?.full_name || user.email || "Learner"
       );
+      setEmail(user.email || "");
 
-      // Get this parent's linked children.
+      // Load parent profile.
+      const { data: profileData, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select(
+            "full_name, phone, contact_number_differs, additional_contact_number"
+          )
+          .eq("id", user.id)
+          .single();
+
+      if (profileError) {
+        setLoadError("Unable to load your profile information.");
+      } else {
+        setProfile(profileData);
+      }
+
+      // Load linked children.
       const { data: links, error: linksError } = await supabase
         .from("parent_student_links")
         .select("student_id")
@@ -86,7 +112,9 @@ export default function ParentDashboard() {
         const { data: studentData, error: studentError } =
           await supabase
             .from("students")
-            .select("id, full_name, date_of_birth, current_class, status")
+            .select(
+              "id, full_name, date_of_birth, current_class, status"
+            )
             .in("id", studentIds);
 
         if (studentError) {
@@ -162,6 +190,7 @@ export default function ParentDashboard() {
           Welcome to your Swastha Learning Clinic learning portal.
         </p>
 
+        {/* My Profile */}
         <div
           style={{
             marginTop: 32,
@@ -172,21 +201,57 @@ export default function ParentDashboard() {
             maxWidth: 750,
           }}
         >
-          <h2>Your Learning Dashboard</h2>
+          <h2>My Profile</h2>
 
-          <p>
-            Your account is active. Your learning information
-            and assigned activities will appear here.
+          {profile ? (
+            <>
+              <p>
+                <strong>Parent / Guardian name:</strong>{" "}
+                {profile.full_name || "Not available"}
+              </p>
+
+              <p>
+                <strong>WhatsApp number:</strong>{" "}
+                {profile.phone || "Not available"}
+              </p>
+
+              <p>
+                <strong>Contact number differs:</strong>{" "}
+                {profile.contact_number_differs ? "Yes" : "No"}
+              </p>
+
+              {profile.contact_number_differs && (
+                <p>
+                  <strong>Additional contact number:</strong>{" "}
+                  {profile.additional_contact_number || "Not available"}
+                </p>
+              )}
+
+              <p>
+                <strong>Login email:</strong>{" "}
+                {email || "Not available"}
+              </p>
+            </>
+          ) : (
+            <p>Profile information is not available.</p>
+          )}
+
+          <p style={{ color: "#667a74", fontSize: 13 }}>
+            Your profile information is currently read-only.
           </p>
+        </div>
 
-          <hr
-            style={{
-              border: 0,
-              borderTop: "1px solid #dce8e1",
-              margin: "28px 0",
-            }}
-          />
-
+        {/* My Child */}
+        <div
+          style={{
+            marginTop: 24,
+            padding: 28,
+            background: "#ffffff",
+            border: "1px solid #dce8e1",
+            borderRadius: 16,
+            maxWidth: 750,
+          }}
+        >
           <h2>My Child</h2>
 
           {loadError ? (
@@ -230,6 +295,12 @@ export default function ParentDashboard() {
             ))
           )}
         </div>
+
+        {loadError && (
+          <p style={{ color: "#b42318", marginTop: 16 }}>
+            {loadError}
+          </p>
+        )}
       </section>
     </main>
   );
