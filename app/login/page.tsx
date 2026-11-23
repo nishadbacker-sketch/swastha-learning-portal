@@ -93,14 +93,21 @@ export default function LoginPage() {
 
         if (error) throw error;
 
+        // Clear the new session so the parent can sign in manually.
         if (data.session) {
-          router.push("/parent/dashboard");
-        } else {
-          // Show registration success popup.
-          setIsRegister(false);
-          setPassword("");
-          setShowSuccessPopup(true);
+          const { error: signOutError } =
+            await supabase.auth.signOut();
+
+          if (signOutError) {
+            throw signOutError;
+          }
         }
+
+        // Show registration success popup.
+        setIsRegister(false);
+        setPassword("");
+        setShowSuccessPopup(true);
+
       } else {
         const { data, error } =
           await supabase.auth.signInWithPassword({
@@ -405,9 +412,9 @@ export default function LoginPage() {
                 margin: "0 0 24px",
               }}
             >
-              Your account has been registered successfully.
-              Please check your email and click the confirmation
-              link to activate your account.
+              Your account and child registration have been
+              completed successfully. You can now sign in
+              to your account.
             </p>
 
             <button
