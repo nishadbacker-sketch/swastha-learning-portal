@@ -1,27 +1,12 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
-import {
-  BookOpen,
-  ClipboardCheck,
-  Users,
-  BarChart3,
-  Plus,
-  Send,
-  LogOut,
-  Phone,
-  MessageCircle,
-  Calendar,
-  CheckCircle2,
-  AlertCircle,
-  Sparkles,
-  UserCheck,
-  Clock,
-  Layers,
-  Globe,
-} from "lucide-react";
+
+type Level = "LP" | "UP" | "HS" | "HSS";
+type Tab = "overview" | "assessments" | "activities" | "students";
 
 type Student = {
   id: string;
@@ -58,8 +43,6 @@ type ActivityAssignment = {
   assigned_at: string;
 };
 
-type Level = "LP" | "UP" | "HS" | "HSS";
-
 type Assessment = {
   id: string;
   student_id: string;
@@ -69,17 +52,40 @@ type Assessment = {
   assigned_at: string;
 };
 
-const LEVELS: { value: Level; label: string; short: string; color: string }[] = [
-  { value: "LP", label: "LP — Classes 1–4", short: "Classes 1–4", color: "#176b58" },
-  { value: "UP", label: "UP — Classes 5–7", short: "Classes 5–7", color: "#2563eb" },
-  { value: "HS", label: "HS — Classes 8–10", short: "Classes 8–10", color: "#7c3aed" },
-  { value: "HSS", label: "HSS — Classes 11–12", short: "Classes 11–12", color: "#d97706" },
+const LEVELS: {
+  value: Level;
+  label: string;
+  color: string;
+}[] = [
+  { value: "LP", label: "Classes 1–4", color: "#176b58" },
+  { value: "UP", label: "Classes 5–7", color: "#2563eb" },
+  { value: "HS", label: "Classes 8–10", color: "#7c3aed" },
+  { value: "HSS", label: "Classes 11–12", color: "#d97706" },
 ];
 
-const roman: Record<string, number> = {
-  I: 1, II: 2, III: 3, IV: 4,
-  V: 5, VI: 6, VII: 7, VIII: 8,
-  IX: 9, X: 10, XI: 11, XII: 12,
+const ROMAN: Record<string, number> = {
+  I: 1,
+  II: 2,
+  III: 3,
+  IV: 4,
+  V: 5,
+  VI: 6,
+  VII: 7,
+  VIII: 8,
+  IX: 9,
+  X: 10,
+  XI: 11,
+  XII: 12,
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  assigned: "#2563eb",
+  in_progress: "#d97706",
+  submitted: "#7c3aed",
+  reviewed: "#16805d",
+  pending: "#d97706",
+  completed: "#16805d",
+  active: "#16805d",
 };
 
 function getLevel(value: string | null): Level | null {
@@ -92,4 +98,1952 @@ function getLevel(value: string | null): Level | null {
 
   const number = /^\d{1,2}$/.test(cleaned)
     ? Number(cleaned)
-    : roman[cleaned];
+    : ROMAN[cleaned];
+
+  if (!number || number < 1 || number > 12) return null;
+  if (number <= 4) return "LP";
+  if (number <= 7) return "UP";
+  if (number <= 10) return "HS";
+  return "HSS";
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "Not available";
+
+  const parts = value.slice(0, 10).split("-");
+
+  if (parts.length !== 3) return value;
+
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function phoneDigits(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return digits.length === 10 ? `91${digits}` : digits;
+}
+
+const panel: React.CSSProperties = {
+  background: "#ffffff",
+  border: "1px solid #dce8e1",
+  borderRadius: 16,
+  padding: 22,
+  boxShadow: "0 3px 14px rgba(24,58,53,0.04)",
+};
+
+const field: React.CSSProperties = {
+  display: "block",
+  width: "100%",
+  padding: 12,
+  marginTop: 7,
+  border: "1px solid #dce8e1",
+  borderRadius: 9,
+  background: "#ffffff",
+  color: "#183a35",
+  boxSizing: "border-box",
+  fontSize: 14,
+};
+
+const primaryButton: React.CSSProperties = {
+  border: "none",
+  borderRadius: 10,
+  background: "#176b58",
+  color: "#ffffff",
+  padding: "12px 18px",
+  fontSize: 14,
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
+const grid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+  gap: 18,
+};
+
+function StatusBadge({ value }: { value: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "5px 10px",
+        borderRadius: 20,
+        background: STATUS_COLORS[value] || "#64748b",
+        color: "#ffffff",
+        fontSize: 12,
+        fontWeight: 700,
+        textTransform: "capitalize",
+      }}
+    >
+      {value.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  color,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      style={{
+        ...panel,
+        borderTop: `4px solid ${color}`,
+        textAlign: "left",
+        cursor: onClick ? "pointer" : "default",
+        width: "100%",
+        color: "#183a35",
+      }}
+    >
+      <div
+        style={{
+          color: "#667a74",
+          fontSize: 13,
+          fontWeight: 700,
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          color,
+          fontSize: 34,
+          fontWeight: 800,
+          marginTop: 8,
+        }}
+      >
+        {value}
+      </div>
+
+      {onClick && (
+        <div
+          style={{
+            fontSize: 12,
+            color: "#667a74",
+            marginTop: 8,
+          }}
+        >
+          Click to view details
+        </div>
+      )}
+    </button>
+  );
+}
+
+function DonutChart({
+  segments,
+  label,
+}: {
+  segments: {
+    label: string;
+    value: number;
+    color: string;
+  }[];
+  label: string;
+}) {
+  const total = segments.reduce(
+    (sum, segment) => sum + segment.value,
+    0
+  );
+
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 22,
+        alignItems: "center",
+      }}
+    >
+      <div
+        style={{
+          width: 170,
+          height: 170,
+          position: "relative",
+        }}
+      >
+        <svg
+          viewBox="0 0 140 140"
+          style={{ width: "100%", height: "100%" }}
+        >
+          <circle
+            cx="70"
+            cy="70"
+            r={radius}
+            fill="none"
+            stroke="#e9efeb"
+            strokeWidth="17"
+          />
+
+          <g transform="rotate(-90 70 70)">
+            {total > 0 &&
+              segments.map((segment) => {
+                const fraction = segment.value / total;
+                const currentOffset = offset;
+
+                offset += fraction * circumference;
+
+                return (
+                  <circle
+                    key={segment.label}
+                    cx="70"
+                    cy="70"
+                    r={radius}
+                    fill="none"
+                    stroke={segment.color}
+                    strokeWidth="17"
+                    strokeDasharray={`${
+                      fraction * circumference
+                    } ${circumference}`}
+                    strokeDashoffset={-currentOffset}
+                  />
+                );
+              })}
+          </g>
+
+          <text
+            x="70"
+            y="67"
+            textAnchor="middle"
+            fontSize="26"
+            fontWeight="800"
+            fill="#183a35"
+          >
+            {total}
+          </text>
+
+          <text
+            x="70"
+            y="85"
+            textAnchor="middle"
+            fontSize="11"
+            fill="#667a74"
+          >
+            {label}
+          </text>
+        </svg>
+      </div>
+
+      <div style={{ flex: 1, minWidth: 170 }}>
+        {segments.map((segment) => (
+          <div
+            key={segment.label}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "8px 0",
+              borderBottom: "1px solid #edf2ee",
+              fontSize: 13,
+            }}
+          >
+            <span>
+              <span
+                style={{
+                  color: segment.color,
+                  marginRight: 8,
+                }}
+              >
+                ●
+              </span>
+              {segment.label}
+            </span>
+
+            <strong>{segment.value}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BarChart({
+  items,
+}: {
+  items: {
+    label: string;
+    value: number;
+    color: string;
+  }[];
+}) {
+  const maximum = Math.max(
+    1,
+    ...items.map((item) => item.value)
+  );
+
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      {items.map((item) => (
+        <div key={item.label}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 7,
+              fontSize: 13,
+            }}
+          >
+            <strong>{item.label}</strong>
+            <strong>{item.value}</strong>
+          </div>
+
+          <div
+            style={{
+              height: 14,
+              borderRadius: 20,
+              overflow: "hidden",
+              background: "#e9efeb",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${(item.value / maximum) * 100}%`,
+                background: item.color,
+                borderRadius: 20,
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function TeacherDashboard() {
+  const router = useRouter();
+
+  const [userId, setUserId] = useState("");
+  const [teacherName, setTeacherName] = useState("Teacher");
+
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
+
+  const [students, setStudents] = useState<Student[]>([]);
+  const [guardians, setGuardians] = useState<Guardian[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+
+  const [activityAssignments, setActivityAssignments] =
+    useState<ActivityAssignment[]>([]);
+
+  const [assessments, setAssessments] =
+    useState<Assessment[]>([]);
+
+  const [profileId, setProfileId] = useState("");
+  const [selectedAssessmentId, setSelectedAssessmentId] =
+    useState("");
+
+  const [level, setLevel] = useState<Level>("LP");
+  const [assessmentStudent, setAssessmentStudent] =
+    useState("");
+  const [assessmentDue, setAssessmentDue] = useState("");
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [activityStudent, setActivityStudent] = useState("");
+  const [selectedActivity, setSelectedActivity] = useState("");
+  const [activityDue, setActivityDue] = useState("");
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const loadDashboard = useCallback(async (uid: string) => {
+    if (!supabase) {
+      throw new Error("Supabase is not configured.");
+    }
+
+    const { data: teacher, error: teacherError } =
+      await supabase
+        .from("teachers")
+        .select("id, status")
+        .eq("user_id", uid)
+        .single();
+
+    if (teacherError) throw teacherError;
+
+    if (!teacher || teacher.status !== "active") {
+      throw new Error("Your teacher account is not active.");
+    }
+
+    const { data: links, error: linkError } =
+      await supabase
+        .from("teacher_assignments")
+        .select("student_id")
+        .eq("teacher_id", teacher.id);
+
+    if (linkError) throw linkError;
+
+    const ids = [
+      ...new Set(
+        (links || []).map((link) => link.student_id)
+      ),
+    ];
+
+    const { data: activityData, error: activityError } =
+      await supabase
+        .from("learning_activities")
+        .select("id, title, description")
+        .eq("created_by", uid)
+        .order("created_at", { ascending: false });
+
+    if (activityError) throw activityError;
+
+    setActivities(activityData || []);
+
+    if (ids.length === 0) {
+      setStudents([]);
+      setGuardians([]);
+      setActivityAssignments([]);
+      setAssessments([]);
+      setProfileId("");
+      return;
+    }
+
+    const [
+      studentResult,
+      guardianResult,
+      assignmentResult,
+      assessmentResult,
+    ] = await Promise.all([
+      supabase
+        .from("students")
+        .select(
+          "id, full_name, current_class, date_of_birth, student_code, preferred_language, status"
+        )
+        .in("id", ids),
+
+      supabase.rpc("get_assigned_student_guardians"),
+
+      supabase
+        .from("student_activity_assignments")
+        .select(
+          "id, student_id, activity_id, status, due_date, assigned_at"
+        )
+        .in("student_id", ids)
+        .eq("assigned_by", uid)
+        .order("assigned_at", { ascending: false }),
+
+      supabase
+        .from("assessment_assignments")
+        .select(
+          "id, student_id, assessment_level, status, due_date, assigned_at"
+        )
+        .in("student_id", ids)
+        .order("assigned_at", { ascending: false }),
+    ]);
+
+    if (studentResult.error) throw studentResult.error;
+    if (guardianResult.error) throw guardianResult.error;
+    if (assignmentResult.error) throw assignmentResult.error;
+    if (assessmentResult.error) throw assessmentResult.error;
+
+    setStudents(studentResult.data || []);
+
+    setGuardians(
+      ((guardianResult.data || []) as Guardian[]).filter(
+        (guardian) => ids.includes(guardian.student_id)
+      )
+    );
+
+    setActivityAssignments(assignmentResult.data || []);
+
+    setAssessments(
+      (assessmentResult.data || []) as Assessment[]
+    );
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initialize() {
+      if (!supabase) {
+        if (!cancelled) {
+          setErrorMessage("Supabase is not configured.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const { data, error } =
+          await supabase.auth.getUser();
+
+        if (cancelled) return;
+
+        if (error || !data.user) {
+          router.replace("/login");
+          return;
+        }
+
+        const uid = data.user.id;
+
+        const { data: roleData, error: roleError } =
+          await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", uid)
+            .single();
+
+        if (cancelled) return;
+
+        if (roleError || !roleData) {
+          throw new Error(
+            "Unable to verify your account role."
+          );
+        }
+
+        if (roleData.role !== "teacher") {
+          router.replace(
+            roleData.role === "admin"
+              ? "/admin/dashboard"
+              : roleData.role === "parent"
+              ? "/parent/dashboard"
+              : "/login"
+          );
+          return;
+        }
+
+        setUserId(uid);
+
+        setTeacherName(
+          data.user.user_metadata?.full_name ||
+            data.user.email ||
+            "Teacher"
+        );
+
+        await loadDashboard(uid);
+      } catch (err) {
+        if (!cancelled) {
+          setErrorMessage(
+            err instanceof Error
+              ? err.message
+              : "Unable to load dashboard."
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void initialize();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, loadDashboard]);
+
+  async function refresh() {
+    if (!userId) return;
+
+    try {
+      await loadDashboard(userId);
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Unable to refresh dashboard."
+      );
+    }
+  }
+
+  async function createActivity(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
+    e.preventDefault();
+
+    if (!supabase || !userId || !title.trim() || saving) {
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+    setErrorMessage("");
+
+    try {
+      const { error } = await supabase
+        .from("learning_activities")
+        .insert({
+          title: title.trim(),
+          description: description.trim() || null,
+          created_by: userId,
+        });
+
+      if (error) throw error;
+
+      setTitle("");
+      setDescription("");
+
+      setMessage(
+        "Learning activity created successfully."
+      );
+
+      await refresh();
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Unable to create activity."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function assignActivity(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
+    e.preventDefault();
+
+    if (
+      !supabase ||
+      !userId ||
+      !activityStudent ||
+      !selectedActivity ||
+      saving
+    ) {
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+    setErrorMessage("");
+
+    try {
+      const { error } = await supabase
+        .from("student_activity_assignments")
+        .insert({
+          student_id: activityStudent,
+          activity_id: selectedActivity,
+          assigned_by: userId,
+          due_date: activityDue || null,
+          status: "pending",
+        });
+
+      if (error) throw error;
+
+      setActivityStudent("");
+      setSelectedActivity("");
+      setActivityDue("");
+
+      setMessage(
+        "Learning activity assigned successfully."
+      );
+
+      await refresh();
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Unable to assign activity."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function assignAssessment(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
+    e.preventDefault();
+
+    if (
+      !supabase ||
+      !userId ||
+      !assessmentStudent ||
+      saving
+    ) {
+      return;
+    }
+
+    const student = students.find(
+      (s) => s.id === assessmentStudent
+    );
+
+    if (
+      !student ||
+      getLevel(student.current_class) !== level
+    ) {
+      setErrorMessage(
+        "Student class does not match assessment level."
+      );
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+    setErrorMessage("");
+
+    try {
+      const { error } = await supabase
+        .from("assessment_assignments")
+        .insert({
+          student_id: assessmentStudent,
+          assessment_level: level,
+          assigned_by: userId,
+          due_date: assessmentDue || null,
+          status: "assigned",
+        });
+
+      if (error) throw error;
+
+      setAssessmentStudent("");
+      setAssessmentDue("");
+
+      setMessage(
+        "Assessment assigned successfully."
+      );
+
+      await refresh();
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Unable to assign assessment."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function signOut() {
+    if (!supabase) return;
+
+    await supabase.auth.signOut();
+    router.replace("/login");
+  }
+
+  function studentName(id: string) {
+    return (
+      students.find((s) => s.id === id)?.full_name ||
+      "Unknown student"
+    );
+  }
+
+  function activityTitle(id: string) {
+    return (
+      activities.find((a) => a.id === id)?.title ||
+      "Activity"
+    );
+  }
+
+  const eligibleStudents = students.filter(
+    (student) =>
+      getLevel(student.current_class) === level
+  );
+
+  const selectedProfile = students.find(
+    (student) => student.id === profileId
+  );
+
+  const profileGuardians = guardians.filter(
+    (guardian) => guardian.student_id === profileId
+  );
+
+  const selectedAssessment = assessments.find(
+    (assessment) =>
+      assessment.id === selectedAssessmentId
+  );
+
+  const assessmentSegments = [
+    {
+      label: "Assigned",
+      value: assessments.filter(
+        (a) => a.status === "assigned"
+      ).length,
+      color: "#2563eb",
+    },
+    {
+      label: "In Progress",
+      value: assessments.filter(
+        (a) => a.status === "in_progress"
+      ).length,
+      color: "#d97706",
+    },
+    {
+      label: "Submitted",
+      value: assessments.filter(
+        (a) => a.status === "submitted"
+      ).length,
+      color: "#7c3aed",
+    },
+    {
+      label: "Reviewed",
+      value: assessments.filter(
+        (a) => a.status === "reviewed"
+      ).length,
+      color: "#16805d",
+    },
+  ];
+
+  const gradeBars = LEVELS.map((item) => ({
+    label: `${item.value} — ${item.label}`,
+    value: students.filter(
+      (student) =>
+        getLevel(student.current_class) === item.value
+    ).length,
+    color: item.color,
+  }));
+
+  const completedActivities =
+    activityAssignments.filter(
+      (assignment) =>
+        assignment.status === "completed" ||
+        assignment.status === "reviewed"
+    ).length;
+
+  const pendingActivities =
+    activityAssignments.length - completedActivities;
+
+  const completionPercent =
+    activityAssignments.length > 0
+      ? Math.round(
+          (completedActivities /
+            activityAssignments.length) *
+            100
+        )
+      : 0;
+
+  const languageCounts = students.reduce<
+    Record<string, number>
+  >((acc, student) => {
+    const language =
+      student.preferred_language?.trim() ||
+      "Unspecified";
+
+    acc[language] = (acc[language] || 0) + 1;
+
+    return acc;
+  }, {});
+
+  if (loading) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          background: "#f8faf7",
+          color: "#183a35",
+        }}
+      >
+        Loading Swastha Teacher Workspace...
+      </main>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f8faf7",
+        color: "#183a35",
+        fontFamily: "Arial, Helvetica, sans-serif",
+      }}
+    >
+      <header
+        style={{
+          background: "#ffffff",
+          borderBottom: "1px solid #dce8e1",
+          padding: "18px 5%",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1160,
+            margin: "auto",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 18,
+          }}
+        >
+          <div>
+            <strong
+              style={{
+                color: "#176b58",
+                letterSpacing: 1,
+              }}
+            >
+              SWASTHA LEARNING CLINIC
+            </strong>
+
+            <div
+              style={{
+                fontSize: 12,
+                color: "#667a74",
+                marginTop: 5,
+              }}
+            >
+              LEARN • GROW • THRIVE
+            </div>
+
+            <div
+              style={{
+                fontSize: 13,
+                marginTop: 5,
+              }}
+            >
+              Welcome, {teacherName}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={signOut}
+            style={{
+              ...primaryButton,
+              background: "#ffffff",
+              color: "#183a35",
+              border: "1px solid #dce8e1",
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      </header>
+
+      <main
+        style={{
+          maxWidth: 1160,
+          margin: "auto",
+          padding: "30px 20px 70px",
+        }}
+      >
+        <h1 style={{ marginBottom: 6 }}>
+          Teacher Dashboard
+        </h1>
+
+        <p
+          style={{
+            color: "#667a74",
+            marginTop: 0,
+          }}
+        >
+          Student development, assessments and
+          learning activities
+        </p>
+
+        {message && (
+          <div
+            role="status"
+            style={{
+              padding: 15,
+              borderRadius: 10,
+              background: "#e4f5ea",
+              color: "#176b42",
+              marginBottom: 18,
+            }}
+          >
+            {message}
+          </div>
+        )}
+
+        {errorMessage && (
+          <div
+            role="alert"
+            style={{
+              padding: 15,
+              borderRadius: 10,
+              background: "#fff0ed",
+              color: "#b42318",
+              marginBottom: 18,
+            }}
+          >
+            {errorMessage}
+          </div>
+        )}
+
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 14,
+            marginBottom: 25,
+          }}
+        >
+          <Metric
+            label="Assigned Students"
+            value={students.length}
+            color="#176b58"
+            onClick={() => setActiveTab("students")}
+          />
+
+          <Metric
+            label="Learning Activities"
+            value={activities.length}
+            color="#2563eb"
+            onClick={() => setActiveTab("activities")}
+          />
+
+          <Metric
+            label="Assessments"
+            value={assessments.length}
+            color="#7c3aed"
+            onClick={() => setActiveTab("assessments")}
+          />
+
+          <Metric
+            label="Pending Reviews"
+            value={
+              assessments.filter(
+                (a) => a.status === "submitted"
+              ).length
+            }
+            color="#d97706"
+            onClick={() => setActiveTab("assessments")}
+          />
+        </section>
+
+        <nav
+          aria-label="Teacher dashboard sections"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            marginBottom: 25,
+            padding: 7,
+            border: "1px solid #dce8e1",
+            borderRadius: 13,
+            background: "#ffffff",
+          }}
+        >
+          {(
+            [
+              ["overview", "Analytics"],
+              ["assessments", "Assessments"],
+              ["activities", "Activities"],
+              ["students", "Students"],
+            ] as [Tab, string][]
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              aria-current={
+                activeTab === id ? "page" : undefined
+              }
+              style={{
+                ...primaryButton,
+                background:
+                  activeTab === id
+                    ? "#176b58"
+                    : "#f8faf7",
+                color:
+                  activeTab === id
+                    ? "#ffffff"
+                    : "#183a35",
+                flex: "1 1 130px",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        {activeTab === "overview" && (
+          <section>
+            <h2>Analytics & Charts Overview</h2>
+
+            <p style={{ color: "#667a74" }}>
+              Live counts from your assigned students
+              and activities.
+            </p>
+
+            <div style={grid}>
+              <div style={panel}>
+                <h3>Assessment Pipeline Breakdown</h3>
+
+                <DonutChart
+                  segments={assessmentSegments}
+                  label="Total"
+                />
+              </div>
+
+              <div style={panel}>
+                <h3>Students by Grade Level</h3>
+
+                <BarChart items={gradeBars} />
+              </div>
+
+              <div style={panel}>
+                <h3>Learning Activity Completion Rate</h3>
+
+                <div
+                  style={{
+                    fontSize: 38,
+                    fontWeight: 800,
+                    color: "#176b58",
+                    marginBottom: 12,
+                  }}
+                >
+                  {completionPercent}%
+                </div>
+
+                <div
+                  style={{
+                    height: 18,
+                    background: "#e9efeb",
+                    borderRadius: 20,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${completionPercent}%`,
+                      background: "#176b58",
+                    }}
+                  />
+                </div>
+
+                <p style={{ color: "#667a74" }}>
+                  Completed: {completedActivities} /{" "}
+                  {activityAssignments.length}
+                </p>
+
+                <p style={{ color: "#667a74" }}>
+                  Pending / Active: {pendingActivities}
+                </p>
+              </div>
+
+              <div style={panel}>
+                <h3>Student Preferred Languages</h3>
+
+                {Object.keys(languageCounts).length === 0 ? (
+                  <p>No student data yet.</p>
+                ) : (
+                  <BarChart
+                    items={Object.entries(
+                      languageCounts
+                    ).map(([language, count], index) => ({
+                      label: language,
+                      value: count,
+                      color: [
+                        "#176b58",
+                        "#2563eb",
+                        "#7c3aed",
+                        "#d97706",
+                      ][index % 4],
+                    }))}
+                  />
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "assessments" && (
+          <section>
+            <h2>Grade-Based Assessments</h2>
+
+            <div style={grid}>
+              <div style={panel}>
+                <h3>Assign Grade-Based Assessment</h3>
+
+                <p
+                  style={{
+                    color: "#667a74",
+                    fontSize: 13,
+                  }}
+                >
+                  Select the assessment level and an
+                  eligible student.
+                </p>
+
+                <form onSubmit={assignAssessment}>
+                  <label htmlFor="assessment-level">
+                    Assessment level *
+                  </label>
+
+                  <select
+                    id="assessment-level"
+                    value={level}
+                    onChange={(e) => {
+                      setLevel(e.target.value as Level);
+                      setAssessmentStudent("");
+                    }}
+                    style={field}
+                  >
+                    {LEVELS.map((item) => (
+                      <option
+                        key={item.value}
+                        value={item.value}
+                      >
+                        {item.value} — {item.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div style={{ height: 18 }} />
+
+                  <label htmlFor="assessment-student">
+                    Select student *
+                  </label>
+
+                  <select
+                    id="assessment-student"
+                    value={assessmentStudent}
+                    onChange={(e) =>
+                      setAssessmentStudent(e.target.value)
+                    }
+                    style={field}
+                    required
+                  >
+                    <option value="">
+                      Choose a student
+                    </option>
+
+                    {eligibleStudents.map((student) => (
+                      <option
+                        key={student.id}
+                        value={student.id}
+                      >
+                        {student.full_name} —{" "}
+                        {student.current_class}
+                      </option>
+                    ))}
+                  </select>
+
+                  {eligibleStudents.length === 0 && (
+                    <p
+                      style={{
+                        color: "#a16207",
+                        fontSize: 13,
+                      }}
+                    >
+                      No assigned students match {level}.
+                    </p>
+                  )}
+
+                  <div style={{ height: 18 }} />
+
+                  <label htmlFor="assessment-due">
+                    Due date (optional)
+                  </label>
+
+                  <input
+                    id="assessment-due"
+                    type="date"
+                    value={assessmentDue}
+                    onChange={(e) =>
+                      setAssessmentDue(e.target.value)
+                    }
+                    style={field}
+                  />
+
+                  <div style={{ height: 20 }} />
+
+                  <button
+                    type="submit"
+                    style={primaryButton}
+                    disabled={
+                      saving || !assessmentStudent
+                    }
+                  >
+                    {saving
+                      ? "Assigning..."
+                      : `Assign ${level} Assessment`}
+                  </button>
+                </form>
+              </div>
+
+              <div style={panel}>
+                <h3>
+                  Assessment Assignment History (
+                  {assessments.length})
+                </h3>
+
+                {assessments.length === 0 ? (
+                  <p>No assessments assigned yet.</p>
+                ) : (
+                  assessments.map((assessment) => (
+                    <div
+                      key={assessment.id}
+                      style={{
+                        borderBottom:
+                          "1px solid #dce8e1",
+                        padding: "15px 0",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedAssessmentId(
+                            selectedAssessmentId ===
+                              assessment.id
+                              ? ""
+                              : assessment.id
+                          )
+                        }
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          padding: 12,
+                          background:
+                            selectedAssessmentId ===
+                            assessment.id
+                              ? "#f2f8f4"
+                              : "#ffffff",
+                          border:
+                            "1px solid #dce8e1",
+                          borderRadius: 10,
+                          cursor: "pointer",
+                          color: "#183a35",
+                        }}
+                      >
+                        <strong>
+                          {studentName(
+                            assessment.student_id
+                          )}
+                        </strong>
+
+                        <div
+                          style={{
+                            fontSize: 13,
+                            marginTop: 7,
+                          }}
+                        >
+                          Level:{" "}
+                          {assessment.assessment_level}
+                        </div>
+
+                        <div style={{ marginTop: 9 }}>
+                          <StatusBadge
+                            value={assessment.status}
+                          />
+                        </div>
+
+                        <div
+                          style={{
+                            fontSize: 12,
+                            marginTop: 8,
+                            color: "#176b58",
+                          }}
+                        >
+                          {selectedAssessmentId ===
+                          assessment.id
+                            ? "Hide details"
+                            : "Click to open assignment"}
+                        </div>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {selectedAssessment && (
+              <div
+                style={{
+                  ...panel,
+                  marginTop: 20,
+                }}
+              >
+                <h3>Selected Assessment Details</h3>
+
+                <p>
+                  <strong>Student:</strong>{" "}
+                  {studentName(
+                    selectedAssessment.student_id
+                  )}
+                </p>
+
+                <p>
+                  <strong>Assessment level:</strong>{" "}
+                  {selectedAssessment.assessment_level}
+                </p>
+
+                <p>
+                  <strong>Status:</strong>{" "}
+                  <StatusBadge
+                    value={selectedAssessment.status}
+                  />
+                </p>
+
+                <p>
+                  <strong>Assigned date:</strong>{" "}
+                  {formatDate(
+                    selectedAssessment.assigned_at
+                  )}
+                </p>
+
+                <p>
+                  <strong>Due date:</strong>{" "}
+                  {formatDate(
+                    selectedAssessment.due_date
+                  )}
+                </p>
+
+                <p
+                  style={{
+                    color: "#667a74",
+                    fontSize: 13,
+                  }}
+                >
+                  The assignment is open. The full
+                  assessment questionnaire and teacher
+                  review controls will be connected
+                  separately.
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeTab === "activities" && (
+          <section>
+            <h2>Learning Activities</h2>
+
+            <div style={grid}>
+              <div style={panel}>
+                <h3>Create Learning Activity</h3>
+
+                <form onSubmit={createActivity}>
+                  <label htmlFor="activity-title">
+                    Activity title *
+                  </label>
+
+                  <input
+                    id="activity-title"
+                    value={title}
+                    onChange={(e) =>
+                      setTitle(e.target.value)
+                    }
+                    style={field}
+                    placeholder="Enter activity title"
+                    required
+                  />
+
+                  <div style={{ height: 18 }} />
+
+                  <label htmlFor="activity-description">
+                    Activity description
+                  </label>
+
+                  <textarea
+                    id="activity-description"
+                    value={description}
+                    onChange={(e) =>
+                      setDescription(e.target.value)
+                    }
+                    style={field}
+                    rows={4}
+                    placeholder="Instructions for student and parent"
+                  />
+
+                  <div style={{ height: 20 }} />
+
+                  <button
+                    type="submit"
+                    style={primaryButton}
+                    disabled={saving || !title.trim()}
+                  >
+                    {saving
+                      ? "Saving..."
+                      : "Create Activity"}
+                  </button>
+                </form>
+              </div>
+
+              <div style={panel}>
+                <h3>Assign Learning Activity</h3>
+
+                <form onSubmit={assignActivity}>
+                  <label htmlFor="activity-student">
+                    Select student *
+                  </label>
+
+                  <select
+                    id="activity-student"
+                    value={activityStudent}
+                    onChange={(e) =>
+                      setActivityStudent(e.target.value)
+                    }
+                    style={field}
+                    required
+                  >
+                    <option value="">
+                      Choose a student
+                    </option>
+
+                    {students.map((student) => (
+                      <option
+                        key={student.id}
+                        value={student.id}
+                      >
+                        {student.full_name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div style={{ height: 18 }} />
+
+                  <label htmlFor="activity-select">
+                    Select activity *
+                  </label>
+
+                  <select
+                    id="activity-select"
+                    value={selectedActivity}
+                    onChange={(e) =>
+                      setSelectedActivity(e.target.value)
+                    }
+                    style={field}
+                    required
+                  >
+                    <option value="">
+                      Choose an activity
+                    </option>
+
+                    {activities.map((activity) => (
+                      <option
+                        key={activity.id}
+                        value={activity.id}
+                      >
+                        {activity.title}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div style={{ height: 18 }} />
+
+                  <label htmlFor="activity-due">
+                    Due date (optional)
+                  </label>
+
+                  <input
+                    id="activity-due"
+                    type="date"
+                    value={activityDue}
+                    onChange={(e) =>
+                      setActivityDue(e.target.value)
+                    }
+                    style={field}
+                  />
+
+                  <div style={{ height: 20 }} />
+
+                  <button
+                    type="submit"
+                    style={primaryButton}
+                    disabled={
+                      saving ||
+                      !activityStudent ||
+                      !selectedActivity
+                    }
+                  >
+                    {saving
+                      ? "Assigning..."
+                      : "Assign Activity"}
+                  </button>
+                </form>
+              </div>
+
+              <div style={panel}>
+                <h3>
+                  My Learning Activities (
+                  {activities.length})
+                </h3>
+
+                {activities.length === 0 ? (
+                  <p>No activities created yet.</p>
+                ) : (
+                  activities.map((activity) => (
+                    <div
+                      key={activity.id}
+                      style={{
+                        padding: "14px 0",
+                        borderBottom:
+                          "1px solid #dce8e1",
+                      }}
+                    >
+                      <strong>
+                        {activity.title}
+                      </strong>
+
+                      <p
+                        style={{
+                          color: "#667a74",
+                        }}
+                      >
+                        {activity.description ||
+                          "No description"}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div style={panel}>
+                <h3>
+                  Activity Assignment History (
+                  {activityAssignments.length})
+                </h3>
+
+                {activityAssignments.length === 0 ? (
+                  <p>No activities assigned yet.</p>
+                ) : (
+                  activityAssignments.map(
+                    (assignment) => (
+                      <div
+                        key={assignment.id}
+                        style={{
+                          padding: "14px 0",
+                          borderBottom:
+                            "1px solid #dce8e1",
+                        }}
+                      >
+                        <strong>
+                          {activityTitle(
+                            assignment.activity_id
+                          )}
+                        </strong>
+
+                        <p>
+                          Student:{" "}
+                          {studentName(
+                            assignment.student_id
+                          )}
+                        </p>
+
+                        <p>
+                          Assigned:{" "}
+                          {formatDate(
+                            assignment.assigned_at
+                          )}
+                        </p>
+
+                        <p>
+                          Due:{" "}
+                          {formatDate(
+                            assignment.due_date
+                          )}
+                        </p>
+
+                        <StatusBadge
+                          value={assignment.status}
+                        />
+                      </div>
+                    )
+                  )
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "students" && (
+          <section>
+            <h2>Students & Guardian Contacts</h2>
+
+            <div style={grid}>
+              <div style={panel}>
+                <h3>
+                  My Assigned Students (
+                  {students.length})
+                </h3>
+
+                {students.length === 0 ? (
+                  <p>No students assigned yet.</p>
+                ) : (
+                  students.map((student) => (
+                    <button
+                      key={student.id}
+                      type="button"
+                      onClick={() =>
+                        setProfileId(student.id)
+                      }
+                      style={{
+                        width: "100%",
+                        display: "block",
+                        textAlign: "left",
+                        padding: 15,
+                        marginBottom: 10,
+                        borderRadius: 12,
+                        border:
+                          profileId === student.id
+                            ? "2px solid #176b58"
+                            : "1px solid #dce8e1",
+                        background:
+                          profileId === student.id
+                            ? "#f2f8f4"
+                            : "#ffffff",
+                        color: "#183a35",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <strong>
+                        {student.full_name}
+                      </strong>
+
+                      <div
+                        style={{
+                          fontSize: 13,
+                          marginTop: 6,
+                        }}
+                      >
+                        Class:{" "}
+                        {student.current_class ||
+                          "Not available"}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: 13,
+                          marginTop: 5,
+                        }}
+                      >
+                        Level:{" "}
+                        {getLevel(
+                          student.current_class
+                        ) || "Unknown"}
+                      </div>
+
+                      <div style={{ marginTop: 9 }}>
+                        <StatusBadge
+                          value={student.status}
+                        />
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+
+              <div style={panel}>
+                <h3>
+                  Student Profile & Guardian Contact Details
+                </h3>
+
+                <label htmlFor="profile-student">
+                  Select student
+                </label>
+
+                <select
+                  id="profile-student"
+                  value={profileId}
+                  onChange={(e) =>
+                    setProfileId(e.target.value)
+                  }
+                  style={field}
+                >
+                  <option value="">
+                    Choose a student
+                  </option>
+
+                  {students.map((student) => (
+                    <option
+                      key={student.id}
+                      value={student.id}
+                    >
+                      {student.full_name} —{" "}
+                      {student.current_class}
+                    </option>
+                  ))}
+                </select>
+
+                {!selectedProfile ? (
+                  <p
+                    style={{
+                      color: "#667a74",
+                      marginTop: 25,
+                    }}
+                  >
+                    Select a student to view their
+                    profile and guardian contact details.
+                  </p>
+                ) : (
+                  <div style={{ marginTop: 22 }}>
+                    <h3>
+                      {selectedProfile.full_name}
+                    </h3>
+
+                    <div
+                      style={{
+                        background: "#f2f8f4",
+                        borderRadius: 12,
+                        padding: 16,
+                      }}
+                    >
+                      <p>
+                        <strong>
+                          Student code:
+                        </strong>{" "}
+                        {selectedProfile.student_code ||
+                          "Not available"}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Date of birth:
+                        </strong>{" "}
+                        {formatDate(
+                          selectedProfile.date_of_birth
+                        )}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Current class:
+                        </strong>{" "}
+                        {selectedProfile.current_class ||
+                          "Not available"}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Assessment level:
+                        </strong>{" "}
+                        {getLevel(
+                          selectedProfile.current_class
+                        ) || "Not available"}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Preferred language:
+                        </strong>{" "}
+                        {selectedProfile.preferred_language ||
+                          "Not available"}
+                      </p>
+
+                      <p>
+                        <strong>Status:</strong>{" "}
+                        {selectedProfile.status}
+                      </p>
+                    </div>
+
+                    <h3 style={{ marginTop: 24 }}>
+                      Parent / Guardian Details
+                    </h3>
+
+                    {profileGuardians.length === 0 ? (
+                      <p style={{ color: "#667a74" }}>
+                        No linked guardian details
+                        available for this student.
+                      </p>
+                    ) : (
+                      profileGuardians.map((guardian) => (
+                        <div
+                          key={guardian.parent_user_id}
+                          style={{
+                            border:
+                              "1px solid #dce8e1",
+                            borderRadius: 12,
+                            padding: 16,
+                            marginBottom: 12,
+                          }}
+                        >
+                          <p>
+                            <strong>
+                              Guardian name:
+                            </strong>{" "}
+                            {guardian.guardian_name ||
+                              "Not available"}
+                          </p>
+
+                          <p>
+                            <strong>
+                              Email address:
+                            </strong>{" "}
+                            {guardian.guardian_email ? (
+                              <a
+                                href={`mailto:${guardian.guardian_email}`}
+                                style={{
+                                  color: "#176b58",
+                                  overflowWrap: "anywhere",
+                                }}
+                              >
+                                {guardian.guardian_email}
+                              </a>
+                            ) : (
+                              "Not provided"
+                            )}
+                          </p>
+
+                          <p>
+                            <strong>
+                              WhatsApp number:
+                            </strong>{" "}
+                            {guardian.whatsapp_number ||
+                              "Not available"}
+                          </p>
+
+                          {guardian.whatsapp_number && (
+                            <p>
+                              <a
+                                href={`https://wa.me/${phoneDigits(
+                                  guardian.whatsapp_number
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  color: "#176b58",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                Open WhatsApp
+                              </a>
+                            </p>
+                          )}
+
+                          <p>
+                            <strong>
+                              Additional phone number:
+                            </strong>{" "}
+                            {guardian.additional_contact_number ||
+                              "Not provided"}
+                          </p>
+
+                          {guardian.additional_contact_number && (
+                            <p>
+                              <a
+                                href={`tel:${guardian.additional_contact_number}`}
+                                style={{
+                                  color: "#176b58",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                Call additional number
+                              </a>
+                            </p>
+                          )}
+
+                          <p>
+                            <strong>
+                              Separate contact number:
+                            </strong>{" "}
+                            {guardian.contact_number_differs
+                              ? "Yes"
+                              : "No"}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+      </main>
+    </div>
+  );
+}
