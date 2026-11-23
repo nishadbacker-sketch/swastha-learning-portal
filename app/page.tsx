@@ -27,7 +27,10 @@ export default function Home() {
           <span className="brand-mark">S</span>
           <span>SWASTHA<span className="brand-light"> LEARNING</span></span>
         </a>
-        <span className="nav-tag">LEARNING PORTAL</span>
+       <div className="nav-actions">
+  <span className="nav-tag">LEARNING PORTAL</span>
+  <a className="nav-login" href="/login">Login / Register</a>
+</div>
       </nav>
 
       <section className="hero">
