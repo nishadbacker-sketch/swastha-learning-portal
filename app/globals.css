@@ -96,3 +96,130 @@ footer {
   h2 { font-size: 36px; }
   footer { padding: 22px 20px; flex-direction: column; }
 }
+
+/* Swastha unified login and registration */
+
+.auth-section {
+  min-height: calc(100vh - 82px);
+  padding: 60px 20px;
+  display: grid;
+  place-items: center;
+  background: var(--mint);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 42px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 50px #244c3b12;
+}
+
+.auth-title {
+  margin: 20px 0 12px;
+  font-family: Georgia, serif;
+  font-size: 38px;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  font-weight: 500;
+}
+
+.auth-description {
+  margin-bottom: 28px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.auth-label {
+  display: block;
+  margin-bottom: 18px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.auth-input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--cream);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.auth-input:focus {
+  outline: 2px solid #8ab99f;
+  border-color: var(--green);
+}
+
+.auth-button {
+  width: 100%;
+  margin-top: 8px;
+  padding: 15px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--green);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.auth-message {
+  margin: 18px 0 0;
+  padding: 12px;
+  background: var(--mint);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.auth-switch {
+  margin: 25px 0 18px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.auth-switch button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--green);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-home {
+  display: block;
+  color: var(--green);
+  text-align: center;
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .auth-section {
+    padding: 35px 16px;
+  }
+
+  .auth-card {
+    padding: 28px 22px;
+  }
+
+  .auth-title {
+    font-size: 32px;
+  }
+}
