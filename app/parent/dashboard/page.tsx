@@ -28,7 +28,7 @@ type Activity = {
   learning_activities: {
     title: string;
     description: string | null;
-  } | null;
+  }[] | null;
 };
 
 export default function ParentDashboard() {
@@ -121,6 +121,7 @@ export default function ParentDashboard() {
       );
 
       if (studentIds.length > 0) {
+        // Fetch child details
         const { data: studentData, error: studentError } =
           await supabase
             .from("students")
@@ -135,7 +136,7 @@ export default function ParentDashboard() {
           setStudents(studentData || []);
         }
 
-        // Load activities assigned to these children
+        // Fetch activities assigned to these children
         const { data: activityData, error: activityError } =
           await supabase
             .from("student_activity_assignments")
@@ -202,6 +203,7 @@ export default function ParentDashboard() {
         color: "#183a35",
       }}
     >
+      {/* Header */}
       <header
         style={{
           padding: "20px 6%",
@@ -294,7 +296,9 @@ export default function ParentDashboard() {
           <h2>My Child</h2>
 
           {students.length === 0 ? (
-            <p>No child information was found for your account.</p>
+            <p>
+              No child information was found for your account.
+            </p>
           ) : (
             students.map((student) => (
               <div
@@ -361,12 +365,12 @@ export default function ParentDashboard() {
                 }}
               >
                 <h3 style={{ marginTop: 0 }}>
-                  {activity.learning_activities?.title ||
+                  {activity.learning_activities?.[0]?.title ||
                     "Untitled activity"}
                 </h3>
 
                 <p>
-                  {activity.learning_activities?.description ||
+                  {activity.learning_activities?.[0]?.description ||
                     "No description provided."}
                 </p>
 
