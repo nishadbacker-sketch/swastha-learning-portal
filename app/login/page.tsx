@@ -27,6 +27,7 @@ export default function LoginPage() {
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -54,7 +55,15 @@ export default function LoginPage() {
         return;
       }
 
-      if (dateOfBirth > new Date().toLocaleDateString("en-CA")) {
+      // Prevent future date of birth.
+      const today = new Date();
+      const todayString = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+      ].join("-");
+
+      if (dateOfBirth > todayString) {
         setMessage("Date of birth cannot be in the future.");
         return;
       }
@@ -87,9 +96,10 @@ export default function LoginPage() {
         if (data.session) {
           router.push("/parent/dashboard");
         } else {
-          setMessage(
-            "Registration successful. Please check your email to confirm your account."
-          );
+          // Show registration success popup.
+          setIsRegister(false);
+          setPassword("");
+          setShowSuccessPopup(true);
         }
       } else {
         const { data, error } =
@@ -330,6 +340,99 @@ export default function LoginPage() {
           </a>
         </div>
       </section>
+
+      {/* Registration Success Popup */}
+      {showSuccessPopup && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="registration-success-title"
+            style={{
+              background: "#ffffff",
+              width: "100%",
+              maxWidth: "420px",
+              padding: "32px 24px",
+              borderRadius: "18px",
+              textAlign: "center",
+              boxShadow: "0 15px 50px rgba(0,0,0,0.2)",
+            }}
+          >
+            <div
+              style={{
+                width: "64px",
+                height: "64px",
+                margin: "0 auto 18px",
+                borderRadius: "50%",
+                background: "#e7f5ed",
+                color: "#176b58",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "36px",
+                fontWeight: "bold",
+              }}
+            >
+              ✓
+            </div>
+
+            <h2
+              id="registration-success-title"
+              style={{
+                color: "#183a35",
+                fontSize: "23px",
+                margin: "0 0 12px",
+              }}
+            >
+              Registration Completed!
+            </h2>
+
+            <p
+              style={{
+                color: "#667a74",
+                lineHeight: 1.6,
+                margin: "0 0 24px",
+              }}
+            >
+              Your account has been registered successfully.
+              Please check your email and click the confirmation
+              link to activate your account.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowSuccessPopup(false);
+                setIsRegister(false);
+                setMessage("");
+              }}
+              style={{
+                background: "#176b58",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "8px",
+                padding: "12px 32px",
+                fontSize: "16px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
