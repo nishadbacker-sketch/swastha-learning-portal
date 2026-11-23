@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -96,9 +93,3 @@ function getLevel(value: string | null): Level | null {
   const number = /^\d{1,2}$/.test(cleaned)
     ? Number(cleaned)
     : roman[cleaned];
-
-
-
-
-
-6
