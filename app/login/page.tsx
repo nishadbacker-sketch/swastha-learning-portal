@@ -9,9 +9,22 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [isRegister, setIsRegister] = useState(false);
+
+  // Parent details
   const [fullName, setFullName] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [contactDiffers, setContactDiffers] = useState(false);
+  const [additionalContact, setAdditionalContact] = useState("");
+
+  // Child details
+  const [childName, setChildName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [currentClass, setCurrentClass] = useState("");
+
+  // Login details
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,16 +37,47 @@ export default function LoginPage() {
       return;
     }
 
+    if (isRegister) {
+      if (
+        !fullName.trim() ||
+        !whatsappNumber.trim() ||
+        !childName.trim() ||
+        !dateOfBirth ||
+        !currentClass.trim()
+      ) {
+        setMessage("Please complete all required fields.");
+        return;
+      }
+
+      if (contactDiffers && !additionalContact.trim()) {
+        setMessage("Please enter the additional contact number.");
+        return;
+      }
+
+      if (dateOfBirth > new Date().toLocaleDateString("en-CA")) {
+        setMessage("Date of birth cannot be in the future.");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
       if (isRegister) {
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: {
             data: {
               full_name: fullName.trim(),
+              whatsapp_number: whatsappNumber.trim(),
+              contact_number_differs: contactDiffers,
+              additional_contact_number: contactDiffers
+                ? additionalContact.trim()
+                : "",
+              child_name: childName.trim(),
+              date_of_birth: dateOfBirth,
+              current_class: currentClass.trim(),
             },
           },
         });
@@ -43,12 +87,14 @@ export default function LoginPage() {
         if (data.session) {
           router.push("/parent/dashboard");
         } else {
-          setMessage("Registration successful. Please check your email to confirm your account.");
+          setMessage(
+            "Registration successful. Please check your email to confirm your account."
+          );
         }
       } else {
         const { data, error } =
           await supabase.auth.signInWithPassword({
-            email,
+            email: email.trim(),
             password,
           });
 
@@ -93,7 +139,7 @@ export default function LoginPage() {
         <a className="brand" href="/">
           <span className="brand-mark">S</span>
           <span>
-            SWASTHA<span className="brand-light"> LEARNING</span>
+            SWASTHA<span className="brand-light"> LEARNING CLINIC</span>
           </span>
         </a>
         <span className="nav-tag">SECURE ACCESS</span>
@@ -111,27 +157,114 @@ export default function LoginPage() {
 
           <p className="auth-description">
             {isRegister
-              ? "Join the Swastha Learning community."
+              ? "Join the Swastha Learning Clinic community."
               : "Sign in to continue your learning journey."}
           </p>
 
           <form onSubmit={handleSubmit}>
             {isRegister && (
-              <label className="auth-label">
-                Full name
-                <input
-                  className="auth-input"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  autoComplete="name"
-                />
-              </label>
+              <>
+                <h3>Parent / Guardian details</h3>
+
+                <label className="auth-label">
+                  Parent / Guardian name *
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    autoComplete="name"
+                    placeholder="Enter parent or guardian name"
+                  />
+                </label>
+
+                <label className="auth-label">
+                  WhatsApp number *
+                  <input
+                    className="auth-input"
+                    type="tel"
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    required
+                    autoComplete="tel"
+                    placeholder="Enter WhatsApp number"
+                  />
+                </label>
+
+                <label className="auth-label">
+                  <input
+                    type="checkbox"
+                    checked={contactDiffers}
+                    onChange={(e) => {
+                      setContactDiffers(e.target.checked);
+                      if (!e.target.checked) {
+                        setAdditionalContact("");
+                      }
+                    }}
+                  />
+                  {" "}Contact number differs from WhatsApp number
+                </label>
+
+                {contactDiffers && (
+                  <label className="auth-label">
+                    Additional contact number *
+                    <input
+                      className="auth-input"
+                      type="tel"
+                      value={additionalContact}
+                      onChange={(e) =>
+                        setAdditionalContact(e.target.value)
+                      }
+                      required
+                      placeholder="Enter additional contact number"
+                    />
+                  </label>
+                )}
+
+                <h3>Child details</h3>
+
+                <label className="auth-label">
+                  Child's name *
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={childName}
+                    onChange={(e) => setChildName(e.target.value)}
+                    required
+                    placeholder="Enter child's full name"
+                  />
+                </label>
+
+                <label className="auth-label">
+                  Date of birth *
+                  <input
+                    className="auth-input"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    required
+                  />
+                </label>
+
+                <label className="auth-label">
+                  Current class *
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={currentClass}
+                    onChange={(e) => setCurrentClass(e.target.value)}
+                    required
+                    placeholder="Example: Class 6, LKG, UKG"
+                  />
+                </label>
+
+                <h3>Account details</h3>
+              </>
             )}
 
             <label className="auth-label">
-              Email address
+              Email address *
               <input
                 className="auth-input"
                 type="email"
@@ -143,7 +276,7 @@ export default function LoginPage() {
             </label>
 
             <label className="auth-label">
-              Password
+              Password *
               <input
                 className="auth-input"
                 type="password"
