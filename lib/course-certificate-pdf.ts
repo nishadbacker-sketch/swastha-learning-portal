@@ -14,6 +14,12 @@ export type CourseCertificate={
  approving_director:string;
 };
 
+export type AssessmentCertificate={
+ id:string;assignment_id:string;student_id:string;student_name:string;student_code:string;
+ assessment_title:string;assessment_level:string;completion_date:string;reference_code:string;
+ issued_at:string;programme_coordinator:string;approving_director:string;
+};
+type CertificateKind="course"|"assessment";
 const verificationBase="https://portal.swasthalearning.com/verify/certificate/";
 export function courseCertificateVerificationUrl(reference:string){
  return verificationBase+encodeURIComponent(reference);
@@ -41,7 +47,8 @@ async function drawApprovedTemplate(
  pdf:import("jspdf").jsPDF,
  image:HTMLImageElement,
  c:CourseCertificate,
- QRCode:typeof import("qrcode")
+ QRCode:typeof import("qrcode"),
+ kind:CertificateKind="course"
 ){
  const width=297,height=220;
  const sx=(x:number)=>x*width/1345;
@@ -63,7 +70,11 @@ async function drawApprovedTemplate(
  };
  pdf.addImage(image,"PNG",0,0,width,height);
  // Erase only placeholder text regions from the exact background photograph.
- box(350,482,1040,583);
+ if(kind==="assessment"){
+  box(280,588,1080,640);
+  drawCentered("FOR SUCCESSFULLY COMPLETING THE ASSESSMENT",683,623,790,10,[42,51,47],"bold");
+ }
+  box(350,482,1040,583);
  drawCentered(c.student_name,695,544,670,31,[6,89,48],"italic","times");
  drawCentered("Student ID: "+c.student_code,695,568,620,9,[38,49,46]);
  box(489,654,875,701,[3,91,50]);
@@ -73,7 +84,7 @@ async function drawApprovedTemplate(
  box(619,818,1005,892);
  drawCentered("Programme Coordinator",356,850,310,11,[4,92,49],"bold");
  drawCentered(c.programme_coordinator,356,881,315,9,[46,49,48]);
- drawCentered("Clinical Director",820,850,370,11,[4,92,49],"bold");
+ drawCentered("Director",820,850,370,11,[4,92,49],"bold");
  drawCentered(c.approving_director,820,881,370,9,[46,49,48]);
  // Keep the source's original issue-date/reference headings, replace example values.
  box(282,938,430,984);
@@ -88,14 +99,14 @@ async function drawApprovedTemplate(
  pdf.addImage(qr,"PNG",sx(1095),sy(781),sx(149),sy(141));
 }
 
-export async function downloadCourseCertificatePDF(c:CourseCertificate){
+export async function downloadCourseCertificatePDF(c:CourseCertificate,kind:CertificateKind="course"){
  const [{jsPDF},QRCode]=await Promise.all([import("jspdf"),import("qrcode")]);
  const approvedTemplate=await loadApprovedCertificateTemplate();
  const pdf=new jsPDF({orientation:"landscape",unit:"mm",format:approvedTemplate?[297,220]:"a4"});
  if(approvedTemplate){
-  await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode);
+  await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode,kind);
   pdf.setProperties({title:"Swastha Learning Clinic Course Completion - "+c.reference_code,subject:"Verified digital course completion"});
-  pdf.save("Swastha-Course-Certificate-"+c.reference_code+".pdf");
+  pdf.save("Swastha-"+(kind==="assessment"?"Assessment":"Course")+"-Certificate-"+c.reference_code+".pdf");
   return;
  }
  const w=297,h=210;
@@ -138,7 +149,7 @@ export async function downloadCourseCertificatePDF(c:CourseCertificate){
  pdf.setFont("helvetica","normal");pdf.setFontSize(9);pdf.setTextColor(46,53,55);
  pdf.text("Student ID: "+c.student_code,w/2,114,{align:"center"});
  pdf.setFontSize(10);
- pdf.text("FOR SUCCESSFULLY COMPLETING THE COURSE",w/2,122,{align:"center"});
+ pdf.text(kind==="assessment"?"FOR SUCCESSFULLY COMPLETING THE ASSESSMENT":"FOR SUCCESSFULLY COMPLETING THE COURSE",w/2,122,{align:"center"});
  pdf.setFillColor(10,102,59);pdf.roundedRect(65,128,167,18,2,2,"F");
  pdf.setTextColor(255,255,255);pdf.setFont("times","bolditalic");pdf.setFontSize(18);
  const titleLines=pdf.splitTextToSize(c.course_title,153).slice(0,2) as string[];
@@ -149,7 +160,7 @@ export async function downloadCourseCertificatePDF(c:CourseCertificate){
  pdf.setDrawColor(185,152,54);pdf.line(43,166,108,166);pdf.line(177,166,239,166);
  pdf.setTextColor(8,93,54);pdf.setFont("helvetica","bold");pdf.setFontSize(9);
  pdf.text("Programme Coordinator",75,173,{align:"center"});
- pdf.text("Clinical Director",208,173,{align:"center"});
+ pdf.text("Director",208,173,{align:"center"});
  pdf.setTextColor(40,45,48);pdf.setFont("helvetica","normal");pdf.setFontSize(8);
  pdf.text(c.programme_coordinator,75,179,{align:"center"});
  pdf.text(c.approving_director,208,179,{align:"center"});
@@ -168,5 +179,16 @@ export async function downloadCourseCertificatePDF(c:CourseCertificate){
  pdf.setTextColor(90,99,97);pdf.setFont("helvetica","normal");pdf.setFontSize(6);
  pdf.text("Issued electronically; no handwritten signature required.",w/2,203,{align:"center"});
  pdf.setProperties({title:"Swastha Learning Clinic Course Completion - "+c.reference_code,subject:"Verified course completion"});
- pdf.save("Swastha-Course-Certificate-"+c.reference_code+".pdf");
+ pdf.save("Swastha-"+(kind==="assessment"?"Assessment":"Course")+"-Certificate-"+c.reference_code+".pdf");
+}
+
+/** Assessment certificates are issued only from teacher-reviewed standard assessments by the server RPC. */
+export async function downloadAssessmentCertificatePDF(c:AssessmentCertificate){
+ return downloadCourseCertificatePDF({
+  id:c.id,registration_id:c.assignment_id,student_id:c.student_id,
+  student_name:c.student_name,student_code:c.student_code,
+  course_title:c.assessment_title,completion_date:c.completion_date,
+  reference_code:c.reference_code,issued_at:c.issued_at,
+  programme_coordinator:c.programme_coordinator,approving_director:c.approving_director
+ },"assessment");
 }

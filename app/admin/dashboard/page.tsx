@@ -82,7 +82,7 @@ export default function AdminDashboard(){
    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
     <div><h2 style={{fontSize:19,margin:"0 0 6px"}}>Student Management & Progress</h2><p style={{margin:0,fontSize:13,color:"#527063"}}>Teachers lead assessments, activities, and development plans. Review student progress and coordinate coverage or teacher reassignment.</p></div>
     <button style={{...action,marginLeft:8,background:"#14532d"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
-    <button type="button" style={{...action,background:"#176b58"}} onClick={()=>router.push("/staff/certificates")}>Course Certificates</button>
+    <button type="button" style={{...action,background:"#176b58"}} onClick={()=>router.push("/staff/assessment-certificates")}>Assessment Certificates</button>
     <button style={{...action,marginLeft:8,background:"#0f4c5c"}} onClick={()=>router.push("/admin/sessions")}>Sessions & Attendance</button>
     <button style={action} onClick={()=>router.push("/admin/students")}>Open Student Management</button>
    </div>

@@ -47,7 +47,7 @@ test("Certificate PDF is downloadable and QR always points to a live verificatio
  assert.match(verify,/verify_course_completion_certificate/);
  assert.match(verify,/Certificate not found or no longer valid/);
  assert.match(layout,/<MainWebsiteFooter \/>/);
- assert.match(parentDashboard,/\/parent\/certificates/);
+ assert.match(parentDashboard,/\/parent\/assessment-certificates/);
 });
 
 test("Exact uploaded certificate art overlays real values and QR, with a non-breaking fallback",()=>{
@@ -67,7 +67,7 @@ test("Exact uploaded certificate art overlays real values and QR, with a non-bre
   "QRCode.toDataURL(courseCertificateVerificationUrl(c.reference_code)",
   'format:approvedTemplate?[297,220]:"a4"',
   "if(approvedTemplate){",
-  "await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode)"
+  "await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode,kind)"
  ];
  for(const fragment of required)assert.ok(pdf.includes(fragment),"Missing exact template rendering logic: "+fragment);
 });

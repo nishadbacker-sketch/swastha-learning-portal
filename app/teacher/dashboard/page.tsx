@@ -1195,7 +1195,7 @@ export default function TeacherDashboard() {
           </button>
           <button type="button" style={{...primaryButton,background:"#14532d"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
           <button type="button" style={{...primaryButton,background:"#0f4c5c"}} onClick={()=>router.push("/teacher/sessions")}>Sessions & Attendance</button>
-          <button type="button" onClick={()=>router.push("/staff/certificates")} style={{...primaryButton,background:"#176b58"}}>Course Certificates</button>
+          <button type="button" onClick={()=>router.push("/staff/assessment-certificates")} style={{...primaryButton,background:"#176b58"}}>Assessment Certificates</button>
           <button type="button" onClick={()=>router.push("/teacher/student-progress")} style={{...primaryButton,marginRight:8}}>Student Progress Tracking</button>
           <button type="button" onClick={()=>router.push("/teacher/idp")}
             style={{...primaryButton,background:"#0f4c5c",color:"white"}}>

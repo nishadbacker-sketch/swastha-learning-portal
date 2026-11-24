@@ -1,0 +1,51 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=(p)=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
+const sql=read("sql/assessment_completion_certificates.sql");
+const pdf=read("lib/course-certificate-pdf.ts");
+const staff=read("app/staff/assessment-certificates/page.tsx");
+const parent=read("app/parent/assessment-certificates/page.tsx");
+const verify=read("app/verify/certificate/[reference]/page.tsx");
+const dashboard=read("app/parent/dashboard/page.tsx");
+test("Assessment completion is independently issued from reviewed assessment with teacher review evidence",()=>{
+ assert.match(sql,/assessment_completion_certificates/);
+ assert.match(sql,/assignment_id uuid NOT NULL UNIQUE/);
+ assert.match(sql,/WHERE id=p_assignment_id FOR UPDATE/);
+ assert.match(sql,/a\.status<>'reviewed'/);
+ assert.match(sql,/r\.reviewed_at IS NOT NULL/);
+ assert.match(sql,/reviewed_date>current_date/);
+ assert.match(sql,/IF EXISTS\(SELECT 1 FROM public\.assessment_completion_certificates/);
+ assert.doesNotMatch(sql,/INSERT INTO public\.assessment_assignments|UPDATE public\.assessment_results|INSERT INTO public\.registrations/);
+});
+test("Assessment RLS does not allow anonymous table reads, and public verification reveals initials only",()=>{
+ assert.match(sql,/ENABLE ROW LEVEL SECURITY/);
+ assert.match(sql,/REVOKE ALL ON public\.assessment_completion_certificates FROM PUBLIC,anon,authenticated/);
+ assert.match(sql,/l\.parent_user_id=\(SELECT auth\.uid\(\)\)/);
+ assert.match(sql,/t\.status='active'/);
+ assert.match(sql,/auth\.uid\(\) IS NULL OR NOT \(public\.has_role\('admin'\) OR public\.has_role\('clinic_admin'\)\)/);
+ assert.match(sql,/left\(c\.student_name,1\)\|\|'\.'/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.verify_assessment_completion_certificate\(text\) TO anon,authenticated/);
+});
+test("Parent and student only retrieve previously-issued assessment certificates; staff issue is role-scoped",()=>{
+ assert.match(parent,/\["parent","student"\]\.includes\(role\.role\)/);
+ assert.match(parent,/\.from\("assessment_completion_certificates"\)/);
+ assert.match(parent,/downloadAssessmentCertificatePDF\(c\)/);
+ assert.match(staff,/\.rpc\("issue_assessment_completion_certificate"/);
+ assert.match(staff,/role!=="teacher"&&<section/);
+ assert.match(staff,/\["owner","admin","clinic_admin","teacher"\]\.includes\(r\.role\)/);
+ assert.match(dashboard,/\/parent\/assessment-certificates/);
+});
+test("SLA verification distinguishes assessment from course without exposing private child data",()=>{
+ assert.match(verify,/verify_assessment_completion_certificate/);
+ assert.match(verify,/verify_course_completion_certificate/);
+ assert.match(verify,/code\.startsWith\("SLA-"\)/);
+ assert.match(verify,/SL\[CA\]/);
+ assert.match(pdf,/downloadAssessmentCertificatePDF/);
+ assert.match(pdf,/FOR SUCCESSFULLY COMPLETING THE ASSESSMENT/);
+ assert.match(pdf,/pdf\.text\("Director",208,173/);
+ assert.match(pdf,/drawCentered\("Director",820,850/);
+ assert.doesNotMatch(pdf,/Clinical Director/);
+ assert.match(pdf,/drawApprovedTemplate\(pdf,approvedTemplate,c,QRCode,kind\)/);
+ assert.match(pdf,/courseCertificateVerificationUrl\(c\.reference_code\)/);
+});
