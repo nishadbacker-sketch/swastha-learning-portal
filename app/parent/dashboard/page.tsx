@@ -14,7 +14,7 @@ type CustomAssessment={id:string;student_id:string;assigned_at:string;due_date:s
 type Response={assignment_id:string;question_id:string;score:string|null};
 type Result={assignment_id:string;overall_score:number|null;domain_scores:Record<string,unknown>;strengths:unknown[];support_needs:unknown[];teacher_feedback:string|null;recommendations:string|null;reviewed_at:string|null};
 const green="#176b58",blue="#0284c7",orange="#f97316",gray="#64748b",teal="#2a9d8f";
-const card:React.CSSProperties={background:"white",border:"1px solid #dce8e1",borderRadius:16,padding:22,marginBottom:18};
+const card:React.CSSProperties={background:"white",border:"1px solid #dce8e1",borderRadius:13,padding:16,marginBottom:14};
 const grid:React.CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:16};
 const btn:React.CSSProperties={background:green,color:"white",border:0,borderRadius:9,padding:"11px 17px",cursor:"pointer",fontWeight:600};
 const levels={LP:"Lower Primary",UP:"Upper Primary",HS:"High School",HSS:"Higher Secondary"};
