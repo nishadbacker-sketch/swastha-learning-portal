@@ -85,7 +85,9 @@ export async function POST(request: NextRequest) {
     return fail("Please complete all required appointment details and consent.", 400, origin);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // The public table intentionally denies anonymous inserts. Only the server
+  // can write validated enquiries, using a credential kept out of the browser.
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return fail("Appointment intake is unavailable.", 503, origin);
   const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await db.from("appointment_enquiries").insert({
