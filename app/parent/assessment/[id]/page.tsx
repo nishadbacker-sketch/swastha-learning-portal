@@ -688,7 +688,7 @@ export default function ParentAssessmentPage() {
                     <button key={item.id} type="button"
                       onClick={() => jumpToQuestion(item.areaIndex,item.id)}
                       style={{textAlign:"left",background:"#fff",border:"1px solid #fbbf24",borderRadius:8,padding:12,cursor:"pointer",color:"#78350f"}}>
-                      <strong>{tr("Area","മേഖല")} {item.areaIndex + 1} · {item.domainTitle} · {tr("Question","ചോദ്യം")} {item.index + 1}</strong>
+                      <strong>{tr("Area","മേഖല")} {item.areaIndex + 1} · {item.domainTitle} · {tr("Question","ചോദ്യം")} {item.domainTitle.match(/^([A-Z])\./)?.[1] || item.id.split("_")[1]?.slice(-1) || ""}.{item.index + 1}</strong>
                       <span style={{display:"block",marginTop:5}}>{lpMalayalam ? LP_MALAYALAM_QUESTIONS[item.id] || item.question : item.question}</span>
                     </button>
                   ))}
@@ -848,7 +848,7 @@ export default function ParentAssessmentPage() {
                                 lineHeight: 1.6,
                               }}
                             >
-                              {index + 1}. {lpMalayalam ? LP_MALAYALAM_QUESTIONS[id] || question : question}
+                              {domain.title.match(/^([A-Z])\./)?.[1] || domain.id.slice(-1)}.{index + 1} — {lpMalayalam ? LP_MALAYALAM_QUESTIONS[id] || question : question}
                             </p>
 
                             <div
