@@ -11,7 +11,7 @@ type Student={full_name:string;current_class:string|null};
 type Response={question_id:string;score:string|null;observation:string|null};
 type PriorReview={teacher_feedback:string|null;recommendations:string|null;strengths:unknown;support_needs:unknown};
 type Question={id:string;title:string;domain:string;area:string;score:string|null;observation:string};
-const card:React.CSSProperties={background:"#fff",padding:20,border:"1px solid #dce8e1",borderRadius:12,marginBottom:18};
+const card:React.CSSProperties={background:"#fff",padding:16,border:"1px solid #dce8e1",borderRadius:12,marginBottom:14};
 const btn:React.CSSProperties={border:0,borderRadius:8,background:"#176b58",padding:"11px 16px",color:"#fff",fontWeight:700,cursor:"pointer"};
 const field:React.CSSProperties={width:"100%",boxSizing:"border-box",minHeight:95,padding:12,borderRadius:8,border:"1px solid #cbd5e1",fontFamily:"inherit"};
 const date=(value:string|null)=>value?new Date(value).toLocaleDateString("en-IN"):"—";
