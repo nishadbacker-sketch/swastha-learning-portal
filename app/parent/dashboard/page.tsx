@@ -18,7 +18,7 @@ type Result={assignment_id:string;overall_score:number|null;domain_scores:Record
 const green="#176b58",blue="#0284c7",orange="#f97316",gray="#64748b",teal="#2a9d8f";
 const card:React.CSSProperties={background:"white",border:"1px solid #dce8e1",borderRadius:13,padding:16,marginBottom:14};
 const grid:React.CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,180px),1fr))",gap:12};
-const btn:React.CSSProperties={background:green,color:"white",border:0,borderRadius:9,padding:"11px 17px",cursor:"pointer",fontWeight:600};
+const btn:React.CSSProperties={background:green,color:"white",border:0,borderRadius:10,padding:"12px 18px",cursor:"pointer",fontWeight:700,fontSize:14};
 const levels={LP:"Lower Primary",UP:"Upper Primary",HS:"High School",HSS:"Higher Secondary"};
 const statuses:Record<string,string>={assigned:"Assigned",in_progress:"In Progress",submitted:"Awaiting Review",reviewed:"Reviewed",completed:"Completed",pending:"Pending",active:"Active"};
 const date=(v:string|null)=>v?new Date(v).toLocaleDateString("en-IN"):"Not specified";
@@ -84,7 +84,7 @@ export default function ParentDashboard(){
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
  <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><p style={{fontSize:12}}>PARENT & LEARNER PORTAL</p></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><button style={btn} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={btn} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div></header>
  <div style={{maxWidth:1250,margin:"auto",padding:"24px 16px"}}>
- <section style={{...card,background:"#0f4c5c",color:"white"}}><small>LEARN • GROW • THRIVE</small><h1 style={{overflowWrap:"anywhere"}}>Welcome, {name}!{accountId&&<span style={{fontSize:"0.58em",fontWeight:500}}> (Account ID: {accountId})</span>}</h1><p>Track your child's learning journey, assessments and development.</p></section>
+ <section style={{...card,background:"#0f4c5c",color:"white",padding:"22px 20px",marginBottom:20}}><small style={{letterSpacing:1,fontWeight:700}}>LEARN • GROW • THRIVE</small><h1 style={{margin:"10px 0 8px",fontSize:29,overflowWrap:"anywhere"}}>Welcome, {name}!{accountId&&<span style={{fontSize:"0.58em",fontWeight:500}}> (Account ID: {accountId})</span>}</h1><p style={{margin:0}}>Track your child's learning journey, assessments and development.</p></section>
  {error&&<p role="alert" style={{...card,color:"#b42318"}}>{error}</p>}
  <nav style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:20}}>{["Overview","My Child","Assessments","Learning Activities"].map(t=><button key={t} style={{...btn,background:tab===t?green:"#e8f2ed",color:tab===t?"white":"#183a35"}} onClick={()=>setTab(t)}>{t}</button>)}</nav>
  {tab!=="My Profile"&&<section style={card}><label>Select Child {" "}<select value={child} onChange={e=>{setChild(e.target.value);setOpened("");}} style={{padding:10,maxWidth:"100%"}}><option value="all">All Children</option>{students.map(s=><option key={s.id} value={s.id}>{s.full_name} ({s.student_code})</option>)}</select></label></section>}
