@@ -3,7 +3,7 @@
 import {useCallback,useEffect,useState} from "react";
 import {supabase} from "../../lib/supabase";
 
-type Student={id:string;full_name:string;current_class:string|null;status:string};
+type Student={id:string;student_code:string;full_name:string;current_class:string|null;status:string};
 type Teacher={id:string;user_id:string;status:string};
 type Assignment={id:string;student_id:string;teacher_id:string};
 const panel:React.CSSProperties={background:"#fff",padding:16,border:"1px solid #dce8e1",borderRadius:13,marginBottom:14};
@@ -26,7 +26,7 @@ export default function TeacherStudentAssignments(){
   setError("");
   try{
    const [studentResult,teacherResult,assignmentResult]=await Promise.all([
-    supabase.from("students").select("id,full_name,current_class,status").order("full_name"),
+    supabase.from("students").select("id,student_code,full_name,current_class,status").order("full_name"),
     supabase.from("teachers").select("id,user_id,status").eq("status","active"),
     supabase.from("teacher_assignments").select("id,student_id,teacher_id")
    ]);
@@ -37,9 +37,9 @@ export default function TeacherStudentAssignments(){
    let names:Record<string,string>={};
    if(active.length){
     const {data:profiles,error:profilesError}=await supabase.from("profiles")
-      .select("id,full_name").in("id",active.map(t=>t.user_id));
+      .select("id,full_name,staff_code").in("id",active.map(t=>t.user_id));
     if(profilesError)throw profilesError;
-    names=Object.fromEntries((profiles||[]).map(p=>[p.id,p.full_name||""]));
+    names=Object.fromEntries((profiles||[]).map(p=>[p.id,(p.full_name||"Teacher")+(p.staff_code?" · "+p.staff_code:"")]));
    }
    setStudents((studentResult.data||[]) as Student[]);
    setTeachers(active);
@@ -88,7 +88,7 @@ export default function TeacherStudentAssignments(){
      const linked=assignments.filter(a=>a.student_id===s.id);
      return <div key={s.id} style={{padding:12,borderRadius:10,border:"1px solid #e2e8e0",background:"#f8faf7",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
       <div style={{flex:"1 1 210px"}}>
-       <strong style={{fontSize:14}}>{s.full_name}</strong>
+       <strong style={{fontSize:14}}>{s.full_name} · {s.student_code}</strong>
        <p style={{fontSize:12,margin:"5px 0",color:"#64748b"}}>Class: {s.current_class||"—"} · {s.status}</p>
        <p style={{fontSize:12,margin:0}}>Assigned: {linked.length?linked.map(a=>{const teacher=teachers.find(t=>t.id===a.teacher_id);return teacher?displayTeacher(teacher):"Previously assigned teacher";}).join(", "):"None"}</p>
       </div>
