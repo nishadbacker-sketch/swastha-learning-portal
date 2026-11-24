@@ -1,4 +1,7 @@
 # Swastha Phase 5: SECURITY DEFINER Function Audit
+
+**Release update (2026-11-24):** The targeted `is_creator_account` hardening was applied to production and released in PR #13 (merge commit `bfd781129d937310378b32ec5e6af5115a48af2e`). Production post-migration read-only checks passed: Parent and Teacher cannot identify the Owner through this helper; Owner access to the legitimate profile and identity check remains intact. The 31 advisor warnings remain because authenticated, role-gated RPC endpoints are intentionally callable; these require ongoing function-specific review rather than blanket revocation. Leaked Password Protection remains disabled and requires Supabase Auth settings access. The original audit narrative below reflects its **pre-release** checkpoint.
+
 Audit date: 2026-11-24. Production project: `cyhfsfwwpqgsxefcxkzp`. Staging project: `cuxftykygloeczviknbn`.
 
 ## Summary
