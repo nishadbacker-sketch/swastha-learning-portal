@@ -135,6 +135,8 @@ export default function LoginPage() {
 
         if (roleData.role === "admin") {
           router.push("/admin/dashboard");
+        } else if (roleData.role === "clinic_admin") {
+          router.push("/clinic-admin/dashboard");
         } else if (roleData.role === "teacher") {
           router.push("/teacher/dashboard");
         } else if (
