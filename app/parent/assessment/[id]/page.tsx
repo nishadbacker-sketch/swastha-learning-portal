@@ -241,6 +241,29 @@ export default function ParentAssessmentPage() {
       )
     : [];
 
+
+  const missingQuestions = checklist
+    ? checklist.areas.flatMap((area, areaIndex) =>
+        area.subDomains.flatMap((domain) =>
+          domain.items.flatMap((question, index) => {
+            const id = domain.id + "_" + (index + 1);
+            return answers[id]?.score == null
+              ? [{ id, areaIndex, domainTitle: domain.title, index, question }]
+              : [];
+          })
+        )
+      )
+    : [];
+
+  function jumpToQuestion(areaIndex: number, id: string) {
+    setActiveArea(areaIndex);
+    window.setTimeout(() => {
+      document.getElementById("question-" + id)?.scrollIntoView({
+        behavior: "smooth", block: "center"
+      });
+    }, 80);
+  }
+
   const total = questionIds.length;
 
   const completed = questionIds.filter(
@@ -299,9 +322,8 @@ export default function ParentAssessmentPage() {
     }
 
     if (finalSubmit && completed !== total) {
-      setMessage(
-        "Please answer every checklist item before submitting. Select NA if an item cannot be assessed."
-      );
+      setMessage("Please answer the highlighted questions. Select NA if you cannot assess an item.");
+      if(missingQuestions.length > 0)jumpToQuestion(missingQuestions[0].areaIndex,missingQuestions[0].id);
       setConfirmSubmit(false);
       return;
     }
@@ -632,6 +654,24 @@ export default function ParentAssessmentPage() {
           </section>
         ) : (
           <>
+            {missingQuestions.length > 0 && (
+              <section style={{...card, border:"2px solid #f59e0b", background:"#fffbeb"}}>
+                <h3 style={{color:"#92400e",marginTop:0}}>
+                  Unanswered questions: {missingQuestions.length}
+                </h3>
+                <p>Click a question to jump directly to it. Select NA if you cannot assess that item.</p>
+                <div style={{display:"grid",gap:9}}>
+                  {missingQuestions.map(item => (
+                    <button key={item.id} type="button"
+                      onClick={() => jumpToQuestion(item.areaIndex,item.id)}
+                      style={{textAlign:"left",background:"#fff",border:"1px solid #fbbf24",borderRadius:8,padding:12,cursor:"pointer",color:"#78350f"}}>
+                      <strong>Area {item.areaIndex + 1} · {item.domainTitle} · Question {item.index + 1}</strong>
+                      <span style={{display:"block",marginTop:5}}>{item.question}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
             <fieldset
               disabled={saving}
               style={{
@@ -769,9 +809,14 @@ export default function ParentAssessmentPage() {
                         return (
                           <div
                             key={id}
+                            id={"question-" + id}
                             style={{
-                              padding: "18px 0",
+                              padding: "18px 10px",
                               borderBottom: "1px solid #e2e8f0",
+                              background: answer?.score == null ? "#fffbeb" : "transparent",
+                              borderLeft: answer?.score == null ? "4px solid #f59e0b" : "4px solid transparent",
+                              borderRadius:8,
+                              scrollMarginTop: "24px",
                             }}
                           >
                             <p
@@ -984,9 +1029,8 @@ export default function ParentAssessmentPage() {
                     disabled={saving}
                     onClick={() => {
                       if (completed !== total) {
-                        setMessage(
-                          `Please complete the remaining ${total - completed} checklist items.`
-                        );
+                        setMessage("Please answer the highlighted questions in the Unanswered questions list.");
+                        if(missingQuestions.length > 0)jumpToQuestion(missingQuestions[0].areaIndex,missingQuestions[0].id);
                         return;
                       }
 
