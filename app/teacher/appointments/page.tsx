@@ -1,3 +1,4 @@
+import BrandLogo from "../../components/brand-logo";
 "use client";
 
 import {useEffect,useState} from "react";
@@ -125,7 +126,7 @@ export default function TeacherAppointments(){
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35"}}>
   <header style={{background:"white",borderBottom:"1px solid #dce8e1",padding:"15px 5%"}}>
    <div style={{maxWidth:1110,margin:"auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-    <div><strong style={{color:"#176b58"}}>SWASTHA LEARNING CLINIC</strong><div style={{fontSize:12,color:"#667a74",marginTop:3}}>APPOINTMENT FOLLOW-UP</div></div>
+    <div><strong style={{color:"#176b58"}}><BrandLogo /></strong><div style={{fontSize:12,color:"#667a74",marginTop:3}}>APPOINTMENT FOLLOW-UP</div></div>
     <button style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push(accountRole==="owner"?"/owner/dashboard":accountRole==="admin"?"/admin/dashboard":accountRole==="clinic_admin"?"/clinic-admin/dashboard":"/teacher/dashboard")}>Back to {accountRole==="admin"||accountRole==="clinic_admin"?"Admin":"Teacher"} Dashboard</button>
    </div>
   </header>
