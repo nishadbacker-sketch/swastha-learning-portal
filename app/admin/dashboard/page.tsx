@@ -89,6 +89,7 @@ export default function AdminDashboard(){
    <button style={action} onClick={()=>router.push("/teacher/coordination")}>Open Coordination Overview</button>
   </section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Question Bank</h2><p style={{fontSize:13}}>Review every LP, UP, HS and HSS question, amend standard wording and review custom questionnaires with revision protection.</p><button style={action} onClick={()=>router.push("/admin/questions")}>Manage All Questions</button></section>
+ <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Administrator Audit Logs</h2><p style={{fontSize:13}}>Review student updates, assessment approvals, appointment changes, IDP progress and staff permission history.</p><button style={action} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button></section>
  <AppointmentEscalations/>
  {creatorMode&&<SuperAdminManagement/>}
  <ClinicAdminManagement/>
