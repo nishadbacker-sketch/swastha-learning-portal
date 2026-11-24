@@ -77,6 +77,7 @@ export default function AssessmentReportPage(){
     <h1 style={{margin:"0 0 7px",fontSize:25,color:"#0f4c5c"}}>Complete Student Assessment Report</h1>
     <p><strong>Student:</strong> {student.full_name} · {student.student_code} · <strong>Class:</strong> {student.current_class||"Not available"} · <strong>Level:</strong> {assignment.assessment_level}</p>
     <p><strong>Reviewed:</strong> {review.reviewed_at?new Date(review.reviewed_at).toLocaleDateString("en-IN"):"Not recorded"} · <strong>Status:</strong> Teacher Approved</p>
+    <p style={{fontSize:13,color:"#475569",marginBottom:0}}><strong>Question version:</strong> Wording effective when this assessment was assigned ({new Date(assignment.assigned_at).toLocaleString("en-IN")}). Later question-bank changes do not alter this report.</p>
    </section>
    <DevelopmentPlan assignmentId={assignment.id} canEdit={role==="teacher"||role==="admin"}/>
    <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:student.id,full_name:student.full_name,student_code:student.student_code}]}/>
