@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useMemo,useState} from "react";
 import {useRouter} from "next/navigation";
 import {supabase} from "../../../lib/supabase";
+import StudentAppointmentHistory from "../../components/student-appointment-history";
 
 type Student={id:string;student_code:string|null;full_name:string;current_class:string|null;status:string;created_at:string};
 type Teacher={id:string;user_id:string;status:string;name:string};
@@ -140,6 +141,7 @@ export default function StudentManagementPage(){
        <div style={{height:5,background:"#dce8e1",borderRadius:8,marginTop:9,overflow:"hidden"}}><div style={{width:(Number(total)>0?Math.min(100,Math.round(100*Number(value)/Number(total))):0)+"%",height:"100%",background:"#176b58"}}/></div>
       </div>)}
      </div>
+     <StudentAppointmentHistory studentId={s.id}/>
      <strong style={{fontSize:13}}>Assigned teachers</strong>
      <div style={{display:"grid",gap:8,marginTop:9}}>
       {assigned.length===0?<p style={{fontSize:12,color:"#b45309"}}>No teacher assigned. Assign an active teacher below.</p>:assigned.map(link=>{
