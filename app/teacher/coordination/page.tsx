@@ -25,6 +25,7 @@ export default function TeacherCoordination(){
  const [tasks,setTasks]=useState<Task[]>([]);
  const [notes,setNotes]=useState<Note[]>([]);
  const [staff,setStaff]=useState<Staff[]>([]);
+ const [staffCodes,setStaffCodes]=useState<Record<string,string>>({});
  const [work,setWork]=useState<Record<string,Work>>({});
  const [selectedStudent,setSelectedStudent]=useState("");
  const [query,setQuery]=useState("");
@@ -42,22 +43,24 @@ export default function TeacherCoordination(){
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
  const isTeacher=role==="teacher";
- const displayName=(id:string|null)=>id?staff.find(t=>t.user_id===id)?.full_name||"Teacher":"Unclaimed";
+ const displayName=(id:string|null)=>id?(staff.find(t=>t.user_id===id)?.full_name||"Teacher")+(staffCodes[id]?" · "+staffCodes[id]:""):"Unclaimed";
 
  const refresh=useCallback(async()=>{
   if(!supabase)throw new Error("Supabase is not configured");
-  const [a,b,c,d,e]=await Promise.all([
+  const [a,b,c,d,e,codes]=await Promise.all([
    supabase.from("students").select("id,student_code,full_name,current_class,status").order("full_name"),
    supabase.from("student_coordination_tasks").select("id,student_id,title,description,category,status,priority,due_date,assigned_to,created_by,created_at").order("created_at",{ascending:false}).limit(1500),
    supabase.from("student_coordination_notes").select("id,student_id,task_id,category,body,author_id,created_at").order("created_at",{ascending:false}).limit(1500),
    supabase.rpc("coordination_staff_directory"),
-   supabase.rpc("coordination_student_work_summary")
+   supabase.rpc("coordination_student_work_summary"),
+   supabase.rpc("swastha_visible_staff_codes")
   ]);
-  for(const result of [a,b,c,d,e])if(result.error)throw result.error;
+  for(const result of [a,b,c,d,e,codes])if(result.error)throw result.error;
   setStudents((a.data||[]) as Student[]);
   setTasks((b.data||[]) as Task[]);
   setNotes((c.data||[]) as Note[]);
   setStaff((d.data||[]) as Staff[]);
+  setStaffCodes(Object.fromEntries((codes.data||[]).map((x:{user_id:string;staff_code:string})=>[x.user_id,x.staff_code])));
   setWork(Object.fromEntries(((e.data||[]) as Work[]).map(x=>[x.student_id,x])));
  },[]);
  useEffect(()=>{
@@ -157,7 +160,7 @@ export default function TeacherCoordination(){
      <input aria-label="Find student" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search name, ID or class" style={field}/>
      <div style={{display:"grid",gap:7,marginTop:11,maxHeight:650,overflowY:"auto"}}>
       {visible.map(s=>{const waiting=tasks.filter(t=>t.student_id===s.id&&t.status!=="done").length;return <button type="button" key={s.id} onClick={()=>{setSelectedStudent(s.id);setNotice("");setShow("all");}} style={{textAlign:"left",padding:11,borderRadius:9,background:selectedStudent===s.id?"#eaf4ef":"#fff",border:selectedStudent===s.id?"2px solid #176b58":"1px solid #dce8e1",cursor:"pointer",color:"#183a35"}}>
-       <strong style={{fontSize:13}}>{s.full_name}</strong><div style={{...caption,marginTop:4}}>{s.student_code} · {s.current_class||"Class not set"} · {waiting} open task(s)</div>
+       <strong style={{fontSize:13}}>{s.full_name} · {s.student_code}</strong><div style={{...caption,marginTop:4}}>Student ID: {s.student_code} · {s.current_class||"Class not set"} · {waiting} open task(s)</div>
       </button>;})}
       {!visible.length&&<p style={caption}>No students match this search.</p>}
      </div>
@@ -165,7 +168,7 @@ export default function TeacherCoordination(){
     <div style={{display:"grid",gap:13,minWidth:0}}>
      {!student?<section style={sheet}>Select a student to coordinate work and view progress.</section>:<>
       <section style={sheet}>
-       <h2 style={{fontSize:21,margin:"0 0 4px"}}>{student.full_name}</h2>
+       <h2 style={{fontSize:21,margin:"0 0 4px"}}>{student.full_name} · {student.student_code}</h2>
        <p style={caption}>Student ID: {student.student_code} · Class: {student.current_class||"Not recorded"} · Student status: {student.status}</p>
        <h3 style={{fontSize:15,margin:"17px 0 9px"}}>Learning pipeline</h3>
        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:9}}>
