@@ -69,3 +69,12 @@ test("allowed site receives CORS preflight; untrusted site does not", async () =
   });
   assert.equal(denied.status, 403);
 });
+
+test("appointment intake rejects an oversized streamed request before database access", async () => {
+  const response = await request("/api/appointment-intake", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "https://swasthalearning.com" },
+    body: JSON.stringify({ message: "x".repeat(13_000) }),
+  });
+  assert.equal(response.status, 413);
+});
