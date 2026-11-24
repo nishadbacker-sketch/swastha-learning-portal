@@ -33,7 +33,8 @@ export default function AdminDashboard(){
    const role=await db.from("user_roles").select("role").eq("user_id",auth.user.id).single();
    if(role.error||!role.data||!["owner","admin"].includes(role.data.role)){router.replace("/login");return;}
    setCreatorMode(role.data.role==="owner");
-   setName(auth.user.user_metadata?.full_name||auth.user.email||"Super Admin");
+   const {data:currentProfile}=await db.from("profiles").select("full_name,staff_code").eq("id",auth.user.id).maybeSingle();
+   setName((currentProfile?.full_name||auth.user.user_metadata?.full_name||auth.user.email||"Super Admin")+(currentProfile?.staff_code?" · "+currentProfile.staff_code:""));
    const [s,t,a]=await Promise.all([
     db.from("students").select("id,student_code,full_name,current_class,status,created_at").order("created_at",{ascending:false}),
     db.from("teachers").select("id,user_id,status").eq("status","active"),
