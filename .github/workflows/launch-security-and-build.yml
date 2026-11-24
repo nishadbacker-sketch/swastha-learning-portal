@@ -27,3 +27,7 @@ jobs:
         run: node --test tests/parent-reviewed-assessment-certificate-download.test.mjs tests/launch-readiness-security.test.mjs
       - name: Next.js production build
         run: npm run build
+      - name: Live login and public verification smoke
+        run: |
+          curl --fail --location --silent --show-error --max-time 20 --retry 2 --output /dev/null https://portal.swasthalearning.com/login
+          curl --fail --location --silent --show-error --max-time 20 --retry 2 --output /dev/null https://portal.swasthalearning.com/verify/certificate/SLA-AD41FB0FFEE54BE487060F2AD469FCF6
