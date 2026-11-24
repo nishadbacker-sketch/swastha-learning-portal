@@ -108,7 +108,7 @@ export default function StudentHistoryPage(){
   </header>
   <div style={{maxWidth:1080,margin:"auto",padding:"25px 17px 60px"}}>
    <section style={card}><h1 style={{marginTop:0}}>Development History</h1>
-    <h2 style={{fontSize:19}}>{student.full_name}</h2>
+    <h2 style={{fontSize:19}}>{student.full_name} · {student.student_code}</h2>
     <p style={{color:"#64748b"}}>Class: {student.current_class||"Not specified"} · Student code: {student.student_code||"Not assigned"}</p>
     <p style={{fontSize:13,color:"#64748b"}}>Only teacher-reviewed assessments appear here. Student information is accessible only to authorised parents, teachers and administrators.</p>
    </section>
