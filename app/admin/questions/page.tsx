@@ -33,7 +33,8 @@ export default function AdminQuestionsPage(){
  const [level,setLevel]=useState<AssessmentLevel>("LP");
  const [mode,setMode]=useState<"standard"|"custom">("standard");
  const [query,setQuery]=useState("");
- const [revisions,setRevisions]=useState<QuestionRevision[]>([]);
+ const [revisions,setRevisions]=useState<(QuestionRevision&{id:number;updated_by:string|null})[]>([]);
+ const [historyKey,setHistoryKey]=useState<string|null>(null);
  const [templates,setTemplates]=useState<Template[]>([]);
  const [drafts,setDrafts]=useState<Record<string,string>>({});
  const [busy,setBusy]=useState("");
@@ -45,14 +46,14 @@ export default function AdminQuestionsPage(){
   if(!supabase)return;
   const [r,t]=await Promise.all([
    supabase.from("standard_question_revisions")
-    .select("assessment_level,question_key,question_text,effective_at")
+    .select("id,assessment_level,question_key,question_text,effective_at,updated_by")
     .order("effective_at",{ascending:true}).order("id",{ascending:true}),
    supabase.from("custom_assessment_templates")
     .select("id,title,level,status,structure").order("created_at",{ascending:false})
   ]);
   if(r.error)throw r.error;
   if(t.error)throw t.error;
-  setRevisions((r.data||[]) as QuestionRevision[]);
+  setRevisions((r.data||[]) as (QuestionRevision&{id:number;updated_by:string|null})[]);
   setTemplates((t.data||[]) as Template[]);
  }
  useEffect(()=>{
@@ -122,8 +123,21 @@ export default function AdminQuestionsPage(){
       {e.current!==e.original&&<p style={{fontSize:12,color:"#64748b"}}><strong>Original:</strong> {e.original}</p>}
       <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap",marginTop:9}}>
        <button disabled={!!busy||(drafts[e.key]??e.current).trim()===e.current} style={{...btn,opacity:busy||((drafts[e.key]??e.current).trim()===e.current)?0.5:1}} onClick={()=>void save(e)}>{busy===e.key?"Saving...":"Save revised question"}</button>
+       <button type="button" style={{...btn,background:"#edf2f5",color:"#183a35"}} onClick={()=>setHistoryKey(k=>k===e.key?null:e.key)}>{historyKey===e.key?"Hide Revision History":"Revision History ("+revisions.filter(r=>r.assessment_level===level&&r.question_key===e.key).length+")"}</button>
        {e.current!==e.original&&<button disabled={!!busy} style={{...btn,background:"#edf5f1",color:"#176b58"}} onClick={()=>setDrafts(x=>({...x,[e.key]:e.original}))}>Restore original wording</button>}
       </div>
+      {historyKey===e.key&&<div style={{borderTop:"1px solid #dce8e1",marginTop:14,paddingTop:12}}>
+        <h4 style={{margin:"0 0 8px"}}>Question Revision History</h4>
+        <p style={{fontSize:12,color:"#64748b"}}>Original wording and all saved revisions. Revisions apply from their effective date; previously assigned assessments keep the earlier wording.</p>
+        <div style={{fontSize:13,border:"1px solid #dce8e1",borderRadius:8,padding:11,marginBottom:8}}>
+          <strong>Original question (before revisions)</strong><p style={{margin:"5px 0 0"}}>{e.original}</p>
+        </div>
+        {revisions.filter(r=>r.assessment_level===level&&r.question_key===e.key).map((r,i)=><div key={r.id} style={{fontSize:13,border:"1px solid #dce8e1",borderRadius:8,padding:11,marginBottom:8}}>
+          <strong>Revision {i+1}</strong> · {new Date(r.effective_at).toLocaleString("en-IN")}
+          <p style={{margin:"6px 0"}}>{r.question_text}</p>
+          <small style={{color:"#64748b"}}>Updated by account: {r.updated_by||"Unknown"}</small>
+        </div>)}
+      </div>}
      </section>)}
     {!results.length&&<div style={card}>No questions found.</div>}
    </>:<>
