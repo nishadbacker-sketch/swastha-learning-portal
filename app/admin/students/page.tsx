@@ -1,3 +1,4 @@
+import BrandLogo from "../../components/brand-logo";
 "use client";
 
 import {useCallback,useEffect,useMemo,useState} from "react";
@@ -99,7 +100,7 @@ export default function StudentManagementPage(){
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
   <header style={{background:"#fff",borderBottom:"1px solid #dce8e1",padding:"14px 5%"}}>
    <div style={{maxWidth:1180,margin:"auto",display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}>
-    <div><strong style={{color:"#176b58"}}>SWASTHA LEARNING CLINIC</strong><div style={{fontSize:12,color:"#667a74",marginTop:4}}>STUDENT MANAGEMENT · {role==="owner"?"CREATOR":role==="admin"?"SUPER ADMIN":"ADMIN"}</div></div>
+    <div><strong style={{color:"#176b58"}}><BrandLogo /></strong><div style={{fontSize:12,color:"#667a74",marginTop:4}}>STUDENT MANAGEMENT · {role==="owner"?"CREATOR":role==="admin"?"SUPER ADMIN":"ADMIN"}</div></div>
     <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push(role==="owner"?"/owner/dashboard":role==="admin"?"/admin/dashboard":"/clinic-admin/dashboard")}>Back to Dashboard</button>
    </div>
   </header>
