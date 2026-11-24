@@ -8,10 +8,10 @@ type InputStudent={id:string;full_name:string};
 type Response={question_id:string;score:string|null;observation:string|null};
 type Item={id:string;question:string;area:string;domain:string;score:string|null;observation:string};
 type Domain={id:string;name:string;area:string;count:number;numeric:number;sum:number;na:number;mastery:number|null};
-const card:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:14,padding:20,marginBottom:16};
-const palette={green:"#176b58",gold:"#c48925",orange:"#e77934",red:"#c44444",blue:"#2a7198",muted:"#657a74"};
+const card:React.CSSProperties={background:"#fff",border:"1px solid #e2e8f0",borderRadius:16,padding:22,marginBottom:18,boxShadow:"0 1px 3px rgba(15,23,42,.045)"};
+const palette={green:"#10b981",gold:"#0284c7",orange:"#f97316",red:"#ef4444",blue:"#0f4c5c",muted:"#64748b"};
 const band=(pct:number|null)=>pct===null?"Not scored":pct>=80?"Independent":pct>=50?"Developing":"Needs Support";
-const bandColor=(pct:number|null)=>pct===null?"#94a3b8":pct>=80?palette.green:pct>=50?palette.gold:palette.red;
+const bandColor=(pct:number|null)=>pct===null?"#94a3b8":pct>=80?palette.green:pct>=50?palette.gold:palette.orange;
 const label=(score:string|null)=>score==="3"?"Independent":score==="2"?"Developing":score==="1"?"Substantial support":score==="0"?"Not demonstrated":score==="NA"?"Not assessed":"Not answered";
 
 function Radar({domains}:{domains:Domain[]}){
@@ -32,6 +32,35 @@ function Radar({domains}:{domains:Domain[]}){
   <div style={{flex:"1 1 220px",maxHeight:300,overflowY:"auto",fontSize:12}}>
    {items.map((d,i)=><div key={d.id} style={{display:"flex",gap:9,padding:"5px 0",borderBottom:"1px solid #edf1ed"}}>
     <span style={{minWidth:25,color:palette.green,fontWeight:700}}>{i+1}.</span><span style={{flex:1}}>{d.name}</span><strong>{d.mastery?.toFixed(0)}%</strong>
+   </div>)}
+  </div>
+ </div>;
+}
+
+function RatingDoughnut({counts,total}:{counts:{score:string;count:number}[];total:number}){
+ const colors=["#ef4444","#f97316","#0284c7","#10b981","#94a3b8"];
+ const circumference=2*Math.PI*83;
+ let running=0;
+ const arcs=counts.map((entry,i)=>{
+  const fraction=total?entry.count/total:0;
+  const arc={key:entry.score,color:colors[i],dash:fraction*circumference,offset:running*circumference};
+  running+=fraction;
+  return arc;
+ });
+ return <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+  <svg role="img" aria-label="Doughnut chart of rating distribution: scores zero through three and NA" viewBox="0 0 260 260" style={{width:"100%",maxWidth:280}}>
+   <circle cx="130" cy="130" r="83" stroke="#e2e8f0" strokeWidth="35" fill="none"/>
+   <g transform="rotate(-90 130 130)">
+    {arcs.filter(a=>a.dash>0).map(a=><circle key={a.key} cx="130" cy="130" r="83" fill="none" stroke={a.color} strokeWidth="35" strokeDasharray={String(a.dash)+" "+String(circumference-a.dash)} strokeDashoffset={-a.offset}/>)}
+   </g>
+   <text x="130" y="130" dominantBaseline="middle" textAnchor="middle" fontSize="29" fontWeight="800" fill="#1e293b">{total}</text>
+   <text x="130" y="158" dominantBaseline="middle" textAnchor="middle" fontSize="12" fill="#64748b">assessed</text>
+  </svg>
+  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(95px,1fr))",gap:9,width:"100%",marginTop:8}}>
+   {counts.map((entry,i)=><div key={entry.score} style={{fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+    <span style={{background:colors[i],borderRadius:4,width:11,height:11,flexShrink:0}}/>
+    <span>{entry.score==="NA"?"NA":entry.score+" — "+label(entry.score)}</span>
+    <strong style={{marginLeft:"auto"}}>{entry.count}</strong>
    </div>)}
   </div>
  </div>;
@@ -79,8 +108,8 @@ export default function AssessmentAnalytics({assessments,students}:{assessments:
  const developing=items.filter(q=>q.score==="2");
  if(!available.length)return <section style={card}><h3>Holistic Student Assessment Analytics</h3><p style={{color:palette.muted}}>Submitted or approved assessments will appear here. Assigned or incomplete assessments are not included.</p></section>;
  return <section style={{marginTop:24}}>
-  <div style={{...card,background:"#f0f7f4"}}>
-   <h2 style={{marginTop:0}}>Holistic Student Assessment Analytics</h2>
+  <div style={{...card,background:"#f8fafc"}}>
+   <h2 style={{marginTop:0,fontSize:22,color:"#0f4c5c"}}>Analytics Dashboard</h2>
    <p style={{fontSize:13,color:palette.muted}}>Live, question-level analysis of submitted responses. Select an assessment to view its readiness indicators and support priorities. These are educational screening indicators, not a diagnosis.</p>
    <label style={{display:"block",fontWeight:700,marginBottom:6}} htmlFor="analytics-assessment">Select student and assessment</label>
    <select id="analytics-assessment" value={selected} onChange={e=>setSelected(e.target.value)} style={{padding:12,borderRadius:9,border:"1px solid #a9bfb5",maxWidth:"100%",width:650}}>
@@ -89,29 +118,30 @@ export default function AssessmentAnalytics({assessments,students}:{assessments:
   </div>
   {error&&<p role="alert" style={{color:palette.red}}>{error}</p>}
   {loading?<p>Loading live assessment analytics...</p>:!responses.length?<p>No recorded responses found for the selected assessment.</p>:<>
-   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(185px,1fr))",gap:13,marginBottom:18}}>
+   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:16,marginBottom:19}}>
     {[
-     ["Overall Readiness",readiness===null?"N/A":Math.round(readiness)+"%",readiness===null?"No numeric ratings":band(readiness)],
-     ["Independent Skills (3)",String(strengths.length),"indicators"],
-     ["Developing Skills (2)",String(developing.length),"indicators"],
-     ["Support Priority (0–1)",String(needs.length),"indicators"]
-    ].map(([name,value,detail],i)=><div key={name} style={{...card,margin:0,borderTop:"4px solid "+[palette.green,palette.green,palette.gold,palette.red][i]}}>
-     <p style={{fontSize:13,color:palette.muted,marginTop:0}}>{name}</p>
-     <div style={{fontSize:34,fontWeight:800,color:[palette.green,palette.green,palette.gold,palette.red][i]}}>{value}</div>
-     <small style={{color:palette.muted}}>{detail}</small>
+     ["Overall Readiness",readiness===null?"—":Math.round(readiness)+"%",readiness===null?"Awaiting Scores":band(readiness),"Weighted across assessed items (excl. NA)","#0f4c5c","◉"],
+     ["Independent Skills (3)",String(strengths.length),"indicators","Demonstrated consistently & independently","#10b981","✓"],
+     ["Developing Skills (2)",String(developing.length),"indicators","Performs partly or with occasional prompts","#0284c7","✦"],
+     ["Support Priority (0–1)",String(needs.length),"indicators","Requires direct assistance or scaffolding","#f97316","♡"]
+    ].map(([name,value,detail,subtitle,color,symbol])=><div key={name} style={{...card,margin:0,padding:20}}>
+     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+      <span style={{fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",color:"#64748b"}}>{name}</span>
+      <span style={{display:"grid",placeItems:"center",background:color+"17",color:color,borderRadius:9,fontWeight:800,width:34,height:34,fontSize:19}}>{symbol}</span>
+     </div>
+     <div style={{display:"flex",alignItems:"baseline",gap:9,marginTop:13,flexWrap:"wrap"}}>
+      <strong style={{fontSize:34,lineHeight:1.1,color:name==="Overall Readiness"?"#1e293b":color}}>{value}</strong>
+      <span style={{fontSize:12,color:color,fontWeight:700}}>{detail}</span>
+     </div>
+     <p style={{fontSize:12,color:"#94a3b8",margin:"11px 0 0"}}>{subtitle}</p>
     </div>)}
    </div>
    <p style={{fontSize:13,color:palette.muted}}>Readiness = total numeric ratings ÷ (3 × numeric responses), excluding NA and unanswered questions. {assessed} of {items.length} indicators have recorded scores or NA ({counts[4].count} NA).</p>
-   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:15}}>
-    <div style={card}><h3>Holistic Sub-Domain Competency Radar</h3><p style={{fontSize:13,color:palette.muted}}>Percentage of available rating points across scored sub-domains.</p><Radar domains={domains}/></div>
-    <div style={card}><h3>Rating Distribution</h3><p style={{fontSize:13,color:palette.muted}}>Breakdown of scores 0–3, plus NA.</p>
-     {counts.map(x=><div key={x.score} style={{marginBottom:16}}>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:5}}><strong>{x.score==="NA"?"NA — Not assessed":x.score+" — "+label(x.score)}</strong><span>{x.count}</span></div>
-      <div style={{height:14,borderRadius:10,background:"#edf2ef",overflow:"hidden"}}><div style={{height:"100%",width:(items.length?x.count/items.length*100:0)+"%",background:x.score==="3"?palette.green:x.score==="2"?palette.gold:x.score==="1"?palette.orange:x.score==="0"?palette.red:palette.muted}}/></div>
-     </div>)}
-    </div>
+   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:22,alignItems:"stretch"}}>
+    <div style={{...card,gridColumn:"span 1"}}><h3 style={{margin:"0 0 4px",fontSize:18}}>Holistic Sub-Domain Competency Radar</h3><p style={{fontSize:12,color:palette.muted,margin:"0 0 14px"}}>Percentage mastery across all checklist sub-domains for active student</p><Radar domains={domains}/></div>
+    <div style={card}><h3 style={{margin:"0 0 4px",fontSize:18}}>Rating Distribution</h3><p style={{fontSize:12,color:palette.muted,margin:"0 0 14px"}}>Breakdown of 0–3 scores & NA items</p><RatingDoughnut counts={counts} total={assessed}/><p style={{fontSize:12,color:"#64748b",background:"#f8fafc",borderRadius:10,padding:12,marginTop:14}}>Assessed {assessed} of {items.length} indicators ({counts[4].count} marked NA).</p></div>
    </div>
-   <div style={card}><h3>Sub-Domain Readiness Breakdown (%)</h3>
+   <div style={card}><h3 style={{margin:"0 0 5px",fontSize:18}}>Sub-Domain Readiness Breakdown (%)</h3>
     <p style={{fontSize:13,color:palette.muted}}>Independent ≥80% · Developing 50–79% · Needs Support below 50%. Categories with no numeric ratings are shown as not scored.</p>
     {domains.map(d=><div key={d.id} style={{padding:"12px 0",borderBottom:"1px solid #e2e8e5"}}>
      <small style={{color:palette.muted}}>{d.area}</small>
@@ -121,13 +151,13 @@ export default function AssessmentAnalytics({assessments,students}:{assessments:
     </div>)}
    </div>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:15}}>
-    <section style={card}><h3>Observed Strengths (Score 3)</h3><p style={{fontSize:13,color:palette.muted}}>Skills rated independently in this assessment; observations appear only if recorded.</p>
+    <section style={{...card,borderColor:"#bbf7d0"}}><h3 style={{margin:"0 0 6px",fontSize:17}}>Observed Strengths (Score 3 & Talents)</h3><p style={{fontSize:13,color:palette.muted}}>Skills rated independently in this assessment; observations appear only if recorded.</p>
      {!strengths.length?<p>No score-3 indicators recorded.</p>:strengths.map(q=><div key={q.id} style={{padding:"11px 0",borderBottom:"1px solid #e2e8e5"}}>
       <small style={{color:palette.green}}>{q.domain} · Score 3</small><div style={{fontWeight:600,margin:"5px 0"}}>{q.question}</div>
       {q.observation&&<p style={{fontSize:13,whiteSpace:"pre-wrap",color:palette.muted}}>Evidence: {q.observation}</p>}
      </div>)}
     </section>
-    <section style={card}><h3>Priority Support Needs (Scores 0 & 1)</h3><p style={{fontSize:13,color:palette.muted}}>Indicators requiring targeted support; context appears only when recorded.</p>
+    <section style={{...card,borderColor:"#fed7aa"}}><h3 style={{margin:"0 0 6px",fontSize:17}}>Priority Support Needs (Scores 0 & 1)</h3><p style={{fontSize:13,color:palette.muted}}>Indicators requiring targeted support; context appears only when recorded.</p>
      {!needs.length?<p>No score-0 or score-1 indicators recorded.</p>:needs.map(q=><div key={q.id} style={{padding:"11px 0",borderBottom:"1px solid #e2e8e5"}}>
       <small style={{color:palette.red}}>{q.domain} · Score {q.score}</small><div style={{fontWeight:600,margin:"5px 0"}}>{q.question}</div>
       {q.observation&&<p style={{fontSize:13,whiteSpace:"pre-wrap",color:palette.muted}}>Context: {q.observation}</p>}
