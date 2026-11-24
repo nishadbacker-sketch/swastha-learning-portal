@@ -854,7 +854,7 @@ export default function TeacherDashboard() {
 
   function studentName(id: string) {
     return (
-      ((s)=>s?s.full_name+" · "+(s.student_code||"Student ID pending"):"Unknown student")(students.find((s) => s.id === id))
+      ((s:Student|undefined)=>s?s.full_name+" · "+(s.student_code||"Student ID pending"):"Unknown student")(students.find((s) => s.id === id))
     );
   }
 
