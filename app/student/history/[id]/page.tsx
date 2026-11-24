@@ -12,7 +12,7 @@ type CustomTemplate={id:string;title:string;structure:Area[]|{title:string;categ
 type Custom={id:string;student_id:string;template_id:string;status:string;assigned_at:string;reviewed_at:string|null;teacher_feedback:string|null;answers:Record<string,{score?:string|null;choice?:string|null;written_answer?:string|null}>;custom_assessment_templates:CustomTemplate|CustomTemplate[]|null};
 type Activity={id:string;student_id:string;assigned_at:string;status:string;learning_activities:{title:string}|{title:string}[]|null};
 type Entry={id:string;kind:"standard"|"custom";title:string;date:string;status:string;group:string;average:number|null;ratings:number;na:number;choices:number;written:number;feedback:string|null;recommendations:string|null;reportUrl:string|null};
-const card:React.CSSProperties={border:"1px solid #dbe7e1",borderRadius:15,padding:20,background:"#fff",marginBottom:17};
+const card:React.CSSProperties={border:"1px solid #dbe7e1",borderRadius:13,padding:16,background:"#fff",marginBottom:14};
 const button:React.CSSProperties={background:"#176b58",color:"white",padding:"11px 17px",border:0,borderRadius:9,fontWeight:700,cursor:"pointer"};
 const date=(s:string)=>new Date(s).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
 function signature(structure:CustomTemplate["structure"]):string{
