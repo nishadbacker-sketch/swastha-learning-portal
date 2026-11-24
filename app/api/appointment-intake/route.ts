@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
   const note = text(raw.message ?? raw.reason, 1500);
   const reason = [support, note].filter(Boolean).join(" — ").slice(0, 2000);
   const consent = raw.consent === true;
-  const phonePattern = /^[+\\d\\s()-]{8,20}$/;
-  const validDate = (d: string) => /^\\d{4}-\\d{2}-\\d{2}$/.test(d) && !Number.isNaN(new Date(d + "T00:00:00Z").getTime()) && new Date(d + "T00:00:00Z").toISOString().slice(0,10) === d;
+  const phonePattern = /^[+\d\s()-]{8,20}$/;
+  const validDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(new Date(d + "T00:00:00Z").getTime()) && new Date(d + "T00:00:00Z").toISOString().slice(0,10) === d;
   if (guardian_name.length < 2 || child_name.length < 2 || !phonePattern.test(whatsapp_number) || !consent ||
       (!age_range && !date_of_birth) || (date_of_birth && (!validDate(date_of_birth) || date_of_birth > new Date().toISOString().slice(0,10))) ||
       (preferred_date && !validDate(preferred_date)))
