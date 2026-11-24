@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendNewAppointmentStaffAlert } from "../../../lib/server/appointment-notification";
 
 const origins = new Set([
   "https://swasthalearning.com",
@@ -92,6 +93,14 @@ export async function POST(request: NextRequest) {
   if (error) {
     console.error("Appointment intake failed:", error.code);
     return fail("We could not record your appointment. Please try again.", 503, origin);
+  }
+  // Mail delivery is deliberately opt-in and non-critical: a successfully
+  // recorded enquiry must never be lost or falsely reported failed because
+  // the notification transport is unavailable.
+  try {
+    await sendNewAppointmentStaffAlert();
+  } catch {
+    console.error("Appointment staff notification could not be sent.");
   }
   return NextResponse.json({ ok: true, message: "Appointment request received." }, { status: 201, headers: cors(origin) });
 }
