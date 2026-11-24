@@ -39,8 +39,8 @@ export default function DevelopmentPlan({assignmentId,canEdit=false}:{assignment
  },[assignmentId]);
  useEffect(()=>{void refresh();},[refresh]);
 
- async function addGoal(e:React.FormEvent<HTMLFormElement>){
-  e.preventDefault();
+ async function addGoal(event:React.FormEvent<HTMLFormElement>){
+  event.preventDefault();
   if(!supabase||!canEdit)return;
   if(title.trim().length<3||activity.trim().length<3){setError("Enter a goal and supporting activity (at least 3 characters each).");return;}
   setBusy("new");setError("");setNotice("");
