@@ -10,7 +10,8 @@ const button:React.CSSProperties={border:0,borderRadius:9,padding:"10px 14px",ba
 const panel:React.CSSProperties={background:"#fff",borderRadius:16,padding:22,width:"min(540px,calc(100vw - 28px))",maxHeight:"min(80vh,720px)",overflowY:"auto",boxShadow:"0 24px 70px rgba(15,23,42,.25)"};
 const eventMeta:Record<string,{title:string;description:string;destination:(id:string)=>string}>={
  assessment_submitted:{title:"Assessment submitted",description:"An assessment is awaiting review.",destination:id=>"/teacher/assessment-review/"+id},
- custom_assessment_submitted:{title:"Custom assessment submitted",description:"A custom assessment is awaiting review.",destination:()=>"/teacher/custom-assessments"}
+ custom_assessment_submitted:{title:"Custom assessment submitted",description:"A custom assessment is awaiting review.",destination:()=>"/teacher/custom-assessments"},
+ teacher_assigned:{title:"Student assigned to you",description:"A student has been assigned to your teaching caseload.",destination:()=>"/teacher/dashboard"}
 };
 export default function StaffNotificationsPopup(){
  const router=useRouter();
@@ -34,7 +35,7 @@ export default function StaffNotificationsPopup(){
   setUserId(user);
   const [result,acks]=await Promise.all([
    supabase.from("portal_notification_events").select("id,student_id,event_type,source_id,created_at")
-    .eq("recipient_user_id",user).in("event_type",["assessment_submitted","custom_assessment_submitted"])
+    .eq("recipient_user_id",user).in("event_type",["assessment_submitted","custom_assessment_submitted","teacher_assigned"])
     .order("created_at",{ascending:false}).limit(100),
    supabase.from("staff_notification_acknowledgements").select("event_id").eq("user_id",user).limit(500)
   ]);
