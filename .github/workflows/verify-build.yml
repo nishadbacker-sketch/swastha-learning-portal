@@ -75,6 +75,8 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Verify IDP student progress overview uses assigned approved records
+        run: node --test tests/student-progress-overview.test.mjs
       - name: Verify staging parent and teacher isolation (read-only, opt-in)
         if: ${{ vars.SWASTHA_RUN_STAGING_AUTH_TESTS == 'true' }}
         run: node --test tests/staging-authenticated-readonly.test.mjs
