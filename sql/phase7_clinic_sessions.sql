@@ -43,6 +43,7 @@ AS $$
 BEGIN
  IF NOT EXISTS(
   SELECT 1 FROM public.teachers t JOIN public.teacher_assignments ta ON ta.teacher_id=t.id
+  JOIN public.user_roles ur ON ur.user_id=t.user_id AND ur.role='teacher'
   WHERE t.user_id=NEW.teacher_user_id AND t.status='active' AND ta.student_id=NEW.student_id
  ) THEN RAISE EXCEPTION 'An active assigned Teacher is required'; END IF;
  IF NEW.appointment_enquiry_id IS NOT NULL AND NOT EXISTS(
@@ -55,6 +56,9 @@ BEGIN
   NEW.created_by IS DISTINCT FROM OLD.created_by OR
   NEW.created_at IS DISTINCT FROM OLD.created_at)
  THEN RAISE EXCEPTION 'Session identity and teacher cannot be changed'; END IF;
+ IF TG_OP='UPDATE' AND OLD.status='attended' AND NEW.status<>'attended'
+ AND EXISTS(SELECT 1 FROM public.clinic_session_parent_updates u WHERE u.session_id=NEW.id)
+ THEN RAISE EXCEPTION 'Cannot change attendance after a Parent summary is approved'; END IF;
  NEW.updated_at:=now();
  RETURN NEW;
 END; $$;
