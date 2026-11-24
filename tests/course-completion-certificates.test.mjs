@@ -67,7 +67,7 @@ test("Exact uploaded certificate art overlays real values and QR, with a non-bre
   "QRCode.toDataURL(courseCertificateVerificationUrl(c.reference_code)",
   'format:approvedTemplate?[297,220]:"a4"',
   "if(approvedTemplate){",
-  "await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode)"
+  "await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode,kind)"
  ];
  for(const fragment of required)assert.ok(pdf.includes(fragment),"Missing exact template rendering logic: "+fragment);
 });
