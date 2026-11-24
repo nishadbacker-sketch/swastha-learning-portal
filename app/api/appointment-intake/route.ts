@@ -1,0 +1,75 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+
+const origins = new Set([
+  "https://swasthalearning.com",
+  "https://www.swasthalearning.com",
+  "https://portal.swasthalearning.com",
+]);
+const MAX_BYTES = 12_000;
+
+function cors(origin: string | null) {
+  return origin && origins.has(origin)
+    ? { "Access-Control-Allow-Origin": origin, "Vary": "Origin", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }
+    : { "Vary": "Origin" };
+}
+const fail = (reason: string, status: number, origin: string | null) =>
+  NextResponse.json({ ok: false, error: reason }, { status, headers: cors(origin) });
+
+function text(value: unknown, max: number) {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, max);
+}
+
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  return new NextResponse(null, { status: origins.has(origin || "") ? 204 : 403, headers: cors(origin) });
+}
+
+export async function POST(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  if (!origin || !origins.has(origin)) return fail("This form must be submitted from the Swastha Learning Clinic website.", 403, origin);
+  const size = Number(request.headers.get("content-length") || 0);
+  if (size > MAX_BYTES) return fail("Appointment details are too large.", 413, origin);
+  let raw: Record<string, unknown>;
+  try {
+    raw = await request.json() as Record<string, unknown>;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("Invalid request");
+  } catch {
+    return fail("Invalid appointment request.", 400, origin);
+  }
+  // Honeypot, never recorded.
+  if (raw.website) return NextResponse.json({ ok: true }, { headers: cors(origin) });
+  const guardian_name = text(raw.parent ?? raw.guardian_name, 160);
+  const whatsapp_number = text(raw.phone ?? raw.whatsapp_number, 20);
+  const child_name = text(raw.child ?? raw.child_name, 160);
+  const date_of_birth = text(raw.date_of_birth, 10) || null;
+  const age_range = text(raw.age ?? raw.age_range, 80) || null;
+  const current_class = text(raw.current_class ?? raw["class"], 80) || "Not specified";
+  const preferred_date = text(raw.date ?? raw.preferred_date, 10) || null;
+  const preferred_time = text(raw.time ?? raw.preferred_time, 80) || null;
+  const support = text(raw.support, 350);
+  const note = text(raw.message ?? raw.reason, 1500);
+  const reason = [support, note].filter(Boolean).join(" — ").slice(0, 2000);
+  const consent = raw.consent === true;
+  const phonePattern = /^[+\\d\\s()-]{8,20}$/;
+  const validDate = (d: string) => /^\\d{4}-\\d{2}-\\d{2}$/.test(d) && !Number.isNaN(new Date(d + "T00:00:00Z").getTime()) && new Date(d + "T00:00:00Z").toISOString().slice(0,10) === d;
+  if (guardian_name.length < 2 || child_name.length < 2 || !phonePattern.test(whatsapp_number) || !consent ||
+      (!age_range && !date_of_birth) || (date_of_birth && (!validDate(date_of_birth) || date_of_birth > new Date().toISOString().slice(0,10))) ||
+      (preferred_date && !validDate(preferred_date)))
+    return fail("Please complete all required appointment details and consent.", 400, origin);
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return fail("Appointment intake is unavailable.", 503, origin);
+  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error } = await db.from("appointment_enquiries").insert({
+    guardian_name, whatsapp_number, child_name, date_of_birth, age_range, current_class,
+    preferred_date, preferred_time, reason, consent: true, source: "website_appointment"
+  });
+  if (error) {
+    console.error("Appointment intake failed:", error.code);
+    return fail("We could not record your appointment. Please try again.", 503, origin);
+  }
+  return NextResponse.json({ ok: true, message: "Appointment request received." }, { status: 201, headers: cors(origin) });
+}
