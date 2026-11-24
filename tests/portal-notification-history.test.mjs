@@ -36,5 +36,5 @@ test("staff inbox is limited to individually addressed submission events",()=>{
  assert.match(staff,/\.limit\(100\)/);
  assert.doesNotMatch(staff,/\.from\("portal_notification_events"\)\.insert/);
  for(const file of ["app/teacher/dashboard/page.tsx","app/admin/dashboard/page.tsx","app/clinic-admin/dashboard/page.tsx"])
-  assert.match(read(file),/\/staff\/notifications/);
+  assert.match(read(file),/<StaffNotificationsPopup\s*\/>/);
 });

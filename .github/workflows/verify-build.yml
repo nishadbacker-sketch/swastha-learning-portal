@@ -59,6 +59,8 @@ jobs:
         run: node --test tests/appointment-email-regression.test.mjs
       - name: Check planned in-portal assessment and activity notification history
         run: node --test tests/portal-notification-history.test.mjs
+      - name: Verify staff top-bar popup mirrors parent notification controls
+        run: node --test tests/staff-notification-popup.test.mjs
       - name: Require production anonymous security test configuration
         run: |
           if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
