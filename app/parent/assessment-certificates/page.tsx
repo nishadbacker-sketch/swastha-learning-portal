@@ -73,6 +73,7 @@ export default function MyAssessmentCertificates(){
   catch{setError("Unable to generate certificate PDF. Please try again.");}
   finally{setDownloading("");}
  }
+ const pending=reviewed.filter(a=>!items.some(c=>c.assignment_id===a.id));
  return <main style={{minHeight:"100vh",padding:"24px 16px",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
   <div style={{maxWidth:1000,margin:"auto"}}>
    <header style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
@@ -82,26 +83,23 @@ export default function MyAssessmentCertificates(){
    <p style={{fontSize:13,color:"#64748b"}}>Once your child's assessment is reviewed and the clinic has configured its official certificate names, you can download a digitally verifiable PDF directly. Assessment completion does not certify scores or diagnoses.</p>
    {error&&<p role="alert" style={{color:"#b42318"}}>{error}</p>}
    {loading?<p>Loading reviewed assessments and certificates...</p>:<>
-    <section style={{padding:18,border:"1px solid #dce8e1",borderRadius:12,background:"#fff",marginBottom:16}}>
-     <h2 style={{fontSize:19,marginTop:0}}>Reviewed Assessments — Download Certificate</h2>
-     {!reviewed.length?<p>No Teacher-reviewed standard assessments are available for your linked students yet.</p>:
+    {!!pending.length&&<section style={{padding:18,border:"1px solid #dce8e1",borderRadius:12,background:"#fff",marginBottom:16}}>
+     <h2 style={{fontSize:19,marginTop:0}}>New Certificates Available</h2>
       <div style={{display:"grid",gap:12}}>
-       {reviewed.map(a=>{
+       {pending.map(a=>{
         const st=students.find(x=>x.id===a.student_id);
-        const existing=items.find(c=>c.assignment_id===a.id);
         return <article key={a.id} style={{padding:14,border:"1px solid #dce8e1",borderRadius:9,background:"#f8faf7"}}>
          <strong>{st?.full_name||"Student"} ({st?.student_code||"Student ID pending"})</strong>
          <p style={{fontSize:13}}>{levels[a.assessment_level]||a.assessment_level} Learning Assessment · Teacher reviewed</p>
          <button style={{...button,opacity:downloading===a.id?0.6:1}} disabled={!!downloading} onClick={()=>void claimAndDownload(a)}>
-          {downloading===a.id?"Preparing your certificate...":existing?"Download Certificate Again (PDF)":"Download Certificate (PDF)"}
+          {downloading===a.id?"Preparing your certificate...":"Download Certificate (PDF)"}
          </button>
-         {existing&&<a href={"/verify/certificate/"+encodeURIComponent(existing.reference_code)} style={{color:"#176b58",marginLeft:12}} target="_blank" rel="noopener noreferrer">Verify online</a>}
         </article>;
        })}
-      </div>}
-    </section>
+      </div>
+    </section>}
     {!!items.length&&<section style={{padding:18,border:"1px solid #dce8e1",borderRadius:12,background:"#fff"}}>
-     <h2 style={{fontSize:19}}>Previously Issued Certificates</h2>
+     <h2 style={{fontSize:19}}>Download Your Certificates</h2>
      <div style={{display:"grid",gap:12}}>
       {items.map(c=><article key={c.id} style={{padding:14,border:"1px solid #dce8e1",borderRadius:9}}>
        <strong>{c.assessment_title}</strong> — {c.student_name} ({c.student_code})
@@ -111,6 +109,7 @@ export default function MyAssessmentCertificates(){
       </article>)}
      </div>
     </section>}
+   {!pending.length&&!items.length&&<section style={{padding:18,border:"1px solid #dce8e1",borderRadius:12,background:"#fff"}}>No Teacher-reviewed standard assessments are available for your linked students yet.</section>}
    </>}
   </div>
  </main>;
