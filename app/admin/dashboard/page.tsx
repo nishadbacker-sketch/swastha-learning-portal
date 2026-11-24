@@ -89,6 +89,6 @@ export default function AdminDashboard(){
  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><select value={selected[s.id]||""} onChange={e=>setSelected(old=>({...old,[s.id]:e.target.value}))} style={{padding:10,maxWidth:"100%"}} aria-label={"Choose teacher for "+s.full_name}><option value="">Select a teacher</option>{teachers.map((t,i)=>{const p=Array.isArray(t.profiles)?t.profiles[0]:t.profiles;return <option value={t.id} key={t.id}>{p?.full_name&&p.full_name!=="Name not provided"?p.full_name:"Teacher "+(i+1)}</option>})}</select><button style={{...action,opacity:busy===s.id?0.6:1}} disabled={busy===s.id} onClick={()=>assign(s)}>{busy===s.id?"Assigning...":"Assign Teacher"}</button></div>
  </div></section>})}
  </section>
- <p style={{color:"#64748b",fontSize:13}}>Only a Super Admin can assign teachers. Parents cannot remove registered children. A student may have more than one assigned teacher.</p>
+ <p style={{color:"#64748b",fontSize:13}}>Super Admin and Admin can assign teachers to students. Only Super Admin can change account roles. Parents cannot remove registered children. A student may have more than one assigned teacher.</p>
  </div></main>;
 }
