@@ -19,7 +19,7 @@ const panel:React.CSSProperties={border:"1px solid #dce8e1",background:"#fff",bo
 const input:React.CSSProperties={width:"100%",padding:"9px 10px",borderRadius:8,border:"1px solid #cbd5e1",fontSize:13};
 const button:React.CSSProperties={background:"#176b58",color:"#fff",border:0,borderRadius:8,padding:"9px 13px",fontSize:13,fontWeight:700,cursor:"pointer"};
 const date=(s:string|null)=>s?new Date(s).toLocaleDateString("en-IN"):"Not specified";
-const phoneUrl=(raw:string)=>"https://wa.me/"+raw.replace(/\D/g,"");
+const phoneUrl=(raw:string)=>{const n=raw.replace(/\D/g,"");return "https://wa.me/"+(n.length===10?"91"+n:n);};
 
 export default function TeacherAppointments(){
  const router=useRouter();
@@ -69,7 +69,7 @@ export default function TeacherAppointments(){
   else{setMessage("Follow-up saved.");await refresh();}
   setBusy("");
  }
- const visible=records.filter(r=>filter==="all"||filter==="open"?!["completed","not_interested"].includes(r.status):r.status===filter);
+ const visible=records.filter(r=>filter==="all"?true:filter==="open"?!["completed","not_interested"].includes(r.status):r.status===filter);
  const newCount=records.filter(r=>r.status==="new").length;
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35"}}>
   <header style={{background:"white",borderBottom:"1px solid #dce8e1",padding:"15px 5%"}}>
