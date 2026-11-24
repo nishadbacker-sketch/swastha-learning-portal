@@ -85,6 +85,8 @@ jobs:
         run: node --test tests/phase6-student-progress-report.test.mjs
       - name: Verify Phase 6 staging IDP parity and history source guards
         run: node --test tests/phase6-staging-parity-guards.test.mjs
+      - name: Verify Phase 7 sessions and approved Parent summary access controls
+        run: node --test tests/phase7-clinic-sessions.test.mjs
       - name: Verify staging parent and teacher isolation (read-only, opt-in)
         if: ${{ vars.SWASTHA_RUN_STAGING_AUTH_TESTS == 'true' }}
         run: node --test tests/staging-authenticated-readonly.test.mjs
