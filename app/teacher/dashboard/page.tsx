@@ -648,11 +648,8 @@ export default function TeacherDashboard() {
 
         setUserId(uid);
 
-        setTeacherName(
-          data.user.user_metadata?.full_name ||
-            data.user.email ||
-            "Teacher"
-        );
+        const {data:myProfile}=await supabase.from("profiles").select("full_name,staff_code").eq("id",uid).maybeSingle();
+        setTeacherName((myProfile?.full_name||data.user.user_metadata?.full_name||data.user.email||"Teacher")+(myProfile?.staff_code?" · "+myProfile.staff_code:""));
 
         await loadDashboard(uid);
       } catch (err) {
@@ -857,8 +854,7 @@ export default function TeacherDashboard() {
 
   function studentName(id: string) {
     return (
-      students.find((s) => s.id === id)?.full_name ||
-      "Unknown student"
+      ((s)=>s?s.full_name+" · "+(s.student_code||"Student ID pending"):"Unknown student")(students.find((s) => s.id === id))
     );
   }
 
@@ -1366,7 +1362,7 @@ export default function TeacherDashboard() {
                         key={student.id}
                         value={student.id}
                       >
-                        {student.full_name} —{" "}
+                        {student.full_name} · {student.student_code} —{" "}
                         {student.current_class}
                       </option>
                     ))}
@@ -1658,7 +1654,7 @@ export default function TeacherDashboard() {
                         key={student.id}
                         value={student.id}
                       >
-                        {student.full_name}
+                        {student.full_name} · {student.student_code}
                       </option>
                     ))}
                   </select>
@@ -1860,7 +1856,7 @@ export default function TeacherDashboard() {
                       }}
                     >
                       <strong>
-                        {student.full_name}
+                        {student.full_name} · {student.student_code}
                       </strong>
 
                       <div
@@ -1927,7 +1923,7 @@ export default function TeacherDashboard() {
                       key={student.id}
                       value={student.id}
                     >
-                      {student.full_name} —{" "}
+                      {student.full_name} · {student.student_code} —{" "}
                       {student.current_class}
                     </option>
                   ))}
@@ -1946,7 +1942,7 @@ export default function TeacherDashboard() {
                 ) : (
                   <div style={{ marginTop: 22 }}>
                     <h3>
-                      {selectedProfile.full_name}
+                      {selectedProfile.full_name} · {selectedProfile.student_code}
                     </h3>
 
                     <div
