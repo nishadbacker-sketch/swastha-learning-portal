@@ -1,5 +1,6 @@
 "use client";
 import BrandLogo from "../../components/brand-logo";
+import StaffNotificationsPopup from "../../components/staff-notifications-popup";
 
 
 import {useEffect,useState} from "react";
@@ -45,7 +46,7 @@ export default function ClinicAdminDashboard(){
   <header style={{background:"#fff",borderBottom:"1px solid #dce8e1",padding:"16px 5%"}}>
    <div style={{maxWidth:1100,margin:"auto",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
     <div><strong style={{color:"#176b58"}}><BrandLogo /></strong><div style={{fontSize:12,color:"#667a74",marginTop:4}}>ADMIN · OPERATIONS</div></div>
-    <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><button style={{...action,background:"#edf4f0",color:"#176b58"}} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={{...action,background:"#edf4f0",color:"#176b58"}} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div>
+    <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><StaffNotificationsPopup/><button style={{...action,background:"#edf4f0",color:"#176b58"}} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={{...action,background:"#edf4f0",color:"#176b58"}} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div>
    </div>
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"22px 16px 65px"}}>
