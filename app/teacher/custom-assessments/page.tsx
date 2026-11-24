@@ -13,7 +13,7 @@ function makeOptions():AnswerOption[]{return [
 type Category={id:string;title:string;questions:Question[]};
 type Section={id:string;title:string;categories:Category[]};
 type Template={id:string;title:string;description:string;level:string;status:"draft"|"published";structure:Section[];created_by:string;created_at:string};
-type Student={id:string;full_name:string;current_class:string|null};
+type Student={id:string;full_name:string;student_code:string;current_class:string|null};
 type Assignment={id:string;template_id:string;student_id:string;status:string;due_date:string|null;assigned_at:string;answers:Record<string,{score?:string|null;choice?:string|null;written_answer?:string|null;observation:string}>;teacher_feedback:string|null};
 const card:React.CSSProperties={background:"#fff",border:"1px solid #dae8e0",borderRadius:13,padding:16,marginBottom:14};
 const green="#176b58";
@@ -51,7 +51,7 @@ export default function CustomAssessmentBuilder(){
   const [t,a,st]=await Promise.all([
    supabase.from("custom_assessment_templates").select("id,title,description,level,status,structure,created_by,created_at").order("created_at",{ascending:false}),
    supabase.from("custom_assessment_assignments").select("id,template_id,student_id,status,due_date,assigned_at,answers,teacher_feedback").order("assigned_at",{ascending:false}),
-   supabase.from("students").select("id,full_name,current_class").order("full_name")
+   supabase.from("students").select("id,student_code,full_name,current_class").order("full_name")
   ]);
   if(t.error)throw t.error;if(a.error)throw a.error;if(st.error)throw st.error;
   setTemplates((t.data||[]) as Template[]);
@@ -157,7 +157,7 @@ export default function CustomAssessmentBuilder(){
   finally{setBusy(false);}
  }
  const published=templates.filter(x=>x.status==="published");
- const studentName=(id:string)=>{const s=students.find(x=>x.id===id);return s?s.full_name+(s.current_class?" · Class "+s.current_class:""):"Student";};
+ const studentName=(id:string)=>{const s=students.find(x=>x.id===id);return s?s.full_name+" · "+s.student_code+(s.current_class?" · Class "+s.current_class:""):"Student";};
  const selectedReview=assignments.find(x=>x.id===reviewId);
  const reviewTemplate=templates.find(x=>x.id===selectedReview?.template_id);
  const readableAnswers=reviewTemplate?questionsOf(reviewTemplate):[];
