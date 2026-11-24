@@ -25,4 +25,4 @@ Staging migration applied. Transaction-only test with existing assigned active T
 - Live Hostinger deployed commit and role-based browser flows must be separately confirmed before treating this as fully signed off.
 
 ## Release
-Apply `phase8_clinic_session_conflict_detection.sql` to production after successful staging and GitHub CI, then merge the corresponding application pull request. Record checks in release issue #12.
+**Released 24 November 2026:** Staging overlap test passed with rollback; GitHub CI run #325 passed. Production migration `phase8_clinic_session_conflict_detection` applied successfully and conflict trigger verified. PR #18 merged as `aec9d5092d56d3501f32a474bdc7f293ab8dbb3c`. Post-release production counts: 7 students, 14 Teacher links, 3 existing appointment enquiries, and 0 sessions. Existing records and Parent dashboard settings preserved. Hostinger live deployed commit and authenticated role-browser walkthrough remain external verification gates; see issue #12.
