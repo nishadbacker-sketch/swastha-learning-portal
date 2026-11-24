@@ -23,8 +23,8 @@ function Radar({domains}:{domains:Domain[]}){
  // Space labels on the left and right of the chart instead of depending on a numbered key.
  // All percentages are calculated from the selected assessment's saved item scores.
  const width=1100;
- const height=Math.max(720,Math.ceil(items.length/2)*52+120);
- const centerX=width/2,centerY=height/2,rad=208;
+ const height=Math.max(720,Math.ceil(items.length/2)*58+120);
+ const centerX=width/2,centerY=height/2,rad=240;
  const xy=(i:number,r:number)=>{
   const theta=-Math.PI/2+i*2*Math.PI/items.length;
   return [centerX+Math.cos(theta)*r,centerY+Math.sin(theta)*r] as const;
@@ -34,28 +34,32 @@ function Radar({domains}:{domains:Domain[]}){
  const complete=scored.length===items.length;
  const values=items.map((d,i)=>xy(i,rad*(d.mastery??0)/100).join(",")).join(" ");
  const readable=(value:number|null)=>value===null?"Not scored":Math.round(value)+"%";
- const wrap=(label:string)=>{
-  const words=label.split(/\s+/);
-  const lines:string[]=[];
-  let line="";
-  for(const word of words){
-   if(line && (line+" "+word).length>31){lines.push(line);line=word;}
-   else line=line?line+" "+word:word;
+ // Two balanced lines for longer titles, then a dedicated percentage line:
+ // maximum three readable lines, never the old numbered skill list.
+ const wrap=(name:string,percentage:string)=>{
+  const words=name.trim().split(/\s+/).filter(Boolean);
+  if(words.length<=1||name.length<=23)return [name,"("+percentage+")"];
+  let split=1;
+  let smallestDifference=Number.POSITIVE_INFINITY;
+  for(let index=1;index<words.length;index++){
+   const left=words.slice(0,index).join(" ");
+   const right=words.slice(index).join(" ");
+   const difference=Math.abs(left.length-right.length);
+   if(difference<smallestDifference){smallestDifference=difference;split=index;}
   }
-  if(line)lines.push(line);
-  return lines;
+  return [words.slice(0,split).join(" "),words.slice(split).join(" "),"("+percentage+")"];
  };
  const placement=items.map((item,i)=>{
   const [axisX,axisY]=xy(i,rad+12);
   const side=axisX>=centerX?"right":"left";
-  return {item,i,side,axisX,axisY,lines:wrap(item.name+" ("+readable(item.mastery)+")"),labelY:axisY};
+  return {item,i,side,axisX,axisY,lines:wrap(item.name,readable(item.mastery)),labelY:axisY};
  });
  // Reserve line height for long skill names, independently on each side.
  for(const side of ["left","right"]){
   const entries=placement.filter(e=>e.side===side).sort((a,b)=>a.axisY-b.axisY);
   let bottom=26;
   for(const entry of entries){
-   const blockHeight=Math.max(33,entry.lines.length*16+7);
+   const blockHeight=Math.max(44,entry.lines.length*18+8);
    entry.labelY=Math.max(entry.axisY,bottom+blockHeight/2);
    bottom=entry.labelY+blockHeight/2+8;
   }
@@ -86,16 +90,16 @@ function Radar({domains}:{domains:Domain[]}){
    })}
    {placement.map(({item,i,side,axisX,axisY,labelY,lines})=>{
     const isRight=side==="right";
-    const elbowX=isRight?785:315;
-    const textX=isRight?1080:20;
+    const elbowX=isRight?806:294;
+    const textX=isRight?1084:16;
     const color=bandColor(item.mastery);
-    const startY=labelY-(lines.length-1)*8;
+    const startY=labelY-(lines.length-1)*9;
     return <g key={"label-"+item.id}>
-     <polyline points={axisX+","+axisY+" "+elbowX+","+labelY+" "+(isRight?805:295)+","+labelY}
+     <polyline points={axisX+","+axisY+" "+elbowX+","+labelY+" "+(isRight?825:275)+","+labelY}
       fill="none" stroke={item.mastery===null?"#cbd5e1":"#a4b8af"} strokeWidth={1.2}/>
      <text x={textX} y={startY} textAnchor={isRight?"end":"start"}
       dominantBaseline="middle" fontSize="15" fontWeight="600" fill={item.mastery===null?palette.muted:"#183a35"}>
-      {lines.map((line,lineIndex)=><tspan key={lineIndex} x={textX} dy={lineIndex===0?0:16}>{line}</tspan>)}
+      {lines.map((line,lineIndex)=><tspan key={lineIndex} x={textX} dy={lineIndex===0?0:18}>{line}</tspan>)}
      </text>
      <title>{item.area} — {item.name} ({readable(item.mastery)})</title>
     </g>;
@@ -103,7 +107,7 @@ function Radar({domains}:{domains:Domain[]}){
    <text x={centerX} y="22" fontSize="13" fill={palette.muted} textAnchor="middle">Outer ring = 100%</text>
   </svg>
   <p style={{margin:"6px 0",fontSize:12,color:palette.muted}}>
-   {scored.length} of {items.length} sub-domains scored. Each sub-domain is labelled with its readiness percentage in brackets; unscored skills are marked “Not scored”.
+   {scored.length} of {items.length} sub-domains scored. Each sub-domain uses two or three lines with its readiness percentage in brackets; unscored skills are marked “Not scored”.
   </p>
   {!chartReady&&<p role="status" style={{fontSize:12,color:palette.muted}}>Fewer than three scored sub-domains: individual scores are shown without a connected radar area.</p>}
  </div>;

@@ -12,7 +12,7 @@ test("Radar keeps all scored, zero-rated and unscored sub-domains",()=>{
  assert.doesNotMatch(radar,/domains\.filter\(d=>d\.mastery!==null\)/);
 });
 test("Sub-domain names and actual percentages appear directly on diagram",()=>{
- assert.match(radar,/wrap\(item\.name\+" \("\+readable\(item\.mastery\)\+"\)"\)/);
+ assert.match(radar,/lines:wrap\(item\.name,readable\(item\.mastery\)\)/);
  assert.match(radar,/item\.area/);
  assert.match(radar,/placement\.map/);
  assert.match(radar,/<polyline points=/);
@@ -21,10 +21,14 @@ test("Sub-domain names and actual percentages appear directly on diagram",()=>{
  assert.doesNotMatch(radar,/Skill key — numbered sub-domains|key=\{"number-"|\{i\+1\}<\/text>/);
 });
 test("Layout separates labels by side and reserves space for wrapped names",()=>{
- assert.match(radar,/Math\.ceil\(items\.length\/2\)\*52\+120/);
- assert.match(radar,/entry\.lines\.length\*16\+7/);
+ assert.match(radar,/Math\.ceil\(items\.length\/2\)\*58\+120/);
+ assert.match(radar,/entry\.lines\.length\*18\+8/);
  assert.match(radar,/for\(const side of \["left","right"\]\)/);
  assert.match(radar,/textAnchor=\{isRight\?"end":"start"\}/);
+ assert.match(radar,/rad=240/);
+ assert.match(radar,/return \[name,"\("\+percentage\+"\)"\]/);
+ assert.match(radar,/return \[words\.slice\(0,split\)\.join\(" "\),words\.slice\(split\)\.join\(" "\),"\("\+percentage\+"\)"\]/);
+ assert.match(radar,/dy=\{lineIndex===0\?0:18\}/);
 });
 test("Incomplete data are never shown as a fully scored polygon",()=>{
  assert.match(radar,/const complete=scored\.length===items\.length/);
