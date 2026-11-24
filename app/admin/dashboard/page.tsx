@@ -1,5 +1,6 @@
 "use client";
 import BrandLogo from "../../components/brand-logo";
+import StaffNotificationsPopup from "../../components/staff-notifications-popup";
 
 
 import { useEffect, useState } from "react";
@@ -74,7 +75,7 @@ export default function AdminDashboard(){
  const available=students.filter(s=>filter==="all"||!assignments.some(a=>a.student_id===s.id));
  if(loading)return <main style={{padding:35}}>Loading Super Admin dashboard...</main>;
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
- <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><div style={{color:"#64748b",fontSize:12,marginTop:5}}>{creatorMode?"CREATOR / OWNER PORTAL":"SUPER ADMIN PORTAL"}</div></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><button style={{...action,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={action} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div></header>
+ <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><div style={{color:"#64748b",fontSize:12,marginTop:5}}>{creatorMode?"CREATOR / OWNER PORTAL":"SUPER ADMIN PORTAL"}</div></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><StaffNotificationsPopup /><button style={{...action,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={action} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div></header>
  <div style={{maxWidth:1100,margin:"auto",padding:"30px 16px"}}>
  <section style={{...box,background:"#0f4c5c",color:"white"}}><p>LEARN • GROW • THRIVE</p><h1>Welcome, {name}</h1><p>Manage student-to-teacher assignments.</p></section>
  <section style={{background:"#eef7f2",padding:16,borderRadius:12,border:"1px solid #c8e3d4",marginBottom:14}}>
@@ -91,7 +92,7 @@ export default function AdminDashboard(){
  <section style={box}>
   <h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Oversight</h2>
   <p style={{fontSize:13}}>Monitor assessments awaiting teacher review, overdue assignments and approved reports. Review student IDs and open authorised follow-up actions without changing existing records.</p>
-  <button type="button" style={action} onClick={()=>router.push("/admin/assessment-oversight")}>Open Assessment Oversight</button> <button type="button" style={{...action,marginLeft:8}} onClick={()=>router.push("/staff/notifications")}>Staff Notifications</button>
+  <button type="button" style={action} onClick={()=>router.push("/admin/assessment-oversight")}>Open Assessment Oversight</button>
  </section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Question Bank</h2><p style={{fontSize:13}}>Review every LP, UP, HS and HSS question, amend standard wording and review custom questionnaires with revision protection.</p><button style={action} onClick={()=>router.push("/admin/questions")}>Manage All Questions</button></section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Administrator Audit Logs</h2><p style={{fontSize:13}}>Review student updates, assessment approvals, appointment changes, IDP progress and staff permission history.</p><button style={action} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button></section>
