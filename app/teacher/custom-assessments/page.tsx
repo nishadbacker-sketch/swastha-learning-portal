@@ -7,7 +7,19 @@ import { supabase } from "../../../lib/supabase";
 type Question={id:string;text:string;text_ml:string};
 type Category={id:string;title:string;questions:Question[]};
 type Section={id:string;title:string;categories:Category[]};
-type Template={id:string;title:string;description:string;level:string;status:"draft"|"published";structure:Section[];created_by:string;created_at:string};
+type ScoreCode="0"|"1"|"2"|"3"|"NA";
+type ScoringCard=Record<ScoreCode,{en:string;ml:string}>;
+const DEFAULT_SCORING_CARD:ScoringCard={
+ "0":{en:"Not demonstrated",ml:"പ്രകടിപ്പിച്ചിട്ടില്ല"},
+ "1":{en:"Substantial support",ml:"കൂടുതൽ പിന്തുണ ആവശ്യമാണ്"},
+ "2":{en:"Developing",ml:"വികസിച്ചുവരുന്നു"},
+ "3":{en:"Independent",ml:"സ്വതന്ത്രമായി ചെയ്യുന്നു"},
+ "NA":{en:"Not assessed",ml:"വിലയിരുത്തിയിട്ടില്ല"}
+};
+const SCORE_CODES:ScoreCode[]=["0","1","2","3","NA"];
+const SCORE_COLORS:Record<ScoreCode,string>={"0":"#ef4444","1":"#f97316","2":"#0284c7","3":"#10b981","NA":"#64748b"};
+function scoringCard(value?:ScoringCard|null):ScoringCard{return {...DEFAULT_SCORING_CARD,...value};}
+type Template={id:string;title:string;description:string;level:string;status:"draft"|"published";structure:Section[];scoring_guide:ScoringCard;created_by:string;created_at:string};
 type Student={id:string;full_name:string;current_class:string|null};
 type Assignment={id:string;template_id:string;student_id:string;status:string;due_date:string|null;assigned_at:string;answers:Record<string,{score:string|null;observation:string}>;teacher_feedback:string|null};
 const card:React.CSSProperties={background:"#fff",border:"1px solid #dae8e0",borderRadius:15,padding:20,marginBottom:18};
@@ -31,6 +43,7 @@ export default function CustomAssessmentBuilder(){
  const [description,setDescription]=useState("");
  const [level,setLevel]=useState("all");
  const [structure,setStructure]=useState<Section[]>(blank);
+ const [scoringGuide,setScoringGuide]=useState<ScoringCard>(structuredClone(DEFAULT_SCORING_CARD));
  const [templateId,setTemplateId]=useState("");
  const [studentId,setStudentId]=useState("");
  const [dueDate,setDueDate]=useState("");
@@ -43,7 +56,7 @@ export default function CustomAssessmentBuilder(){
  const refresh=useCallback(async()=>{
   if(!supabase)return;
   const [t,a,st]=await Promise.all([
-   supabase.from("custom_assessment_templates").select("id,title,description,level,status,structure,created_by,created_at").order("created_at",{ascending:false}),
+   supabase.from("custom_assessment_templates").select("id,title,description,level,status,structure,scoring_guide,created_by,created_at").order("created_at",{ascending:false}),
    supabase.from("custom_assessment_assignments").select("id,template_id,student_id,status,due_date,assigned_at,answers,teacher_feedback").order("assigned_at",{ascending:false}),
    supabase.from("students").select("id,full_name,current_class").order("full_name")
   ]);
@@ -73,10 +86,12 @@ export default function CustomAssessmentBuilder(){
  function removeSection(si:number){if(structure.length===1)return;changeStructure(s=>s.filter((_,i)=>i!==si));}
  function removeCategory(si:number,ci:number){if(structure[si].categories.length===1)return;changeStructure(s=>{s[si].categories.splice(ci,1);return s;});}
  function removeQuestion(si:number,ci:number,qi:number){if(structure[si].categories[ci].questions.length===1)return;changeStructure(s=>{s[si].categories[ci].questions.splice(qi,1);return s;});}
- function clearEditor(){setEditing(null);setTitle("");setDescription("");setLevel("all");setStructure(blank());setError("");}
- function openEditor(t:Template){setEditing(t.id);setTitle(t.title);setDescription(t.description);setLevel(t.level);setStructure(structuredClone(t.structure));setError("");setNotice("");setMode("builder");window.scrollTo({top:0,behavior:"smooth"});}
- function clone(t:Template){setEditing(null);setTitle(t.title+" (Copy)");setDescription(t.description);setLevel(t.level);setStructure(structuredClone(t.structure));setError("");setMode("builder");window.scrollTo({top:0,behavior:"smooth"});}
+ function clearEditor(){setEditing(null);setTitle("");setDescription("");setLevel("all");setStructure(blank());setScoringGuide(structuredClone(DEFAULT_SCORING_CARD));setError("");}
+ function openEditor(t:Template){setEditing(t.id);setTitle(t.title);setDescription(t.description);setLevel(t.level);setStructure(structuredClone(t.structure));setScoringGuide(scoringCard(t.scoring_guide));setError("");setNotice("");setMode("builder");window.scrollTo({top:0,behavior:"smooth"});}
+ function clone(t:Template){setEditing(null);setTitle(t.title+" (Copy)");setDescription(t.description);setLevel(t.level);setStructure(structuredClone(t.structure));setScoringGuide(scoringCard(t.scoring_guide));setError("");setMode("builder");window.scrollTo({top:0,behavior:"smooth"});}
+ function updateScoreText(code:ScoreCode,lang:"en"|"ml",value:string){setScoringGuide(previous=>({...previous,[code]:{...previous[code],[lang]:value}}));}
  function validate(){
+  for(const code of SCORE_CODES){if(scoringGuide[code].en.trim().length<2)throw new Error("Add an English description for every scoring level.");}
   if(title.trim().length<3)throw new Error("Enter a test title (at least 3 characters).");
   if(!structure.length||structure.length>12)throw new Error("Use 1–12 sections.");
   let total=0;
@@ -94,7 +109,7 @@ export default function CustomAssessmentBuilder(){
   try{
    if(publish)validate();
    else if(title.trim().length<3)throw new Error("Enter a title before saving a draft.");
-   const fields={title:title.trim(),description:description.trim(),level,structure,status:publish?"published":"draft"};
+   const fields={title:title.trim(),description:description.trim(),level,structure,scoring_guide:scoringGuide,status:publish?"published":"draft"};
    let id=editing;
    if(id){
     const {data,error:e}=await supabase.from("custom_assessment_templates").update(fields).eq("id",id).select("id").single();
@@ -154,6 +169,19 @@ export default function CustomAssessmentBuilder(){
      <label style={{display:"block",marginBottom:12}}>Test title *<input style={input} maxLength={150} value={title} placeholder="e.g. Attention & Memory Assessment" onChange={e=>setTitle(e.target.value)}/></label>
      <label style={{display:"block",marginBottom:12}}>Description<textarea style={{...input,minHeight:65}} value={description} onChange={e=>setDescription(e.target.value)} placeholder="Purpose and instructions"/></label>
      <label style={{display:"block",marginBottom:12}}>Suitable level <select style={input} value={level} onChange={e=>setLevel(e.target.value)}><option value="all">All levels</option><option value="LP">LP — Classes 1–4</option><option value="UP">UP — Classes 5–7</option><option value="HS">HS — Classes 8–10</option><option value="HSS">HSS — Classes 11–12</option></select></label>
+     <section style={{...card,background:"#f8faf7"}}>
+       <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+        <div><h3 style={{marginTop:0}}>Scoring Card</h3><p style={{color:"#64748b",fontSize:13}}>Customise how each score is described in English and Malayalam. Numeric values remain fixed for consistent scoring.</p></div>
+        <button type="button" style={outline} onClick={()=>setScoringGuide(structuredClone(DEFAULT_SCORING_CARD))}>Restore Default Labels</button>
+       </div>
+       {SCORE_CODES.map(code=><div key={code} style={{borderTop:"1px solid #e2e8f0",paddingTop:12,marginTop:12}}>
+         <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:9}}><span style={{background:SCORE_COLORS[code],color:"white",padding:"7px 13px",borderRadius:8,fontWeight:700}}>{code}</span><strong>{code==="NA"?"Not assessed / excluded from average":"Score "+code}</strong></div>
+         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:10}}>
+          <label>English description *<input style={input} value={scoringGuide[code].en} maxLength={150} onChange={e=>updateScoreText(code,"en",e.target.value)}/></label>
+          <label>മലയാള വിവരണം<input style={input} value={scoringGuide[code].ml} maxLength={200} onChange={e=>updateScoreText(code,"ml",e.target.value)}/></label>
+         </div>
+       </div>)}
+     </section>
      {structure.map((section,si)=><section key={section.id} style={{...card,background:"#f6faf8",border:"1px solid #b5d9c8"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center",flexWrap:"wrap"}}><h3>Section {si+1}</h3><button disabled={structure.length===1} style={outline} onClick={()=>removeSection(si)}>Remove Section</button></div>
       <input style={input} value={section.title} maxLength={150} aria-label={"Section "+(si+1)+" title"} onChange={e=>editSection(si,"title",e.target.value)}/>
@@ -207,10 +235,20 @@ export default function CustomAssessmentBuilder(){
     })}
     {selectedReview&&reviewTemplate&&<section style={{...card,background:"#f7faf8",marginTop:18}}>
      <h3>{reviewTemplate.title} — {studentName(selectedReview.student_id)}</h3>
+     <section style={{...card,background:"#fff"}}>
+      <h4>Scoring Card</h4>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{SCORE_CODES.map(code=><span key={code} style={{border:"1px solid "+SCORE_COLORS[code],borderRadius:7,padding:9}}><strong>{code}</strong> — {scoringCard(reviewTemplate.scoring_guide)[code].en}</span>)}</div>
+     </section>
+     {readableAnswers.length>0&&(()=>{
+      const rated=readableAnswers.map(q=>selectedReview.answers?.[q.id]?.score).filter(v=>v==="0"||v==="1"||v==="2"||v==="3") as string[];
+      const excluded=readableAnswers.filter(q=>selectedReview.answers?.[q.id]?.score==="NA").length;
+      const mean=rated.length?rated.reduce((sum,v)=>sum+Number(v),0)/rated.length:null;
+      return <section style={{...card,background:"#f0f7f5"}}><h4>Scoring Summary</h4><p>Answered and scored: {rated.length} / {readableAnswers.length} · NA: {excluded}</p><p><strong>Average: {mean===null?"Not rated":mean.toFixed(2)+" / 3"}</strong></p><p style={{fontSize:12,color:"#64748b"}}>Descriptive assessment only; NA responses are excluded from the average.</p></section>;
+     })()}
      {readableAnswers.map((q,i)=>{
       const a=selectedReview.answers?.[q.id];
       return <div key={q.id} style={{borderBottom:"1px solid #dce8e1",padding:"12px 0"}}>
-       <strong>{i+1}. {q.text}</strong><p>Score: {scores.find(x=>x[0]===a?.score)?.join(" — ")||"Not answered"}</p>{a?.observation&&<p>Observation: {a.observation}</p>}
+       <strong>{i+1}. {q.text}</strong><p>Score: {a?.score ? a.score+" — "+(scoringCard(reviewTemplate.scoring_guide)[a.score as ScoreCode]?.en||"") : "Not answered"}</p>{a?.observation&&<p>Observation: {a.observation}</p>}
       </div>;
      })}
      {selectedReview.status==="submitted"?<>
