@@ -71,6 +71,21 @@ export default function DevelopmentPlan({assignmentId,canEdit=false}:{assignment
   {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
   {notice&&<p role="status" style={{color:"#176b58",fontSize:13}}>{notice}</p>}
   {loading?<p>Loading development plan...</p>:<>
+   {canEdit&&<form onSubmit={addGoal} style={{...box,background:"#f3f9f6",marginBottom:0}}>
+    <h3 style={{fontSize:15,margin:"0 0 12px"}}>Add a Development Goal</h3>
+    <div style={{display:"grid",gap:11}}>
+     <label style={{fontSize:12,fontWeight:700}}>Priority goal *
+      <input required minLength={3} maxLength={300} style={{...field,marginTop:5}} value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Improve independent reading comprehension"/>
+     </label>
+     <label style={{fontSize:12,fontWeight:700}}>Activities / support strategies *
+      <textarea required minLength={3} maxLength={4000} rows={3} style={{...field,display:"block",marginTop:5}} value={activity} onChange={e=>setActivity(e.target.value)} placeholder="Describe specific practice activities, supports, and frequency"/>
+     </label>
+     <label style={{fontSize:12,fontWeight:700}}>Target review date
+      <input type="date" style={{...field,marginTop:5,maxWidth:240}} value={target} onChange={e=>setTarget(e.target.value)}/>
+     </label>
+    </div>
+    <button type="submit" disabled={!!busy} style={{...button,marginTop:12,opacity:busy ? 0.65 : 1}}>{busy==="new"?"Adding...":"Add Goal"}</button>
+   </form>}
    <div style={{display:"flex",gap:9,alignItems:"center",flexWrap:"wrap",marginBottom:14}}>
     <strong style={{color:"#176b58"}}>{achieved} / {goals.length} goals achieved</strong>
     <div style={{height:8,flex:"1 1 145px",maxWidth:250,borderRadius:9,background:"#e2e8f0",overflow:"hidden"}}>
@@ -97,21 +112,7 @@ export default function DevelopmentPlan({assignmentId,canEdit=false}:{assignment
      <div><button type="button" disabled={!!busy} style={{...button,opacity:busy ? 0.65 : 1}} onClick={()=>save(g)}>{busy===g.id?"Saving...":"Save Progress"}</button></div>
     </div>:g.progress_notes&&<p style={{fontSize:13,whiteSpace:"pre-wrap",margin:"8px 0 0"}}><strong>Progress notes:</strong> {g.progress_notes}</p>}
    </article>)}
-   {canEdit&&<form onSubmit={addGoal} style={{...box,background:"#f3f9f6",marginBottom:0}}>
-    <h3 style={{fontSize:15,margin:"0 0 12px"}}>Add a Development Goal</h3>
-    <div style={{display:"grid",gap:11}}>
-     <label style={{fontSize:12,fontWeight:700}}>Priority goal *
-      <input required minLength={3} maxLength={300} style={{...field,marginTop:5}} value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Improve independent reading comprehension"/>
-     </label>
-     <label style={{fontSize:12,fontWeight:700}}>Activities / support strategies *
-      <textarea required minLength={3} maxLength={4000} rows={3} style={{...field,display:"block",marginTop:5}} value={activity} onChange={e=>setActivity(e.target.value)} placeholder="Describe specific practice activities, supports, and frequency"/>
-     </label>
-     <label style={{fontSize:12,fontWeight:700}}>Target review date
-      <input type="date" style={{...field,marginTop:5,maxWidth:240}} value={target} onChange={e=>setTarget(e.target.value)}/>
-     </label>
-    </div>
-    <button type="submit" disabled={!!busy} style={{...button,marginTop:12,opacity:busy ? 0.65 : 1}}>{busy==="new"?"Adding...":"Add Goal"}</button>
-   </form>}
+
   </>}
  </section>;
 }
