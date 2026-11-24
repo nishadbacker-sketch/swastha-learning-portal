@@ -14,7 +14,7 @@ export default function BrandLogo({ footer = false }: { footer?: boolean }) {
       height={footer ? 103 : 80}
       loading="eager"
       onError={() => setFailed(true)}
-      style={{ width: footer ? "min(310px, 100%)" : "min(240px, 100%)", height: "auto", display: "block", objectFit: "contain" }}
+      style={{ width: footer ? "min(310px, 100%)" : "min(240px, 100%)", height: "auto", display: "block", objectFit: "contain", background: "#fff", borderRadius: 6, padding: "3px 5px", boxSizing: "border-box" }}
     />
   );
 }
