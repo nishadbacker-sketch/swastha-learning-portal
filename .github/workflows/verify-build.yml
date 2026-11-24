@@ -95,6 +95,8 @@ jobs:
         run: node --test tests/holistic-radar-skill-markers.test.mjs
       - name: Verify unified main-website-style footer layout and Parent preservation
         run: node --test tests/main-site-footer-layout.test.mjs
+      - name: Verify role-based learning diagrams, reviewed results and empty-state privacy
+        run: node --test tests/role-based-learning-insights-charts.test.mjs
       - name: Verify staging parent and teacher isolation (read-only, opt-in)
         if: ${{ vars.SWASTHA_RUN_STAGING_AUTH_TESTS == 'true' }}
         run: node --test tests/staging-authenticated-readonly.test.mjs
