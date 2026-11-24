@@ -24,11 +24,11 @@ export default function ClinicAdminDashboard(){
     if(authError||!auth.user){router.replace("/login");return;}
     const {data:role,error:roleError}=await supabase.from("user_roles").select("role").eq("user_id",auth.user.id).single();
     if(roleError||role?.role!=="clinic_admin"){router.replace("/login");return;}
-    const {data:profile}=await supabase.from("profiles").select("full_name").eq("id",auth.user.id).maybeSingle();
+    const {data:profile}=await supabase.from("profiles").select("full_name,staff_code").eq("id",auth.user.id).maybeSingle();
     const {data:enquiries,error:queryError}=await supabase.from("appointment_enquiries").select("status").limit(1000);
     if(queryError)throw queryError;
     if(live){
-     setName(profile?.full_name||"Admin");
+     setName((profile?.full_name||"Admin")+(profile?.staff_code?" · "+profile.staff_code:""));
      const rows=enquiries||[];
      setCounts({new:rows.filter(x=>x.status==="new").length,open:rows.filter(x=>!["completed","not_interested"].includes(x.status)).length,total:rows.length});
     }
