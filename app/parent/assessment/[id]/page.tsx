@@ -517,7 +517,7 @@ export default function ParentAssessmentPage() {
           >
             <div>
               <small>Student</small>
-              <p><strong>{student.full_name}</strong></p>
+              <p><strong>{student.full_name} · {student.student_code}</strong></p>
             </div>
 
             <div>
