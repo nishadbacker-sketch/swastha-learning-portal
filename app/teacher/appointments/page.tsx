@@ -32,7 +32,7 @@ export default function TeacherAppointments(){
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
  const [message,setMessage]=useState("");
- const [filter,setFilter]=useState("open");
+ const [filter,setFilter]=useState("all");
  const [userId,setUserId]=useState("");
  const [accountRole,setAccountRole]=useState("teacher");
  const [history,setHistory]=useState<History[]>([]);
@@ -119,7 +119,7 @@ export default function TeacherAppointments(){
   }
   setBusy("");
  }
- const visible=records.filter(r=>filter==="all"?true:filter==="open"?!["completed","not_interested"].includes(r.status):filter==="registered"?registrationLinks.some(l=>l.enquiry_id===r.id):r.status===filter);
+ const visible=records.filter(r=>filter==="all"?true:filter==="open"?!["completed","not_interested"].includes(r.status):filter==="closed"?["completed","not_interested"].includes(r.status):filter==="registered"?registrationLinks.some(l=>l.enquiry_id===r.id):r.status===filter);
  const newCount=records.filter(r=>r.status==="new").length;
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35"}}>
   <header style={{background:"white",borderBottom:"1px solid #dce8e1",padding:"15px 5%"}}>
@@ -132,10 +132,10 @@ export default function TeacherAppointments(){
    <h1 style={{fontSize:25,margin:"0 0 6px"}}>Appointment Follow-up</h1>
    <p style={{fontSize:13,color:"#64748b"}}>Website appointment requests are routed to the clinic's authorised teacher queue. Contact guardians and record the outcome here.</p>
    <div style={{...panel,display:"flex",gap:10,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap"}}>
-    <strong>{newCount} new · {records.length} total enquiries</strong>
+    <strong>{newCount} new · {records.filter(r=>["completed","not_interested"].includes(r.status)).length} closed · {records.length} total enquiries</strong>
     <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>Show
      <select style={{...input,width:"auto"}} value={filter} onChange={e=>setFilter(e.target.value)}>
-      <option value="open">Open follow-ups</option><option value="all">All enquiries</option><option value="registered">Linked registered users</option>
+      <option value="all">All enquiries (including closed)</option><option value="open">Open follow-ups</option><option value="closed">Closed follow-ups</option><option value="registered">Linked registered users</option>
       {statusList.map(s=><option key={s.key} value={s.key}>{s.label}</option>)}
      </select>
     </label>
