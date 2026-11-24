@@ -55,6 +55,8 @@ jobs:
         run: node --test tests/assessment-workflow-regression.test.mjs
       - name: Verify email authentication and recovery UI safeguards
         run: node --test tests/email-auth-regression.test.mjs
+      - name: Check appointment staff notification safety (no emails sent)
+        run: node --test tests/appointment-email-regression.test.mjs
       - name: Require production anonymous security test configuration
         run: |
           if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
