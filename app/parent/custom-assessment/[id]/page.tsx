@@ -5,11 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 
 type Choice={id:"1"|"2"|"3";text:string;text_ml:string};
-type Question={id:string;text:string;text_ml:string;response_type?:"rating"|"multiple_choice";options?:Choice[]};
+type Question={id:string;text:string;text_ml:string;response_type?:"rating"|"multiple_choice"|"written";options?:Choice[]};
 type Category={id:string;title:string;questions:Question[]};
 type Section={id:string;title:string;categories:Category[]};
 type Template={id:string;title:string;description:string;level:string;structure:Section[];status:string};
-type Answer={score?:string|null;choice?:string|null;observation:string};
+type Answer={score?:string|null;choice?:string|null;written_answer?:string|null;observation:string};
 type Assignment={id:string;student_id:string;status:string;due_date:string|null;answers:Record<string,Answer>;teacher_feedback:string|null;reviewed_at:string|null;template_id:string};
 const palette:[string,string,string][]=[
  ["1","Needs support","#f97316"],
@@ -56,13 +56,17 @@ export default function CustomAssessmentPage(){
  const tr=(en:string,translation:string)=>ml?translation:en;
  const sections=template?.structure||[];
  const items=sections.flatMap((section,si)=>section.categories.flatMap((category,ci)=>category.questions.map((q,qi)=>({id:q.id,section:section.title,category:category.title,si,ci,qi,text:q.text,text_ml:q.text_ml,response_type:q.response_type,options:q.options}))));
- const missing=items.filter(x=>x.response_type==="multiple_choice" ? answers[x.id]?.choice==null : answers[x.id]?.score==null);
+ const missing=items.filter(x=>x.response_type==="multiple_choice"
+  ? answers[x.id]?.choice==null
+  : x.response_type==="written"
+    ? !answers[x.id]?.written_answer?.trim()
+    : answers[x.id]?.score==null);
  const total=items.length,done=total-missing.length;
  const status=assessment?.status||"assigned";
  const readOnly=status==="submitted"||status==="reviewed";
  const progress=total?Math.round(done/total*100):0;
  function answer(id:string,patch:Partial<Answer>){
-  setAnswers(previous=>({...previous,[id]:{score:previous[id]?.score??null,choice:previous[id]?.choice??null,observation:previous[id]?.observation??"",...patch}}));
+  setAnswers(previous=>({...previous,[id]:{score:previous[id]?.score??null,choice:previous[id]?.choice??null,written_answer:previous[id]?.written_answer??"",observation:previous[id]?.observation??"",...patch}}));
   setMessage("");
  }
  function languageChange(next:"en"|"ml"){setLanguage(next);try{localStorage.setItem("swastha-assessment-language",next);}catch{/* optional */}}
@@ -104,7 +108,8 @@ export default function CustomAssessmentPage(){
       const vals=ratingItems.map(item=>answers[item.id]?.score).filter(v=>v==="0"||v==="1"||v==="2"||v==="3") as string[];
       const na=ratingItems.filter(item=>answers[item.id]?.score==="NA").length;
       const choices=items.filter(item=>item.response_type==="multiple_choice"&&answers[item.id]?.choice!=null).length;
-      return <p>{tr("Rated questions","സ്കോർ ചെയ്ത ചോദ്യങ്ങൾ")}: {vals.length}/{ratingItems.length} · NA: {na} · {tr("Choices answered","തിരഞ്ഞെടുത്ത ഉത്തരങ്ങൾ")}: {choices} · {tr("Average","ശരാശരി")}: <strong>{vals.length?(vals.reduce((sum,v)=>sum+Number(v),0)/vals.length).toFixed(2)+" / 3":tr("Not rated","സ്കോർ ലഭ്യമല്ല")}</strong></p>;
+      const written=items.filter(item=>item.response_type==="written"&&Boolean(answers[item.id]?.written_answer?.trim())).length;
+      return <p>{tr("Rated questions","സ്കോർ ചെയ്ത ചോദ്യങ്ങൾ")}: {vals.length}/{ratingItems.length} · NA: {na} · {tr("Choices answered","തിരഞ്ഞെടുത്ത ഉത്തരങ്ങൾ")}: {choices} · {tr("Written answers","എഴുതിയ ഉത്തരങ്ങൾ")}: {written} · {tr("Average","ശരാശരി")}: <strong>{vals.length?(vals.reduce((sum,v)=>sum+Number(v),0)/vals.length).toFixed(2)+" / 3":tr("Not rated","സ്കോർ ലഭ്യമല്ല")}</strong></p>;
      })()}<p style={{fontSize:12,color:"#64748b"}}>{tr("NA is excluded from the average. This is a descriptive score, not a diagnosis.","ശരാശരി കണക്കാക്കുമ്പോൾ NA ഉൾപ്പെടുത്തുന്നില്ല. ഇത് ഒരു വിവരണാത്മക സ്കോറാണ്, രോഗനിർണയമല്ല.")}</p></section><h3>{tr("Teacher Feedback","അധ്യാപകന്റെ അഭിപ്രായം")}</h3><p style={{whiteSpace:"pre-wrap"}}>{assessment.teacher_feedback||tr("No written feedback provided.","രേഖാമൂലമുള്ള അഭിപ്രായം നൽകിയിട്ടില്ല.")}</p></>}
      <button style={btn} onClick={()=>router.push("/parent/dashboard")}>{tr("Return to Dashboard","ഡാഷ്‌ബോർഡിലേക്ക് മടങ്ങുക")}</button>
     </section>
@@ -117,7 +122,7 @@ export default function CustomAssessmentPage(){
      </button>)}
     </section>}
     <section style={panel}><h3>{tr("How to Answer","ഉത്തരം നൽകേണ്ട വിധം")}</h3>
-     <p>{tr("For rating questions choose 1, 2 or 3 (or NA). For multiple-choice questions choose one of the three written answers.","റേറ്റിംഗ് ചോദ്യങ്ങൾക്ക് 1, 2, 3 അല്ലെങ്കിൽ NA തിരഞ്ഞെടുക്കുക. മൂന്ന് ഉത്തരങ്ങളുള്ള ചോദ്യങ്ങൾക്ക് നൽകിയിരിക്കുന്ന ഉത്തരങ്ങളിൽ ഒന്ന് തിരഞ്ഞെടുക്കുക.")}</p>
+     <p>{tr("For rating questions choose 1, 2 or 3 (or NA). For multiple-choice questions select an option. For written questions type your own answer.","റേറ്റിംഗ് ചോദ്യങ്ങൾക്ക് 1, 2, 3 അല്ലെങ്കിൽ NA തിരഞ്ഞെടുക്കുക. ഓപ്ഷൻ ചോദ്യങ്ങൾക്ക് ഒരു ഉത്തരം തിരഞ്ഞെടുക്കുക. എഴുത്തുചോദ്യങ്ങൾക്ക് സ്വന്തം വാക്കുകളിൽ ഉത്തരം എഴുതുക.")}</p>
     </section>
     <section style={panel}><h3>{tr("Assessment Sections","വിലയിരുത്തൽ വിഭാഗങ്ങൾ")}</h3><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{sections.map((s,si)=>{
      const ids=s.categories.flatMap(c=>c.questions.map(q=>q.id));
@@ -129,9 +134,19 @@ export default function CustomAssessmentPage(){
       <h3 style={{background:"#e0f2f1",padding:13,borderRadius:8}}>{cat.title}</h3>
       {cat.questions.map((q,qi)=>{
        const a=answers[q.id];
-       return <div key={q.id} id={"custom-question-"+q.id} style={{padding:"17px 12px",borderBottom:"1px solid #e2e8f0",borderLeft:showUnanswered&&(q.response_type==="multiple_choice"?a?.choice==null:a?.score==null)?"4px solid #f59e0b":"4px solid transparent",background:showUnanswered&&(q.response_type==="multiple_choice"?a?.choice==null:a?.score==null)?"#fffbeb":"transparent",scrollMarginTop:100}}>
+       return <div key={q.id} id={"custom-question-"+q.id} style={{padding:"17px 12px",borderBottom:"1px solid #e2e8f0",borderLeft:showUnanswered&&(q.response_type==="multiple_choice"?a?.choice==null:q.response_type==="written"?!a?.written_answer?.trim():a?.score==null)?"4px solid #f59e0b":"4px solid transparent",background:showUnanswered&&(q.response_type==="multiple_choice"?a?.choice==null:q.response_type==="written"?!a?.written_answer?.trim():a?.score==null)?"#fffbeb":"transparent",scrollMarginTop:100}}>
         <p style={{fontWeight:700,lineHeight:1.6}}>{String.fromCharCode(65+ci)}.{qi+1} — {ml&&q.text_ml?q.text_ml:q.text}</p>
-        {q.response_type==="multiple_choice"
+        {q.response_type==="written"
+        ? <label style={{display:"block",marginBottom:14}}>
+           <span style={{display:"block",marginBottom:8,fontWeight:600}}>{tr("Write your answer in your own words","നിങ്ങളുടെ സ്വന്തം വാക്കുകളിൽ ഉത്തരം എഴുതുക")}</span>
+           <textarea style={{...control,minHeight:165,resize:"vertical",lineHeight:1.6}}
+            rows={7} maxLength={5000}
+            value={a?.written_answer||""}
+            placeholder={tr("Type your answer here...","നിങ്ങളുടെ ഉത്തരം ഇവിടെ എഴുതുക...")}
+            onChange={event=>answer(q.id,{score:null,choice:null,written_answer:event.target.value})}/>
+           <small style={{color:"#64748b"}}>{(a?.written_answer||"").length}/5000 {tr("characters","അക്ഷരങ്ങൾ")}</small>
+          </label>
+        : q.response_type==="multiple_choice"
         ? <div role="radiogroup" aria-label={tr("Choose one answer","ഒരു ഉത്തരം തിരഞ്ഞെടുക്കുക")} style={{display:"grid",gap:9,marginBottom:12}}>
            {(q.options||[]).map(opt=><button type="button" role="radio" aria-checked={a?.choice===opt.id} key={opt.id}
              onClick={()=>answer(q.id,{score:null,choice:opt.id})}
