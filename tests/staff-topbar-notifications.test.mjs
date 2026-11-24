@@ -25,7 +25,7 @@ test("staff acknowledgement database restricts writes to addressed events",()=>{
  assert.match(sql,/ENABLE ROW LEVEL SECURITY/);
  assert.match(sql,/GRANT SELECT,INSERT/);
  assert.match(sql,/e\.recipient_user_id=\(SELECT auth\.uid\(\)\)/);
- assert.match(sql,/recipient_user_id=\(SELECT auth\.uid\(\)\)/);
+ assert.match(sql,/user_id=\(SELECT auth\.uid\(\)\)/);
  assert.match(sql,/ur\.role IN \('teacher','admin','clinic_admin','owner'\)/);
  assert.doesNotMatch(sql,/GRANT (UPDATE|DELETE)/);
 });
