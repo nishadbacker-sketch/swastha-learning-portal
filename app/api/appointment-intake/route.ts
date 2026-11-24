@@ -31,9 +31,31 @@ export async function POST(request: NextRequest) {
   if (!origin || !origins.has(origin)) return fail("This form must be submitted from the Swastha Learning Clinic website.", 403, origin);
   const size = Number(request.headers.get("content-length") || 0);
   if (size > MAX_BYTES) return fail("Appointment details are too large.", 413, origin);
+  // Enforce the actual streamed payload size, not only the caller-supplied
+  // Content-Length header, which can be absent or misleading.
   let raw: Record<string, unknown>;
   try {
-    raw = await request.json() as Record<string, unknown>;
+    const reader = request.body?.getReader();
+    if (!reader) return fail("Invalid appointment request.", 400, origin);
+    const chunks: Uint8Array[] = [];
+    let bytes = 0;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_BYTES) {
+        await reader.cancel().catch(() => undefined);
+        return fail("Appointment details are too large.", 413, origin);
+      }
+      chunks.push(value);
+    }
+    const buffer = new Uint8Array(bytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      buffer.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    raw = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer)) as Record<string, unknown>;
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("Invalid request");
   } catch {
     return fail("Invalid appointment request.", 400, origin);
