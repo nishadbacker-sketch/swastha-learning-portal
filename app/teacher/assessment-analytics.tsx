@@ -16,70 +16,96 @@ const bandColor=(pct:number|null)=>pct===null?"#94a3b8":pct>=80?palette.green:pc
 const label=(score:string|null)=>score==="3"?"Independent":score==="2"?"Developing":score==="1"?"Substantial support":score==="0"?"Not demonstrated":score==="NA"?"Not assessed":"Not answered";
 
 function Radar({domains}:{domains:Domain[]}){
- // Keep every assessment sub-domain on a stable numbered axis, including unscored skills.
- // A 0% rating is a scored skill, while null means there is no numeric evidence yet.
  const items=domains;
  const scored=items.filter(d=>d.mastery!==null);
  if(items.length<3)return <p style={{color:palette.muted}}>At least three sub-domains are needed for a radar chart.</p>;
- const size=600,center=size/2,rad=204;
+
+ // Space labels on the left and right of the chart instead of depending on a numbered key.
+ // All percentages are calculated from the selected assessment's saved item scores.
+ const width=1100;
+ const height=Math.max(720,Math.ceil(items.length/2)*52+120);
+ const centerX=width/2,centerY=height/2,rad=208;
  const xy=(i:number,r:number)=>{
   const theta=-Math.PI/2+i*2*Math.PI/items.length;
-  return [center+Math.cos(theta)*r,center+Math.sin(theta)*r] as const;
+  return [centerX+Math.cos(theta)*r,centerY+Math.sin(theta)*r] as const;
  };
  const polygon=(f:number)=>items.map((_,i)=>xy(i,rad*f).join(",")).join(" ");
  const chartReady=scored.length>=3;
  const complete=scored.length===items.length;
  const values=items.map((d,i)=>xy(i,rad*(d.mastery??0)/100).join(",")).join(" ");
  const readable=(value:number|null)=>value===null?"Not scored":Math.round(value)+"%";
- return <div style={{display:"flex",alignItems:"flex-start",gap:16,flexWrap:"wrap"}}>
-  <div style={{flex:"1 1 340px",maxWidth:570,minWidth:0}}>
-   <svg viewBox="0 0 600 600" role="img" aria-label={"Holistic competency radar with "+items.length+" numbered skills, "+scored.length+" scored"} style={{width:"100%",height:"auto"}}>
-    <title>Numbered skill competencies: see the matching skill key beside this diagram</title>
-    {[.25,.5,.75,1].map(f=><polygon key={f} points={polygon(f)} fill="none" stroke="#dbe6e0" strokeWidth={1}/>)}
-    {items.map((item,i)=>{
-     const [x,y]=xy(i,rad);
-     return <line key={"axis-"+item.id} x1={center} y1={center} x2={x} y2={y} stroke="#dbe6e0" strokeWidth={1}/>;
-    })}
-    {chartReady&&complete&&<polygon points={values} fill="rgba(23,107,88,.16)" stroke={palette.green} strokeWidth={2.5}/>}
-    {items.map((item,i)=>{
-     const numeric=item.mastery;
-     if(numeric===null)return null;
-     const [x,y]=xy(i,rad*numeric/100);
-     const color=bandColor(numeric);
-     return <g key={"score-"+item.id}>
-      {!complete&&<line x1={center} y1={center} x2={x} y2={y} stroke={color} strokeWidth={3} strokeLinecap="round"/>}
-      <circle cx={x} cy={y} r={numeric===0?6:4.6} fill={color} stroke="#fff" strokeWidth={1.5}>
-       <title>{i+1}. {item.name}: {readable(numeric)}</title>
-      </circle>
-     </g>;
-    })}
-    {items.map((item,i)=>{
-     const [x,y]=xy(i,rad+30);
-     const value=item.mastery;
-     const color=bandColor(value);
-     return <g key={"number-"+item.id}>
-      <circle cx={x} cy={y} r={items.length>48?11:13} fill={value===null?"#f1f5f9":"#fff"} stroke={color} strokeWidth={value===null?1:2}/>
-      <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={items.length>48?9:11} fontWeight="700" fill={value===null?"#64748b":color}>{i+1}</text>
-      <title>{i+1}. {item.area} — {item.name}: {readable(value)}</title>
-     </g>;
-    })}
-    <text x={center} y="26" fontSize="12" fill={palette.muted} textAnchor="middle">Skill numbers match the key · Outer ring = 100%</text>
-   </svg>
-   <p style={{margin:"2px 0",fontSize:12,color:palette.muted}}>
-    {scored.length} of {items.length} sub-domains scored. Coloured dots show measured scores; grey numbers mean not scored. Scores of 0% are marked at the centre.
-   </p>
-   {!chartReady&&<p role="status" style={{fontSize:12,color:palette.muted}}>Fewer than three scored skills: individual markers are shown without a connected radar area.</p>}
-  </div>
-  <div style={{flex:"1 1 240px",minWidth:0,fontSize:12}}>
-   <strong style={{display:"block",marginBottom:8}}>Skill key — numbered sub-domains</strong>
-   <div style={{maxHeight:390,overflowY:"auto",paddingRight:5}}>
-    {items.map((item,i)=><div key={item.id} style={{display:"flex",gap:9,alignItems:"flex-start",padding:"6px 0",borderBottom:"1px solid #edf1ed"}}>
-     <span style={{flex:"0 0 25px",display:"inline-grid",placeItems:"center",border:"1px solid "+bandColor(item.mastery),borderRadius:16,height:25,color:bandColor(item.mastery),fontWeight:700}}>{i+1}</span>
-     <span style={{flex:1,minWidth:0}}><span style={{fontWeight:600}}>{item.name}</span><small style={{display:"block",color:palette.muted}}>{item.area}</small></span>
-     <strong style={{color:bandColor(item.mastery),whiteSpace:"nowrap"}}>{readable(item.mastery)}</strong>
-    </div>)}
-   </div>
-  </div>
+ const wrap=(label:string)=>{
+  const words=label.split(/\s+/);
+  const lines:string[]=[];
+  let line="";
+  for(const word of words){
+   if(line && (line+" "+word).length>31){lines.push(line);line=word;}
+   else line=line?line+" "+word:word;
+  }
+  if(line)lines.push(line);
+  return lines;
+ };
+ const placement=items.map((item,i)=>{
+  const [axisX,axisY]=xy(i,rad+12);
+  const side=axisX>=centerX?"right":"left";
+  return {item,i,side,axisX,axisY,lines:wrap(item.name+" ("+readable(item.mastery)+")"),labelY:axisY};
+ });
+ // Reserve line height for long skill names, independently on each side.
+ for(const side of ["left","right"]){
+  const entries=placement.filter(e=>e.side===side).sort((a,b)=>a.axisY-b.axisY);
+  let bottom=26;
+  for(const entry of entries){
+   const blockHeight=Math.max(33,entry.lines.length*16+7);
+   entry.labelY=Math.max(entry.axisY,bottom+blockHeight/2);
+   bottom=entry.labelY+blockHeight/2+8;
+  }
+  const excess=Math.max(0,bottom-(height-22));
+  if(excess)for(const entry of entries)entry.labelY-=excess;
+ }
+ return <div style={{width:"100%"}}>
+  <svg viewBox={"0 0 "+width+" "+height} role="img"
+   aria-label={"Holistic sub-domain competency radar with "+items.length+" named skills and their percentages"}
+   style={{width:"100%",height:"auto",display:"block"}}>
+   <title>Sub-domain names and current readiness percentages are labelled directly on their radar axes</title>
+   {[.25,.5,.75,1].map(f=><polygon key={f} points={polygon(f)} fill="none" stroke="#dbe6e0" strokeWidth={1}/>)}
+   {items.map((item,i)=>{
+    const [x,y]=xy(i,rad);
+    return <line key={"axis-"+item.id} x1={centerX} y1={centerY} x2={x} y2={y} stroke="#dbe6e0" strokeWidth={1}/>;
+   })}
+   {chartReady&&complete&&<polygon points={values} fill="rgba(23,107,88,.16)" stroke={palette.green} strokeWidth={2.5}/>}
+   {items.map((item,i)=>{
+    if(item.mastery===null)return null;
+    const [x,y]=xy(i,rad*item.mastery/100);
+    const color=bandColor(item.mastery);
+    return <g key={"score-"+item.id}>
+     {!complete&&<line x1={centerX} y1={centerY} x2={x} y2={y} stroke={color} strokeWidth={3} strokeLinecap="round"/>}
+     <circle cx={x} cy={y} r={item.mastery===0?6:4.6} fill={color} stroke="#fff" strokeWidth={1.5}>
+      <title>{item.name}: {readable(item.mastery)}</title>
+     </circle>
+    </g>;
+   })}
+   {placement.map(({item,i,side,axisX,axisY,labelY,lines})=>{
+    const isRight=side==="right";
+    const elbowX=isRight?785:315;
+    const textX=isRight?1080:20;
+    const color=bandColor(item.mastery);
+    const startY=labelY-(lines.length-1)*8;
+    return <g key={"label-"+item.id}>
+     <polyline points={axisX+","+axisY+" "+elbowX+","+labelY+" "+(isRight?805:295)+","+labelY}
+      fill="none" stroke={item.mastery===null?"#cbd5e1":"#a4b8af"} strokeWidth={1.2}/>
+     <text x={textX} y={startY} textAnchor={isRight?"end":"start"}
+      dominantBaseline="middle" fontSize="15" fontWeight="600" fill={item.mastery===null?palette.muted:"#183a35"}>
+      {lines.map((line,lineIndex)=><tspan key={lineIndex} x={textX} dy={lineIndex===0?0:16}>{line}</tspan>)}
+     </text>
+     <title>{item.area} — {item.name} ({readable(item.mastery)})</title>
+    </g>;
+   })}
+   <text x={centerX} y="22" fontSize="13" fill={palette.muted} textAnchor="middle">Outer ring = 100%</text>
+  </svg>
+  <p style={{margin:"6px 0",fontSize:12,color:palette.muted}}>
+   {scored.length} of {items.length} sub-domains scored. Each sub-domain is labelled with its readiness percentage in brackets; unscored skills are marked “Not scored”.
+  </p>
+  {!chartReady&&<p role="status" style={{fontSize:12,color:palette.muted}}>Fewer than three scored sub-domains: individual scores are shown without a connected radar area.</p>}
  </div>;
 }
 
