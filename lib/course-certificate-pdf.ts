@@ -72,11 +72,11 @@ export async function downloadCourseCertificatePDF(c:CourseCertificate){
 
  pdf.setDrawColor(185,152,54);pdf.line(43,166,108,166);pdf.line(177,166,239,166);
  pdf.setTextColor(8,93,54);pdf.setFont("helvetica","bold");pdf.setFontSize(9);
- pdf.text(c.programme_coordinator,75,173,{align:"center"});
- pdf.text(c.approving_director,208,173,{align:"center"});
+ pdf.text("Programme Coordinator",75,173,{align:"center"});
+ pdf.text("Clinical Director",208,173,{align:"center"});
  pdf.setTextColor(40,45,48);pdf.setFont("helvetica","normal");pdf.setFontSize(8);
- pdf.text("Programme Coordinator",75,179,{align:"center"});
- pdf.text("Clinical Director",208,179,{align:"center"});
+ pdf.text(c.programme_coordinator,75,179,{align:"center"});
+ pdf.text(c.approving_director,208,179,{align:"center"});
  pdf.setTextColor(10,86,46);pdf.setFont("helvetica","bold");pdf.setFontSize(8.1);
  pdf.text("Issue date:",28,192);
  pdf.setFont("helvetica","normal");pdf.text(new Date(c.issued_at).toLocaleDateString("en-GB",{timeZone:"Asia/Kolkata"}),48,192);
