@@ -23,3 +23,15 @@ test("audit enumerates all privileged RPCs and documents staged release limits",
  assert.match(inventory,/Production unchanged pending release/);
  assert.match(inventory,/Leaked Password Protection/);
 });
+
+test("staging role-positive CI gate is non-production, opt-in and never modifies roles",()=>{
+ const workflow=read(".github/workflows/verify-build.yml");
+ const script=read("tests/staging-phase5-role-positive.test.mjs");
+ assert.match(workflow,/SWASTHA_RUN_PHASE5_ROLE_TESTS == 'true'/);
+ assert.match(workflow,/node --test tests\/staging-phase5-role-positive\.test\.mjs/);
+ assert.match(script,/cuxftykygloeczviknbn\.supabase\.co/);
+ assert.match(script,/SWASTHA_STAGING_OWNER_USER_ID/);
+ assert.match(script,/\["admin","ADMIN"\],\["clinic_admin","CLINIC_ADMIN"\]/);
+ assert.doesNotMatch(script,/\.from\("user_roles"\)\.update/);
+ assert.doesNotMatch(script,/\.from\("user_roles"\)\.insert/);
+});
