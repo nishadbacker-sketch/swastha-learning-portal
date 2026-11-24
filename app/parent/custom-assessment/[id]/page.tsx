@@ -99,7 +99,7 @@ export default function CustomAssessmentPage(){
    {readOnly?
     <section style={panel}><h2>{status==="reviewed"?tr("Teacher Review Complete","അധ്യാപക പരിശോധന പൂർത്തിയായി"):tr("Submitted for Review","പരിശോധനയ്ക്കായി സമർപ്പിച്ചു")}</h2>
      <p>{tr("Your submitted answers are locked.","സമർപ്പിച്ച ഉത്തരങ്ങൾ ഇനി തിരുത്താൻ കഴിയില്ല.")}</p>
-     {status==="reviewed"&&<section style={{...panel,background:"#f0f7f5"}}><h3>{tr("Scoring Summary","സ്കോറിംഗ് സംഗ്രഹം")}</h3>{(()=>{
+     {status==="reviewed"&&<><section style={{...panel,background:"#f0f7f5"}}><h3>{tr("Scoring Summary","സ്കോറിംഗ് സംഗ്രഹം")}</h3>{(()=>{
       const ratingItems=items.filter(item=>item.response_type!=="multiple_choice");
       const vals=ratingItems.map(item=>answers[item.id]?.score).filter(v=>v==="0"||v==="1"||v==="2"||v==="3") as string[];
       const na=ratingItems.filter(item=>answers[item.id]?.score==="NA").length;
