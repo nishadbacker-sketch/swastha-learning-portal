@@ -9,6 +9,7 @@ import {
   type AssessmentLevel,
   type AssessmentScore,
 } from "../../../../lib/assessment-data";
+import { LP_MALAYALAM_QUESTIONS, LP_MALAYALAM_INTERVIEW, LP_MALAYALAM_TALENTS, LP_MALAYALAM_AREAS, LP_MALAYALAM_DOMAINS } from "../../../../lib/assessment-ml";
 
 type Answer = {
   score: AssessmentScore | null;
@@ -93,6 +94,19 @@ export default function ParentAssessmentPage() {
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [successPopup, setSuccessPopup] = useState(false);
   const [activeArea, setActiveArea] = useState(0);
+  const [language, setLanguage] = useState<"en"|"ml">("en");
+  useEffect(() => {
+    try { if(window.localStorage.getItem("swastha-assessment-language")==="ml")setLanguage("ml"); }
+    catch { /* optional local preference */ }
+  }, []);
+  const malayalam = language==="ml";
+  const tr = (en:string,ml:string) => malayalam?ml:en;
+  function chooseLanguage(value:"en"|"ml") {
+    setLanguage(value);
+    try { window.localStorage.setItem("swastha-assessment-language",value); }
+    catch { /* optional local preference */ }
+  }
+  const lpMalayalam = malayalam && assignment?.assessment_level==="LP";
 
   useEffect(() => {
     async function loadAssessment() {
@@ -454,15 +468,18 @@ export default function ParentAssessmentPage() {
           </div>
         </div>
 
-        <button
-          style={{
-            ...button,
-            background: "#ffffff20",
-          }}
-          onClick={() => router.push("/parent/dashboard")}
-        >
-          Back to Dashboard
-        </button>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+          <label htmlFor="assessment-language" style={{fontSize:14,fontWeight:600}}>{tr("Language","ഭാഷ")}</label>
+          <select id="assessment-language" aria-label="Assessment language"
+            value={language} onChange={event=>chooseLanguage(event.target.value as "en"|"ml")}
+            style={{padding:"10px 12px",borderRadius:8,border:"1px solid #a7e0d9",fontSize:14,fontWeight:700,color:"#0f4c5c",background:"white"}}>
+            <option value="en">English</option>
+            <option value="ml">മലയാളം</option>
+          </select>
+          <button style={{...button,background:"#ffffff20"}} onClick={()=>router.push("/parent/dashboard")}>
+            {tr("Back to Dashboard","ഡാഷ്‌ബോർഡിലേക്ക്")}
+          </button>
+        </div>
       </header>
 
       <main
@@ -477,8 +494,8 @@ export default function ParentAssessmentPage() {
             {checklist.badge}
           </div>
 
-          <h2>{checklist.shortTitle}</h2>
-          <p>{checklist.purpose}</p>
+          <h2>{lpMalayalam ? "എൽ.പി. തലത്തിലെ കുട്ടികളുടെ വിലയിരുത്തൽ ചോദ്യാവലി" : checklist.shortTitle}</h2>
+          <p>{lpMalayalam ? "കുട്ടിയുടെ പഠനശേഷി, ഡിജിറ്റൽ ശീലങ്ങൾ, സാമൂഹിക-വൈകാരിക വളർച്ച, പ്രായോഗിക ചിന്ത, കഴിവുകൾ എന്നിവ മനസ്സിലാക്കുന്നതിനുള്ള ചോദ്യാവലി." : checklist.purpose}</p>
 
           <div
             style={{
@@ -657,16 +674,16 @@ export default function ParentAssessmentPage() {
             {missingQuestions.length > 0 && (
               <section style={{...card, border:"2px solid #f59e0b", background:"#fffbeb"}}>
                 <h3 style={{color:"#92400e",marginTop:0}}>
-                  Unanswered questions: {missingQuestions.length}
+                  {tr("Unanswered questions","ഉത്തരം നൽകാത്ത ചോദ്യങ്ങൾ")}: {missingQuestions.length}
                 </h3>
-                <p>Click a question to jump directly to it. Select NA if you cannot assess that item.</p>
+                <p>{tr("Click a question to jump directly to it. Select NA if you cannot assess that item.","ചോദ്യത്തിൽ ക്ലിക്ക് ചെയ്താൽ അതിലേക്ക് പോകാം. വിലയിരുത്താൻ കഴിയാത്ത ചോദ്യങ്ങൾക്ക് NA തിരഞ്ഞെടുക്കുക.")}</p>
                 <div style={{display:"grid",gap:9}}>
                   {missingQuestions.map(item => (
                     <button key={item.id} type="button"
                       onClick={() => jumpToQuestion(item.areaIndex,item.id)}
                       style={{textAlign:"left",background:"#fff",border:"1px solid #fbbf24",borderRadius:8,padding:12,cursor:"pointer",color:"#78350f"}}>
-                      <strong>Area {item.areaIndex + 1} · {item.domainTitle} · Question {item.index + 1}</strong>
-                      <span style={{display:"block",marginTop:5}}>{item.question}</span>
+                      <strong>{tr("Area","മേഖല")} {item.areaIndex + 1} · {item.domainTitle} · {tr("Question","ചോദ്യം")} {item.index + 1}</strong>
+                      <span style={{display:"block",marginTop:5}}>{lpMalayalam ? LP_MALAYALAM_QUESTIONS[item.id] || item.question : item.question}</span>
                     </button>
                   ))}
                 </div>
@@ -682,7 +699,7 @@ export default function ParentAssessmentPage() {
               }}
             >
               <section style={card}>
-                <h3>Scoring Guide</h3>
+                <h3>{tr("Scoring Guide","മൂല്യനിർണയ മാർഗനിർദേശം")}</h3>
 
                 <p style={{ fontSize: 14 }}>
                   Select the option that best describes your
@@ -718,7 +735,7 @@ export default function ParentAssessmentPage() {
               </section>
 
               <section style={card}>
-                <h3>Assessment Sections</h3>
+                <h3>{tr("Assessment Sections","വിലയിരുത്തൽ വിഭാഗങ്ങൾ")}</h3>
 
                 <div
                   style={{
@@ -755,7 +772,7 @@ export default function ParentAssessmentPage() {
                         }}
                         onClick={() => setActiveArea(index)}
                       >
-                        Area {index + 1} · {count}/{ids.length}
+                        {tr("Area","മേഖല")} {index + 1} · {count}/{ids.length}
                       </button>
                     );
                   })}
@@ -776,7 +793,7 @@ export default function ParentAssessmentPage() {
                       setActiveArea(checklist.areas.length)
                     }
                   >
-                    Parent Interview
+                    {tr("Parent Interview","രക്ഷിതാവുമായുള്ള അഭിമുഖം")}
                   </button>
                 </div>
               </section>
@@ -784,12 +801,12 @@ export default function ParentAssessmentPage() {
               {activeArea < checklist.areas.length ? (
                 <section style={card}>
                   <h3 style={{ color: "#0f4c5c" }}>
-                    {checklist.areas[activeArea].title}
+                    {lpMalayalam ? LP_MALAYALAM_AREAS[activeArea] : checklist.areas[activeArea].title}
                   </h3>
 
                   {checklist.areas[
                     activeArea
-                  ].subDomains.map((domain) => (
+                  ].subDomains.map((domain, domainIndex) => (
                     <div key={domain.id}>
                       <h4
                         style={{
@@ -799,7 +816,7 @@ export default function ParentAssessmentPage() {
                           borderRadius: 9,
                         }}
                       >
-                        {domain.title}
+                        {lpMalayalam ? LP_MALAYALAM_DOMAINS[activeArea]?.[domainIndex] || domain.title : domain.title}
                       </h4>
 
                       {domain.items.map((question, index) => {
@@ -825,7 +842,7 @@ export default function ParentAssessmentPage() {
                                 lineHeight: 1.6,
                               }}
                             >
-                              {index + 1}. {question}
+                              {index + 1}. {lpMalayalam ? LP_MALAYALAM_QUESTIONS[id] || question : question}
                             </p>
 
                             <div
@@ -873,7 +890,7 @@ export default function ParentAssessmentPage() {
                             <textarea
                               rows={2}
                               style={input}
-                              placeholder="Observation or example (optional)"
+                              placeholder={tr("Observation or example (optional)","നിരീക്ഷണം അല്ലെങ്കിൽ ഉദാഹരണം (നിർബന്ധമല്ല)")}
                               value={answer?.observation || ""}
                               onChange={(event) =>
                                 updateObservation(
@@ -891,7 +908,7 @@ export default function ParentAssessmentPage() {
               ) : (
                 <>
                   <section style={card}>
-                    <h3>Parent / Caregiver Interview</h3>
+                    <h3>{tr("Parent / Caregiver Interview","രക്ഷിതാവുമായുള്ള അഭിമുഖം")}</h3>
 
                     {checklist.parentInterview.map(
                       (question, index) => {
@@ -902,12 +919,12 @@ export default function ParentAssessmentPage() {
                             key={id}
                             style={{ marginBottom: 20 }}
                           >
-                            <p><strong>{question}</strong></p>
+                            <p><strong>{lpMalayalam ? LP_MALAYALAM_INTERVIEW[index] || question : question}</strong></p>
 
                             <textarea
                               style={input}
                               rows={3}
-                              placeholder="Enter your response"
+                              placeholder={tr("Enter your response","നിങ്ങളുടെ മറുപടി എഴുതുക")}
                               value={answers[id]?.observation || ""}
                               onChange={(event) =>
                                 updateObservation(
@@ -923,7 +940,7 @@ export default function ParentAssessmentPage() {
                   </section>
 
                   <section style={card}>
-                    <h3>Strengths, Interests & Talents</h3>
+                    <h3>{tr("Strengths, Interests & Talents","കഴിവുകൾ, താൽപര്യങ്ങൾ, പ്രതിഭകൾ")}</h3>
 
                     <p>
                       Describe any interests or abilities you
@@ -938,12 +955,12 @@ export default function ParentAssessmentPage() {
                           key={id}
                           style={{ marginBottom: 16 }}
                         >
-                          <p><strong>{talent}</strong></p>
+                          <p><strong>{lpMalayalam ? LP_MALAYALAM_TALENTS[index] || talent : talent}</strong></p>
 
                           <textarea
                             rows={2}
                             style={input}
-                            placeholder="Optional observation"
+                            placeholder={tr("Optional observation","നിരീക്ഷണം (നിർബന്ധമല്ല)")}
                             value={answers[id]?.observation || ""}
                             onChange={(event) =>
                               updateObservation(
@@ -995,7 +1012,7 @@ export default function ParentAssessmentPage() {
                     )
                   }
                 >
-                  Previous
+                  {tr("Previous","മുമ്പത്തെ വിഭാഗം")}
                 </button>
 
                 <button
@@ -1003,7 +1020,7 @@ export default function ParentAssessmentPage() {
                   disabled={saving}
                   onClick={() => saveAssessment(false)}
                 >
-                  {saving ? "Saving..." : "Save Progress"}
+                  {saving ? tr("Saving...","സേവ് ചെയ്യുന്നു...") : tr("Save Progress","പുരോഗതി സേവ് ചെയ്യുക")}
                 </button>
 
                 {activeArea < checklist.areas.length ? (
@@ -1018,7 +1035,7 @@ export default function ParentAssessmentPage() {
                       });
                     }}
                   >
-                    Next Section
+                    {tr("Next Section","അടുത്ത വിഭാഗം")}
                   </button>
                 ) : (
                   <button
@@ -1037,7 +1054,7 @@ export default function ParentAssessmentPage() {
                       setConfirmSubmit(true);
                     }}
                   >
-                    Submit Assessment
+                    {tr("Submit Assessment","വിലയിരുത്തൽ സമർപ്പിക്കുക")}
                   </button>
                 )}
               </div>
@@ -1093,7 +1110,7 @@ export default function ParentAssessmentPage() {
                   ✓
                 </div>
 
-                <h2>Submission Successful!</h2>
+                <h2>{tr("Submission Successful!","വിജയകരമായി സമർപ്പിച്ചു!")}</h2>
 
                 <p>
                   Your child's assessment has been submitted
@@ -1109,7 +1126,7 @@ export default function ParentAssessmentPage() {
               </>
             ) : (
               <>
-                <h2>Confirm Submission</h2>
+                <h2>{tr("Confirm Submission","സമർപ്പണം സ്ഥിരീകരിക്കുക")}</h2>
 
                 <p>
                   Once submitted, your answers cannot be edited.
@@ -1131,7 +1148,7 @@ export default function ParentAssessmentPage() {
                     disabled={saving}
                     onClick={() => setConfirmSubmit(false)}
                   >
-                    Cancel
+                    {tr("Cancel","റദ്ദാക്കുക")}
                   </button>
 
                   <button
