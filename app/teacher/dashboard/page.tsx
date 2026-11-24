@@ -957,9 +957,6 @@ export default function TeacherDashboard() {
 
   if (loading) {
     return (
-      <div style={{maxWidth:1160,margin:"12px auto 0",padding:"0 20px"}}>
-        <button type="button" style={{border:0,borderRadius:8,background:"#176b58",color:"white",padding:"10px 14px",fontWeight:700,cursor:"pointer"}} onClick={()=>router.push("/staff/notifications")}>Assessment submission notifications</button>
-      </div>
       <main
         style={{
           minHeight: "100vh",
@@ -1043,6 +1040,9 @@ export default function TeacherDashboard() {
         </div>
       </header>
 
+      <div style={{maxWidth:1160,margin:"12px auto 0",padding:"0 20px"}}>
+        <button type="button" style={{border:0,borderRadius:8,background:"#176b58",color:"white",padding:"10px 14px",fontWeight:700,cursor:"pointer"}} onClick={()=>router.push("/staff/notifications")}>Assessment submission notifications</button>
+      </div>
       <main
         style={{
           maxWidth: 1160,
