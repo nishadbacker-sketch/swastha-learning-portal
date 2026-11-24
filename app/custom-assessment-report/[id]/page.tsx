@@ -1,4 +1,5 @@
 "use client";
+import BrandLogo from "../../components/brand-logo";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
@@ -86,7 +87,7 @@ export default function CustomAssessmentReport(){
  return <main style={{background:"#f8faf7",minHeight:"100vh",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
   <style>{"@media print{@page{size:A4;margin:14mm}.report-actions{display:none!important}.report-wrap{max-width:none!important;padding:0!important}.report-panel{break-inside:avoid;page-break-inside:avoid}.report-question{break-inside:avoid;page-break-inside:avoid}body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}"}</style>
   <header className="report-actions" style={{position:"sticky",top:0,zIndex:20,background:"#0f4c5c",color:"white",padding:"13px 4%",display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-   <strong>Swastha Learning Clinic · Assessment Report</strong>
+   <span style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><BrandLogo /> <strong>Assessment Report</strong></span>
    <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:9}}>
     <label htmlFor="report-lang">Language</label>
     <select id="report-lang" value={language} onChange={e=>setLanguage(e.target.value as "en"|"ml")} style={{padding:9,borderRadius:7}}><option value="en">English</option><option value="ml">മലയാളം</option></select>
@@ -97,7 +98,7 @@ export default function CustomAssessmentReport(){
   </header>
   <div className="report-wrap" style={{maxWidth:1020,margin:"auto",padding:"25px 16px 70px"}}>
    <section className="report-panel" style={panel}>
-    <strong style={{color:"#176b58"}}>SWASTHA LEARNING CLINIC</strong>
+    <BrandLogo />
     <h1>{tr("Child Assessment Report","കുട്ടിയുടെ വിലയിരുത്തൽ റിപ്പോർട്ട്")}</h1>
     <h2 style={{fontSize:19}}>{template.title}</h2>
     {template.description&&<p style={{whiteSpace:"pre-wrap"}}>{template.description}</p>}
