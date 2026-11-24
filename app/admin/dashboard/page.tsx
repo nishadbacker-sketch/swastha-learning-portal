@@ -7,7 +7,7 @@ import { supabase } from "../../../lib/supabase";
 type Student = {id:string;full_name:string;current_class:string|null;status:string;created_at:string};
 type Teacher = {id:string;user_id:string;status:string;profiles?:{full_name:string|null}[]|{full_name:string|null}|null};
 type Assignment = {id:string;student_id:string;teacher_id:string};
-const box:React.CSSProperties={background:"white",border:"1px solid #dce8e1",borderRadius:16,padding:22,marginBottom:20};
+const box:React.CSSProperties={background:"white",border:"1px solid #dce8e1",borderRadius:13,padding:16,marginBottom:14};
 const action:React.CSSProperties={padding:"10px 16px",border:0,background:"#176b58",color:"white",borderRadius:8,cursor:"pointer",fontWeight:600};
 export default function AdminDashboard(){
  const router=useRouter();
