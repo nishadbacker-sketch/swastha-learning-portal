@@ -34,3 +34,10 @@ Both migrations staged. Transaction-based tests demonstrated: anon cannot SELECT
 
 ## Release gates
 Run GitHub Next.js build, parent/privacy source tests, staging transactional security checks, then apply migrations to production and merge PR. Hostinger authenticated browser check remains external.
+
+## Release outcome — 24 November 2026
+- PR #25 merged as `7fa8ee441b6d9ce06026cc128e15b04b813836b6`; GitHub CI run #340 **SUCCESS** including Next.js build, smoke tests and security regressions.
+- Both additive migrations applied to staging first and then production.
+- Staging transaction verified authorised issuance, prevention of duplicates, public verification of valid reference, rejection of fake reference, and anonymous read/write denial. **All fixtures rolled back**.
+- Production post-release: 7 existing students, 7 parent links, 0 packages, 0 registrations, 0 issued certificates, certificate table RLS ON and 2 scoped policies. No fabricated completions.
+- Next operational actions: publish real course packages, confirm genuine registrations, have authorised Admin/Clinic Admin verify completion and enter official designation-holder names, then issue. Verify Hostinger live deployment and an actual browser PDF/QR scan with test credentials before announcing certificates to parents.
