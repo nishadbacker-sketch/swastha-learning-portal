@@ -78,7 +78,7 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
  useEffect(()=>{if(!available.some(a=>a.id===selected))setSelected(available[0]?.id||"");},[assessments,selected]);
  useEffect(()=>{let cancelled=false;async function load(){
   if(!selected){setResponses([]);setLoadedAssessmentId("");setBank(null);return;}
-  setLoading(true);setError("");setLoadedAssessmentId("");setResponses([]);
+  setLoading(true);setError("");setLoadedAssessmentId("");setResponses([]);setBank(null);
   if(!supabase){setError("Supabase is not configured.");setLoading(false);return;}
   try{
    const selectedAssignment=available.find(a=>a.id===selected);
