@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { CHECKLIST_DATA, type AssessmentLevel } from "../../lib/assessment-data";
+import {checklistForAssignment} from "../../lib/assessment-question-versions";
 
 type InputAssessment={id:string;student_id:string;assessment_level:AssessmentLevel;status:string;assigned_at:string};
 type InputStudent={id:string;full_name:string;student_code?:string|null};
@@ -70,35 +71,44 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
  const available=assessments.filter(a=>["submitted","reviewed"].includes(a.status));
  const [selected,setSelected]=useState("");
  const [responses,setResponses]=useState<Response[]>([]);
+ const [bank,setBank]=useState<(typeof CHECKLIST_DATA)[AssessmentLevel]|null>(null);
  const [loadedAssessmentId,setLoadedAssessmentId]=useState("");
  const [loading,setLoading]=useState(false);
  const [error,setError]=useState("");
  useEffect(()=>{if(!available.some(a=>a.id===selected))setSelected(available[0]?.id||"");},[assessments,selected]);
  useEffect(()=>{let cancelled=false;async function load(){
-  if(!selected){setResponses([]);setLoadedAssessmentId("");return;}
+  if(!selected){setResponses([]);setLoadedAssessmentId("");setBank(null);return;}
   setLoading(true);setError("");setLoadedAssessmentId("");setResponses([]);
   if(!supabase){setError("Supabase is not configured.");setLoading(false);return;}
-  const {data,error:e}=await supabase.from("assessment_responses").select("question_id,score,observation").eq("assignment_id",selected);
-  if(!cancelled){if(e){setError(e.message);setResponses([]);}else setResponses((data||[]) as Response[]);setLoadedAssessmentId(selected);setLoading(false);}
+  try{
+   const selectedAssignment=available.find(a=>a.id===selected);
+   if(!selectedAssignment)throw new Error("Assessment unavailable");
+   const [bankResult,responseResult]=await Promise.all([
+    checklistForAssignment(selectedAssignment.assessment_level,selectedAssignment.assigned_at),
+    supabase.from("assessment_responses").select("question_id,score,observation").eq("assignment_id",selected)
+   ]);
+   if(responseResult.error)throw responseResult.error;
+   if(!cancelled){setBank(bankResult);setResponses((responseResult.data||[]) as Response[]);setLoadedAssessmentId(selected);setLoading(false);}
+  }catch(e){if(!cancelled){setError(e instanceof Error?e.message:"Unable to load assessment versions");setBank(null);setResponses([]);setLoading(false);}}
  }void load();return()=>{cancelled=true;};},[selected]);
  const assignment=available.find(a=>a.id===selected);
  const items=useMemo<Item[]>(()=>{
   if(!assignment)return [];
   const byId=new Map((loadedAssessmentId===selected?responses:[]).map(r=>[r.question_id,r]));
-  return CHECKLIST_DATA[assignment.assessment_level].areas.flatMap(area=>area.subDomains.flatMap(domain=>domain.items.map((question,i)=>{
+  return (bank||CHECKLIST_DATA[assignment.assessment_level]).areas.flatMap(area=>area.subDomains.flatMap(domain=>domain.items.map((question,i)=>{
    const id=domain.id+"_"+(i+1),res=byId.get(id);
    return {id,question,domain:domain.title,area:area.title,score:res?.score??null,observation:res?.observation||""};
   })));
- },[assignment,responses,loadedAssessmentId,selected]);
+ },[assignment,responses,loadedAssessmentId,selected,bank]);
  const domains=useMemo<Domain[]>(()=>{
   if(!assignment)return [];
-  return CHECKLIST_DATA[assignment.assessment_level].areas.flatMap(area=>area.subDomains.map(d=>{
+  return (bank||CHECKLIST_DATA[assignment.assessment_level]).areas.flatMap(area=>area.subDomains.map(d=>{
    const list=items.filter(q=>q.domain===d.title&&q.area===area.title);
    const rated=list.filter(q=>["0","1","2","3"].includes(q.score||""));
    const sum=rated.reduce((n,q)=>n+Number(q.score),0);
    return {id:d.id,name:d.title,area:area.title,count:list.length,numeric:rated.length,sum,na:list.filter(q=>q.score==="NA").length,mastery:rated.length?sum/rated.length/3*100:null};
   }));
- },[assignment,items]);
+ },[assignment,items,bank]);
  const counts=["0","1","2","3","NA"].map(v=>({score:v,count:items.filter(q=>q.score===v).length}));
  const rated=items.filter(q=>["0","1","2","3"].includes(q.score||""));
  const assessed=rated.length+counts[4].count;
