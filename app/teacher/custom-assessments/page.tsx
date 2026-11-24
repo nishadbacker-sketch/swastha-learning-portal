@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 
 type AnswerOption={id:"1"|"2"|"3";text:string;text_ml:string};
-type Question={id:string;text:string;text_ml:string;response_type?:"rating"|"multiple_choice";options?:AnswerOption[]};
+type Question={id:string;text:string;text_ml:string;response_type?:"rating"|"multiple_choice"|"written";options?:AnswerOption[]};
 function makeQuestion():Question{return {id:uid("q_"),text:"",text_ml:"",response_type:"rating"};}
 function makeOptions():AnswerOption[]{return [
  {id:"1",text:"",text_ml:""},{id:"2",text:"",text_ml:""},{id:"3",text:"",text_ml:""}
@@ -14,7 +14,7 @@ type Category={id:string;title:string;questions:Question[]};
 type Section={id:string;title:string;categories:Category[]};
 type Template={id:string;title:string;description:string;level:string;status:"draft"|"published";structure:Section[];created_by:string;created_at:string};
 type Student={id:string;full_name:string;current_class:string|null};
-type Assignment={id:string;template_id:string;student_id:string;status:string;due_date:string|null;assigned_at:string;answers:Record<string,{score?:string|null;choice?:string|null;observation:string}>;teacher_feedback:string|null};
+type Assignment={id:string;template_id:string;student_id:string;status:string;due_date:string|null;assigned_at:string;answers:Record<string,{score?:string|null;choice?:string|null;written_answer?:string|null;observation:string}>;teacher_feedback:string|null};
 const card:React.CSSProperties={background:"#fff",border:"1px solid #dae8e0",borderRadius:15,padding:20,marginBottom:18};
 const green="#176b58";
 const btn:React.CSSProperties={background:green,color:"white",border:"none",borderRadius:8,padding:"10px 15px",cursor:"pointer",fontWeight:700};
@@ -73,7 +73,7 @@ export default function CustomAssessmentBuilder(){
  function editSection(si:number,key:"title",value:string){changeStructure(s=>{s[si][key]=value;return s;});}
  function editCategory(si:number,ci:number,value:string){changeStructure(s=>{s[si].categories[ci].title=value;return s;});}
  function editQuestion(si:number,ci:number,qi:number,key:"text"|"text_ml",value:string){changeStructure(s=>{s[si].categories[ci].questions[qi][key]=value;return s;});}
- function setQuestionType(si:number,ci:number,qi:number,value:"rating"|"multiple_choice"){changeStructure(s=>{
+ function setQuestionType(si:number,ci:number,qi:number,value:"rating"|"multiple_choice"|"written"){changeStructure(s=>{
   const q=s[si].categories[ci].questions[qi];q.response_type=value;
   if(value==="multiple_choice" && (!q.options||q.options.length===0))q.options=makeOptions();
   return s;
@@ -193,11 +193,13 @@ export default function CustomAssessmentBuilder(){
         <label style={{display:"block",marginTop:10}}>Malayalam translation (optional)<textarea style={{...input,minHeight:60}} maxLength={1500} value={q.text_ml} onChange={e=>editQuestion(si,ci,qi,"text_ml",e.target.value)} placeholder="മലയാളത്തിലുള്ള ചോദ്യം"/></label>
         <label style={{display:"block",marginTop:12}}>How will the student/parent answer this question?
          <select style={input} value={q.response_type||"rating"}
-          onChange={e=>setQuestionType(si,ci,qi,e.target.value as "rating"|"multiple_choice")}>
+          onChange={e=>setQuestionType(si,ci,qi,e.target.value as "rating"|"multiple_choice"|"written")}>
           <option value="rating">Select a rating: 1, 2 or 3 (or NA)</option>
-          <option value="multiple_choice">Choose from 1–3 written answers</option>
+          <option value="multiple_choice">Choose from 1–3 teacher-provided answers</option>
+          <option value="written">Written Answer — student types their own response</option>
          </select>
         </label>
+        {q.response_type==="written"&&<p style={{marginTop:10,padding:12,background:"#eaf4ef",borderRadius:8,fontSize:13}}>The student or parent will see a large answer box to explain their response in their own words (up to 5,000 characters). The teacher reviews it after submission; it is not automatically scored.</p>}
         {(q.response_type||"rating")==="multiple_choice"&&<div style={{...card,background:"#f8faf7",marginTop:12}}>
          <strong>Answer choices for this question</strong>
          <label style={{display:"block",marginTop:10}}>Number of answer choices (1–3)
@@ -229,7 +231,7 @@ export default function CustomAssessmentBuilder(){
       <button style={outline} disabled={busy} onClick={()=>persist(false)}>{busy?"Saving...":"Save Draft"}</button>
       <button style={btn} disabled={busy} onClick={()=>persist(true)}>{busy?"Publishing...":"Publish Test"}</button>
      </div>
-     <p style={{fontSize:13,color:"#64748b"}}>For each question choose a 1–3 rating (NA allowed), or enter 1–3 multiple-choice answers. Older published rating tests stay compatible. Publishing locks questions so saved answers remain consistent.</p>
+     <p style={{fontSize:13,color:"#64748b"}}>For each question choose a 1–3 rating (NA allowed), enter 1–3 multiple-choice answers, or let the student write their own response. Older published rating tests stay compatible. Publishing locks questions so saved answers remain consistent.</p>
     </section>
     <section style={card}><h2>Saved Tests ({templates.length})</h2>
      {!templates.length&&<p>No custom tests created yet.</p>}
@@ -267,8 +269,9 @@ export default function CustomAssessmentBuilder(){
       const rated=ratingQuestions.map(q=>selectedReview.answers?.[q.id]?.score).filter(v=>v==="0"||v==="1"||v==="2"||v==="3") as string[];
       const excluded=ratingQuestions.filter(q=>selectedReview.answers?.[q.id]?.score==="NA").length;
       const choices=readableAnswers.filter(q=>q.response_type==="multiple_choice"&&selectedReview.answers?.[q.id]?.choice!=null).length;
+      const written=readableAnswers.filter(q=>q.response_type==="written"&&Boolean(selectedReview.answers?.[q.id]?.written_answer?.trim())).length;
       const mean=rated.length?rated.reduce((sum,v)=>sum+Number(v),0)/rated.length:null;
-      return <section style={{...card,background:"#f0f7f5"}}><h4>Scoring Summary</h4><p>Rating answers: {rated.length}/{ratingQuestions.length} · NA: {excluded} · Multiple-choice answered: {choices}</p><p><strong>Average: {mean===null?"Not rated":mean.toFixed(2)+" / 3"}</strong></p><p style={{fontSize:12,color:"#64748b"}}>Descriptive assessment only; NA responses are excluded from the average.</p></section>;
+      return <section style={{...card,background:"#f0f7f5"}}><h4>Scoring Summary</h4><p>Rating answers: {rated.length}/{ratingQuestions.length} · NA: {excluded} · Multiple-choice answered: {choices} · Written answered: {written}</p><p><strong>Average: {mean===null?"Not rated":mean.toFixed(2)+" / 3"}</strong></p><p style={{fontSize:12,color:"#64748b"}}>Descriptive assessment only; NA responses are excluded from the average.</p></section>;
      })()}
      {readableAnswers.map((q,i)=>{
       const a=selectedReview.answers?.[q.id];
@@ -278,7 +281,9 @@ export default function CustomAssessmentBuilder(){
         ? <p>Selected answer: {a?.choice
            ? (q.options||[]).find(opt=>opt.id===a.choice)?.text || "Unknown option"
            : "Not answered"}</p>
-        : <p>Rating: {a?.score??"Not answered"}</p>}{a?.observation&&<p>Observation: {a.observation}</p>}
+        : q.response_type==="written"
+          ? <p style={{whiteSpace:"pre-wrap"}}>Written response: {a?.written_answer||"Not answered"}</p>
+          : <p>Rating: {a?.score??"Not answered"}</p>}{a?.observation&&<p>Observation: {a.observation}</p>}
       </div>;
      })}
      {selectedReview.status==="submitted"?<>
