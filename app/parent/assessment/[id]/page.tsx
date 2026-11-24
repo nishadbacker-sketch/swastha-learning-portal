@@ -453,9 +453,13 @@ export default function ParentAssessmentPage() {
     >
       <header
         style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          boxShadow: "0 3px 12px rgba(15, 76, 92, 0.18)",
           background: "#0f4c5c",
           color: "white",
-          padding: "20px 24px",
+          padding: "12px 24px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
