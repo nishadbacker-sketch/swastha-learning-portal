@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLogo from "../../components/brand-logo";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
@@ -166,7 +167,7 @@ export default function CustomAssessmentBuilder(){
  if(loading)return <main style={{padding:35}}>Loading Custom Assessment Builder...</main>;
  return <main style={{fontFamily:"Arial,sans-serif",background:"#f8faf7",minHeight:"100vh",color:"#183a35"}}>
   <header style={{position:"sticky",top:0,zIndex:30,background:"#0f4c5c",color:"white",padding:"14px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-   <div><strong>Swastha Learning Clinic</strong><div style={{fontSize:12,marginTop:4}}>CUSTOM ASSESSMENT BUILDER</div></div>
+   <div><BrandLogo /><div style={{fontSize:12,marginTop:4}}>CUSTOM ASSESSMENT BUILDER</div></div>
    <button style={{...outline,background:"#fff"}} onClick={()=>router.push(roleName==="clinic_admin"?"/clinic-admin/dashboard":roleName==="admin"?"/admin/dashboard":"/teacher/dashboard")}>Back to Dashboard</button>
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"24px 16px 70px"}}>
