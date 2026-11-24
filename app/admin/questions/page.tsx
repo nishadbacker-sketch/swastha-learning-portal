@@ -128,7 +128,7 @@ export default function AdminQuestionsPage(){
     <section style={card}>
      <p style={{fontSize:13,color:"#64748b"}}>Custom assessments may contain written, rating and multiple-choice questions. Published templates are locked so previous student answers keep their original meaning. Amend a published template using <strong>Clone</strong> in the existing builder; drafts can be edited there.</p>
      <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search questionnaires and questions" aria-label="Search custom questions" style={field}/>
-     {(role==="owner"||role==="admin")&&<button style={{...btn,marginTop:12}} onClick={()=>router.push("/teacher/custom-assessments")}>Open Custom Assessment Builder / Clone</button>}
+     {<button style={{...btn,marginTop:12}} onClick={()=>router.push("/teacher/custom-assessments")}>Open Custom Assessment Builder / Clone</button>
     </section>
     {custom.map(t=><section key={t.id} style={card}>
      <h3 style={{fontSize:17,margin:"0 0 5px"}}>{t.title}</h3>
