@@ -1015,7 +1015,7 @@ export default function TeacherDashboard() {
                 marginTop: 5,
               }}
             >
-              LEARN • GROW • THRIVE
+              STAFF PORTAL
             </div>
 
             <div
