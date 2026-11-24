@@ -90,6 +90,7 @@ export default function AdminDashboard(){
   </section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Question Bank</h2><p style={{fontSize:13}}>Review every LP, UP, HS and HSS question, amend standard wording and review custom questionnaires with revision protection.</p><button style={action} onClick={()=>router.push("/admin/questions")}>Manage All Questions</button></section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Administrator Audit Logs</h2><p style={{fontSize:13}}>Review student updates, assessment approvals, appointment changes, IDP progress and staff permission history.</p><button style={action} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button></section>
+ <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Parent Portal Announcements</h2><p style={{fontSize:13}}>Send in-portal notices to all parents or selected families without WhatsApp or email.</p><button type="button" style={action} onClick={()=>router.push("/admin/announcements")}>Manage Announcements</button></section>
  <AppointmentEscalations/>
  {creatorMode&&<SuperAdminManagement/>}
  <ClinicAdminManagement/>
