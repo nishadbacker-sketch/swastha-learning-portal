@@ -25,3 +25,18 @@ test("alerts are time-zoned, open-only and do not create duplicates or change ap
  assert.doesNotMatch(popup,/\.from\("appointment_followup_history"\)\.delete/);
  assert.match(parent,/Notification history/);
 });
+
+test("daily persistent history is unique, staff-recipient scoped and never edits enquiry records",()=>{
+ const sql=read("sql/phase3b_appointment_followup_history.sql");
+ assert.match(sql,/UNIQUE \(enquiry_id,recipient_user_id,followup_date,kind\)/);
+ assert.match(sql,/ON CONFLICT \(enquiry_id,recipient_user_id,followup_date,kind\) DO NOTHING/);
+ assert.match(sql,/ENABLE ROW LEVEL SECURITY/);
+ assert.match(sql,/recipient_user_id = \(SELECT auth\.uid\(\)\)/);
+ assert.match(sql,/status NOT IN \('completed','not_interested'\)/);
+ assert.match(sql,/cron\.schedule/);
+ assert.match(sql,/45 18 \* \* \*/);
+ assert.doesNotMatch(sql,/UPDATE public\.appointment_enquiries/);
+ assert.doesNotMatch(sql,/DELETE FROM public\.appointment_enquiries/);
+ assert.match(popup,/appointment_followup_notification_history/);
+ assert.match(popup,/aria-label="Appointment reminder history"/);
+});
