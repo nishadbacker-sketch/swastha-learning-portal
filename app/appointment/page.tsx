@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLogo from "../components/brand-logo";
 import {useState} from "react";
 import {supabase} from "../../lib/supabase";
 
@@ -48,7 +49,7 @@ export default function PublicAppointmentPage(){
  return <main style={{background:"#f8faf7",minHeight:"100vh",color:"#183a35",padding:"24px 14px 55px"}}>
   <div style={{maxWidth:760,margin:"auto"}}>
    <header className="appointment-intro-header" style={{marginBottom:17}}>
-    <a href="https://swasthalearning.com" style={{color:"#176b58",fontWeight:800,textDecoration:"none",fontSize:13}}>SWASTHA LEARNING CLINIC</a>
+    <a href="https://swasthalearning.com" style={{color:"#176b58",fontWeight:800,textDecoration:"none",fontSize:13}}><BrandLogo /></a>
     <h1 style={{fontSize:27,margin:"12px 0 5px"}}>Appointment Details</h1>
     <p style={{color:"#64748b",fontSize:13}}>Request an appointment. Our teaching team will review your details and contact you to arrange the next step.</p>
    </header>
