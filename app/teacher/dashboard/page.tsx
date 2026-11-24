@@ -1010,6 +1010,10 @@ export default function TeacherDashboard() {
             style={{...primaryButton,background:"#176b58",color:"white"}}>
             + Custom Assessment Builder
           </button>
+          <button type="button" onClick={()=>router.push("/teacher/idp")}
+            style={{...primaryButton,background:"#0f4c5c",color:"white"}}>
+            Individual Development Plan (IDP)
+          </button>
           <button
             type="button"
             onClick={signOut}
