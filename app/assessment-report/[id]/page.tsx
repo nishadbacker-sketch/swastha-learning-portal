@@ -10,7 +10,7 @@ type Assignment={id:string;student_id:string;assessment_level:AssessmentLevel;st
 type Student={id:string;full_name:string;current_class:string|null};
 type Review={overall_score:number|null;teacher_feedback:string|null;recommendations:string|null;strengths:unknown;support_needs:unknown;reviewed_at:string|null};
 type Answer={question_id:string;score:string|null;observation:string|null};
-const card:React.CSSProperties={background:"#fff",padding:22,marginBottom:18,border:"1px solid #e2e8f0",borderRadius:16,boxShadow:"0 1px 3px rgba(15,23,42,.04)"};
+const card:React.CSSProperties={background:"#fff",padding:16,marginBottom:14,border:"1px solid #e2e8f0",borderRadius:16,boxShadow:"0 1px 3px rgba(15,23,42,.04)"};
 const button:React.CSSProperties={background:"#16697a",border:0,color:"white",fontWeight:700,borderRadius:9,padding:"10px 15px",cursor:"pointer"};
 function list(value:unknown){return Array.isArray(value)?value.filter((x):x is string=>typeof x==="string"):[];}
 const scoreTitle=(v:string|null)=>v==="0"?"Not demonstrated":v==="1"?"Substantial support":v==="2"?"Developing":v==="3"?"Independent":v==="NA"?"Not assessed":"Not answered";
