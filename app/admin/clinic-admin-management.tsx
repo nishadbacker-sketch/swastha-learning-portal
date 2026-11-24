@@ -4,8 +4,8 @@ import {useCallback,useEffect,useState} from "react";
 import {supabase} from "../../lib/supabase";
 
 type RoleRow={user_id:string;role:string};
-type ProfileRow={id:string;full_name:string|null;phone:string|null};
-type Account={id:string;role:string;name:string;phone:string|null};
+type ProfileRow={id:string;full_name:string|null;phone:string|null;staff_code:string|null};
+type Account={id:string;role:string;name:string;phone:string|null;staff_code:string|null};
 const panel:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:13,padding:16,marginBottom:14};
 const button:React.CSSProperties={background:"#176b58",border:0,color:"#fff",padding:"8px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700};
 const title=(role:string)=>role==="admin"?"Super Admin":role==="clinic_admin"?"Admin":role==="teacher"?"Teacher":"Parent / Student";
@@ -28,10 +28,10 @@ export default function ClinicAdminManagement(){
   if(re){setError(re.message);setLoading(false);return;}
   const rows=(roles||[]) as RoleRow[];
   if(!rows.length){setUsers([]);setLoading(false);return;}
-  const {data:profiles,error:pe}=await supabase.from("profiles").select("id,full_name,phone").in("id",rows.map(x=>x.user_id));
+  const {data:profiles,error:pe}=await supabase.from("profiles").select("id,full_name,phone,staff_code").in("id",rows.map(x=>x.user_id));
   if(pe){setError(pe.message);setLoading(false);return;}
   const names=new Map(((profiles||[]) as ProfileRow[]).map(x=>[x.id,x]));
-  setUsers(rows.map(x=>({id:x.user_id,role:x.role,name:names.get(x.user_id)?.full_name||"Unnamed account",phone:names.get(x.user_id)?.phone||null})));
+  setUsers(rows.map(x=>({id:x.user_id,role:x.role,name:names.get(x.user_id)?.full_name||"Unnamed account",phone:names.get(x.user_id)?.phone||null,staff_code:names.get(x.user_id)?.staff_code||null})));
   setLoading(false);
  },[]);
 
@@ -54,7 +54,7 @@ export default function ClinicAdminManagement(){
   {loading?<p style={{fontSize:13}}>Loading accounts...</p>:<div style={{display:"grid",gap:9}}>
    {users.map(u=><div key={u.id} style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",flexWrap:"wrap",padding:"10px 12px",background:"#f8faf7",borderRadius:9,border:"1px solid #e7efe9"}}>
     <div style={{minWidth:160,flex:"1 1 auto"}}>
-     <strong style={{fontSize:13}}>{u.name}</strong>
+     <strong style={{fontSize:13}}>{u.name}{u.staff_code?" · "+u.staff_code:""}</strong>
      <div style={{fontSize:12,color:"#64748b"}}>{title(u.role)}{u.phone?" · "+u.phone:""}</div>
     </div>
     {u.role==="clinic_admin"
