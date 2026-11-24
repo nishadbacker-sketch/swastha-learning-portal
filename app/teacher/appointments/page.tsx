@@ -38,6 +38,7 @@ export default function TeacherAppointments(){
  const [history,setHistory]=useState<History[]>([]);
  const [registrationLinks,setRegistrationLinks]=useState<RegistrationLink[]>([]);
  const [linkedStudentNames,setLinkedStudentNames]=useState<Record<string,string>>({});
+ const [linkedStudentCodes,setLinkedStudentCodes]=useState<Record<string,string>>({});
  const [matches,setMatches]=useState<Record<string,Candidate[]>>({});
  const [searched,setSearched]=useState<Record<string,boolean>>({});
  const [confirmed,setConfirmed]=useState<Record<string,boolean>>({});
@@ -66,7 +67,7 @@ export default function TeacherAppointments(){
     if(records.length){
      const ids=Array.from(new Set(records.map(r=>r.student_id)));
      const students=await supabase.from("students").select("id,student_code,full_name").in("id",ids);
-     if(!students.error)setLinkedStudentNames(Object.fromEntries((students.data||[]).map(s=>[s.id,s.full_name+" · "+s.student_code])));
+     if(!students.error){setLinkedStudentNames(Object.fromEntries((students.data||[]).map(s=>[s.id,s.full_name+" · "+s.student_code])));setLinkedStudentCodes(Object.fromEntries((students.data||[]).map(s=>[s.id,s.student_code])));}
     }
    }
   }
@@ -145,7 +146,7 @@ export default function TeacherAppointments(){
    {message&&<p role="status" style={{...panel,color:"#176b58"}}>{message}</p>}
    {loading?<p>Loading appointment requests...</p>:!visible.length?<section style={panel}>No appointment requests in this category yet.</section>:visible.map(item=><section key={item.id} style={panel}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",gap:12,flexWrap:"wrap"}}>
-     <div><strong style={{fontSize:16}}>{item.child_name}</strong><p style={{margin:"4px 0",fontSize:13}}>Guardian: <strong>{item.guardian_name}</strong> · Class: {item.current_class}</p><small style={{color:"#64748b"}}>Submitted {date(item.created_at)}</small></div>
+     <div><strong style={{fontSize:16}}>{item.child_name}{(()=>{const link=registrationLinks.find(l=>l.enquiry_id===item.id);return link&&linkedStudentCodes[link.student_id]?" · "+linkedStudentCodes[link.student_id]:"";})()}</strong><p style={{margin:"4px 0",fontSize:13}}>Guardian: <strong>{item.guardian_name}</strong> · Class: {item.current_class}</p><small style={{color:"#64748b"}}>Submitted {date(item.created_at)}</small></div>
      <strong style={{background:item.status==="new"?"#fff7e8":"#eaf4ef",borderRadius:7,padding:"6px 10px",fontSize:12}}>{statusList.find(x=>x.key===item.status)?.label||item.status}</strong>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))",gap:"5px 16px",fontSize:13,margin:"12px 0"}}>
