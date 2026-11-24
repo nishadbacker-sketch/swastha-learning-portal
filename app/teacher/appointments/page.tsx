@@ -5,6 +5,9 @@ import {useRouter} from "next/navigation";
 import {supabase} from "../../../lib/supabase";
 
 type Status="new"|"contacted"|"appointment_scheduled"|"completed"|"not_interested";
+type History={id:string;enquiry_id:string;actor_id:string|null;old_status:string;new_status:string;old_notes:string;new_notes:string;old_next_followup_date:string|null;new_next_followup_date:string|null;recorded_at:string};
+type RegistrationLink={enquiry_id:string;parent_user_id:string;student_id:string;linked_at:string;link_method:string};
+type Candidate={parent_user_id:string;student_id:string;student_code:string;student_name:string;guardian_name:string;phone_matched:boolean;child_name_matched:boolean;dob_matched:boolean};
 type Enquiry={
  id:string;guardian_name:string;whatsapp_number:string;contact_differs:boolean;contact_number:string|null;
  child_name:string;date_of_birth:string;current_class:string;preferred_date:string|null;preferred_time:string|null;
@@ -32,6 +35,13 @@ export default function TeacherAppointments(){
  const [filter,setFilter]=useState("open");
  const [userId,setUserId]=useState("");
  const [accountRole,setAccountRole]=useState("teacher");
+ const [history,setHistory]=useState<History[]>([]);
+ const [registrationLinks,setRegistrationLinks]=useState<RegistrationLink[]>([]);
+ const [linkedStudentNames,setLinkedStudentNames]=useState<Record<string,string>>({});
+ const [matches,setMatches]=useState<Record<string,Candidate[]>>({});
+ const [searched,setSearched]=useState<Record<string,boolean>>({});
+ const [confirmed,setConfirmed]=useState<Record<string,boolean>>({});
+ const [expandedHistory,setExpandedHistory]=useState<Record<string,boolean>>({});
 
  async function refresh(){
   if(!supabase){setError("Database unavailable.");setLoading(false);return;}
@@ -44,6 +54,22 @@ export default function TeacherAppointments(){
    setRecords(rows);
    setDrafts(Object.fromEntries(rows.map(r=>[r.id,{status:r.status,followup_notes:r.followup_notes,next_followup_date:r.next_followup_date||""}])));
   }
+  if(!e){
+   const [events,links]=await Promise.all([
+    supabase.from("appointment_followup_history").select("id,enquiry_id,actor_id,old_status,new_status,old_notes,new_notes,old_next_followup_date,new_next_followup_date,recorded_at").order("recorded_at",{ascending:false}).limit(1500),
+    supabase.from("appointment_registration_links").select("enquiry_id,parent_user_id,student_id,linked_at,link_method")
+   ]);
+   if(events.error)setError(events.error.message);else setHistory((events.data||[]) as History[]);
+   if(links.error)setError(links.error.message);else{
+    const records=(links.data||[]) as RegistrationLink[];
+    setRegistrationLinks(records);
+    if(records.length){
+     const ids=Array.from(new Set(records.map(r=>r.student_id)));
+     const students=await supabase.from("students").select("id,student_code,full_name").in("id",ids);
+     if(!students.error)setLinkedStudentNames(Object.fromEntries((students.data||[]).map(s=>[s.id,s.full_name+" · "+s.student_code])));
+    }
+   }
+  }
   setLoading(false);
  }
  useEffect(()=>{async function load(){
@@ -51,7 +77,7 @@ export default function TeacherAppointments(){
   const {data:auth}=await supabase.auth.getUser();
   if(!auth.user){router.replace("/login");return;}
   const {data:role}=await supabase.from("user_roles").select("role").eq("user_id",auth.user.id).single();
-  if(!role||!["teacher","clinic_admin","admin"].includes(role.role)){setError("Not authorised to view appointment requests.");setLoading(false);return;}
+  if(!role||!["teacher","clinic_admin","admin","owner"].includes(role.role)){setError("Not authorised to view appointment requests.");setLoading(false);return;}
   setUserId(auth.user.id);
   setAccountRole(role.role);
   await refresh();
@@ -71,7 +97,29 @@ export default function TeacherAppointments(){
   else{setMessage("Follow-up saved.");await refresh();}
   setBusy("");
  }
- const visible=records.filter(r=>filter==="all"?true:filter==="open"?!["completed","not_interested"].includes(r.status):r.status===filter);
+ async function findMatches(item:Enquiry){
+  if(!supabase)return;
+  setBusy(item.id);setError("");setMessage("");
+  const {data,error:e}=await supabase.rpc("swastha_appointment_match_candidates",{p_enquiry:item.id});
+  if(e)setError(e.message);
+  else{setMatches(x=>({...x,[item.id]:(data||[]) as Candidate[]}));setSearched(x=>({...x,[item.id]:true}));}
+  setBusy("");
+ }
+ async function attach(item:Enquiry,candidate:Candidate){
+  if(!supabase||!confirmed[item.id])return;
+  setBusy(item.id);setError("");setMessage("");
+  const {data,error:e}=await supabase.rpc("swastha_link_appointment_to_student",{
+   p_enquiry:item.id,p_student:candidate.student_id,p_confirmed:true
+  });
+  if(e)setError(e.message);else{
+   setMessage(typeof data==="string"?data:"History linked to registered user.");
+   setMatches(x=>({...x,[item.id]:[]}));
+   setConfirmed(x=>({...x,[item.id]:false}));
+   await refresh();
+  }
+  setBusy("");
+ }
+ const visible=records.filter(r=>filter==="all"?true:filter==="open"?!["completed","not_interested"].includes(r.status):filter==="registered"?registrationLinks.some(l=>l.enquiry_id===r.id):r.status===filter);
  const newCount=records.filter(r=>r.status==="new").length;
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35"}}>
   <header style={{background:"white",borderBottom:"1px solid #dce8e1",padding:"15px 5%"}}>
@@ -87,7 +135,7 @@ export default function TeacherAppointments(){
     <strong>{newCount} new · {records.length} total enquiries</strong>
     <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>Show
      <select style={{...input,width:"auto"}} value={filter} onChange={e=>setFilter(e.target.value)}>
-      <option value="open">Open follow-ups</option><option value="all">All enquiries</option>
+      <option value="open">Open follow-ups</option><option value="all">All enquiries</option><option value="registered">Linked registered users</option>
       {statusList.map(s=><option key={s.key} value={s.key}>{s.label}</option>)}
      </select>
     </label>
@@ -121,6 +169,46 @@ export default function TeacherAppointments(){
      </label>
     </div>
     <button style={{...button,marginTop:12,opacity:busy?0.6:1}} disabled={!!busy} onClick={()=>save(item)}>{busy===item.id?"Saving...":"Save Follow-up"}</button>
+    <div style={{borderTop:"1px solid #dce8e1",marginTop:17,paddingTop:14}}>
+      <strong style={{fontSize:14}}>Registered User & Appointment History</strong>
+      {registrationLinks.some(l=>l.enquiry_id===item.id)?registrationLinks.filter(l=>l.enquiry_id===item.id).map(link=>
+       <p key={link.enquiry_id} style={{fontSize:13,color:"#176b58",fontWeight:700}}>
+        Linked registered student: {linkedStudentNames[link.student_id]||"Student record"} · {link.link_method==="automatic_verified"?"Auto-matched using details":"Confirmed by staff"} · Linked {date(link.linked_at)}
+       </p>
+      ):<>
+       <p style={{fontSize:12,color:"#64748b"}}>Not yet linked to a registered parent/child. Search existing accounts with the enquiry's phone number. Verify the child and guardian before linking.</p>
+       <button type="button" style={{...button,background:"#0f4c5c"}} disabled={!!busy} onClick={()=>void findMatches(item)}>{busy===item.id?"Searching...":"Find Registered User"}</button>
+       {searched[item.id]&&!(matches[item.id]||[]).length&&<p style={{fontSize:12,color:"#b45309"}}>No matching registered parent phone found. Retain this enquiry and try again after the parent registers or updates contact details.</p>}
+       {(matches[item.id]||[]).length>0&&<div style={{marginTop:11,padding:12,background:"#f8faf7",border:"1px solid #dce8e1",borderRadius:9}}>
+        <label style={{display:"flex",gap:9,fontSize:12,fontWeight:700,marginBottom:12}}>
+         <input type="checkbox" checked={!!confirmed[item.id]} onChange={e=>setConfirmed(x=>({...x,[item.id]:e.target.checked}))}/>
+         I have verified that this enquiry belongs to the selected registered guardian and child.
+        </label>
+        {(matches[item.id]||[]).map(candidate=><div key={candidate.student_id} style={{display:"flex",gap:10,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",borderTop:"1px solid #e2e8f0",padding:"10px 0",fontSize:12}}>
+          <div><strong>{candidate.student_name}</strong> · {candidate.student_code}
+           <div style={{color:"#64748b",marginTop:4}}>Guardian: {candidate.guardian_name} · Matching phone
+           · Child name {candidate.child_name_matched?"matches":"differs"}
+           · DOB {candidate.dob_matched?"matches":"differs or missing"}</div>
+          </div>
+          <button type="button" style={{...button,opacity:confirmed[item.id]&&!busy?1:0.5}} disabled={!confirmed[item.id]||!!busy} onClick={()=>void attach(item,candidate)}>Link History</button>
+         </div>)}
+       </div>}
+      </>}
+      <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58",marginTop:12}} onClick={()=>setExpandedHistory(x=>({...x,[item.id]:!x[item.id]}))}>
+       {expandedHistory[item.id]?"Hide":"Show"} Follow-up Timeline ({history.filter(h=>h.enquiry_id===item.id).length})
+      </button>
+      {expandedHistory[item.id]&&<div style={{display:"grid",gap:9,marginTop:11}}>
+       <div style={{background:"#f8faf7",borderRadius:9,padding:11,fontSize:12}}>
+        <strong>Enquiry received · {date(item.created_at)}</strong><p>Original reason: {item.reason||"Not recorded"}</p>
+       </div>
+       {history.filter(h=>h.enquiry_id===item.id).map(h=><div key={h.id} style={{background:"#f8faf7",borderRadius:9,padding:11,fontSize:12}}>
+        <strong>{new Date(h.recorded_at).toLocaleString("en-IN")}</strong> · {h.old_status.replace(/_/g," ")} → {h.new_status.replace(/_/g," ")}
+        {h.new_notes!==h.old_notes&&<p style={{whiteSpace:"pre-wrap"}}><strong>Recorded notes:</strong> {h.new_notes||"(cleared)"}</p>}
+        {h.new_next_followup_date!==h.old_next_followup_date&&<p>Next follow-up: {h.new_next_followup_date||"None"}</p>}
+       </div>)}
+       {!history.some(h=>h.enquiry_id===item.id)&&<p style={{fontSize:12,color:"#64748b"}}>No recorded status changes yet. The current follow-up notes are preserved above. Earlier changes made before history tracking was enabled cannot be reconstructed.</p>}
+      </div>}
+    </div>
    </section>)}
   </div>
  </main>;
