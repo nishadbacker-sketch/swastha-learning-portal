@@ -99,6 +99,8 @@ jobs:
         run: node --test tests/role-based-learning-insights-charts.test.mjs
       - name: Verify secured issued-course certificates, PDF and QR route
         run: node --test tests/course-completion-certificates.test.mjs
+      - name: Verify review-gated assessment certificates, Director title and QR privacy
+        run: node --test tests/assessment-completion-certificates.test.mjs
       - name: Verify staging parent and teacher isolation (read-only, opt-in)
         if: ${{ vars.SWASTHA_RUN_STAGING_AUTH_TESTS == 'true' }}
         run: node --test tests/staging-authenticated-readonly.test.mjs
