@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { CHECKLIST_DATA } from "../../../lib/assessment-data";
 import AssessmentAnalytics from "../../teacher/assessment-analytics";
+import ParentNotifications from "../../components/parent-notifications";
 
 type Student={id:string;student_code:string;full_name:string;date_of_birth:string|null;current_class:string|null;status:string};
 type Profile={full_name:string|null;phone:string|null;contact_number_differs:boolean;additional_contact_number:string|null};
@@ -83,7 +84,7 @@ export default function ParentDashboard(){
  const metrics:[string,number,string,string][]=[["My Children",visibleStudents.length,green,"My Child"],["Assessments",aa.length,blue,"Assessments"],["Awaiting Teacher Review",count("submitted"),orange,"Assessments"],["Approved Assessments",count("reviewed"),teal,"Assessments"],["Learning Activities",act.length,green,"Learning Activities"],["Completed Activities",completed,blue,"Learning Activities"]];
  if(loading)return <main style={{padding:40}}>Loading your dashboard...</main>;
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
- <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><p style={{fontSize:12}}>PARENT & LEARNER PORTAL</p></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><button style={btn} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={btn} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div></header>
+ <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><p style={{fontSize:12}}>PARENT & LEARNER PORTAL</p></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><ParentNotifications students={students} assessments={assessments} customAssessments={customAssessments} activities={activities} onShowActivities={()=>setTab("Learning Activities")}/><button style={btn} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={btn} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div></header>
  <div style={{maxWidth:1250,margin:"auto",padding:"24px 16px"}}>
  <section style={{...card,background:"#0f4c5c",color:"white",padding:"22px 20px",marginBottom:20}}><small style={{letterSpacing:1,fontWeight:700}}>LEARN • GROW • THRIVE</small><h1 style={{margin:"10px 0 8px",fontSize:29,overflowWrap:"anywhere"}}>Welcome, {name}!{visibleStudentCodes.length>0&&<span style={{fontSize:"0.58em",fontWeight:500}}> ({visibleStudentCodes.length===1?"Student ID: ":"Student IDs: "}{visibleStudentCodes.join(", ")})</span>}</h1><p style={{margin:0}}>Track your child's learning journey, assessments and development.</p></section>
  {error&&<p role="alert" style={{...card,color:"#b42318"}}>{error}</p>}
