@@ -1,3 +1,4 @@
+import BrandLogo from "../../components/brand-logo";
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -80,7 +81,7 @@ export default function ParentDashboard(){
  const metrics:[string,number,string,string][]=[["My Children",visibleStudents.length,green,"My Child"],["Assessments",aa.length,blue,"Assessments"],["Awaiting Teacher Review",count("submitted"),orange,"Assessments"],["Approved Assessments",count("reviewed"),teal,"Assessments"],["Learning Activities",act.length,green,"Learning Activities"],["Completed Activities",completed,blue,"Learning Activities"]];
  if(loading)return <main style={{padding:40}}>Loading your dashboard...</main>;
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
- <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><strong>SWASTHA LEARNING CLINIC</strong><p style={{fontSize:12}}>PARENT & LEARNER PORTAL</p></div><button style={btn} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></header>
+ <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><p style={{fontSize:12}}>PARENT & LEARNER PORTAL</p></div><button style={btn} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></header>
  <div style={{maxWidth:1250,margin:"auto",padding:"24px 16px"}}>
  <section style={{...card,background:"#0f4c5c",color:"white"}}><small>LEARN • GROW • THRIVE</small><h1>Welcome, {name}!</h1><p>Track your child's learning journey, assessments and development.</p></section>
  {error&&<p role="alert" style={{...card,color:"#b42318"}}>{error}</p>}
@@ -123,5 +124,5 @@ export default function ParentDashboard(){
  </section>}
  {tab==="Learning Activities"&&<section style={card}><h2>Learning Activities</h2><p>Completed: {completed}/{act.length}</p><Progress value={activityRate}/>{!act.length&&<p>No learning activities have been assigned yet.</p>}{act.map(a=>{const d=Array.isArray(a.learning_activities)?a.learning_activities[0]:a.learning_activities;return <section key={a.id} style={{...card,marginTop:16,background:"#f8faf7"}}><h3>{d?.title||"Untitled activity"}</h3><p>Student: {childName(a.student_id)}</p><p style={{whiteSpace:"pre-wrap"}}>{d?.description||"No description provided."}</p><p>Assigned: {date(a.assigned_at)} · Due: {date(a.due_date)}</p><p>Status: {label(a.status)}</p></section>})}<small>Learning activities are displayed for viewing only.</small></section>}
  {tab==="My Profile"&&<section style={card}><h2>My Profile</h2>{profile?<><p>Parent / Guardian name: {profile.full_name||"Not available"}</p><p>WhatsApp number: {profile.phone||"Not available"}</p><p>Contact number differs: {profile.contact_number_differs?"Yes":"No"}</p>{profile.contact_number_differs&&<p>Additional contact number: {profile.additional_contact_number||"Not available"}</p>}<p>Login email: {email||"Not available"}</p></>:<p>Profile information is not available.</p>}<small>Your profile information is currently read-only.</small></section>}
- <footer style={{textAlign:"center",padding:24,color:gray}}><strong>SWASTHA LEARNING CLINIC</strong><p>Nurturing Every Ability, Empowering Every Child.</p></footer></div></main>;
+ <footer style={{textAlign:"center",padding:24,color:gray}}><strong><BrandLogo /></strong><p>Nurturing Every Ability, Empowering Every Child.</p></footer></div></main>;
 }
