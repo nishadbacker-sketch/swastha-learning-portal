@@ -4,7 +4,7 @@ import { supabase } from "../../lib/supabase";
 import { CHECKLIST_DATA, type AssessmentLevel } from "../../lib/assessment-data";
 
 type InputAssessment={id:string;student_id:string;assessment_level:AssessmentLevel;status:string;assigned_at:string};
-type InputStudent={id:string;full_name:string};
+type InputStudent={id:string;full_name:string;student_code?:string|null};
 type Response={question_id:string;score:string|null;observation:string|null};
 type Item={id:string;question:string;area:string;domain:string;score:string|null;observation:string};
 type Domain={id:string;name:string;area:string;count:number;numeric:number;sum:number;na:number;mastery:number|null};
@@ -115,7 +115,7 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
    {!hideSelector && <>
    <label style={{display:"block",fontWeight:700,marginBottom:6}} htmlFor="analytics-assessment">Select student and assessment</label>
    <select id="analytics-assessment" value={selected} onChange={e=>setSelected(e.target.value)} style={{padding:12,borderRadius:9,border:"1px solid #a9bfb5",maxWidth:"100%",width:650}}>
-    {available.map(a=><option key={a.id} value={a.id}>{students.find(s=>s.id===a.student_id)?.full_name||"Student"} — {a.assessment_level} — {a.status} — {new Date(a.assigned_at).toLocaleDateString("en-IN")}</option>)}
+    {available.map(a=><option key={a.id} value={a.id}>{((s)=>s?s.full_name+(s.student_code?" · "+s.student_code:""):"Student")(students.find(s=>s.id===a.student_id))} — {a.assessment_level} — {a.status} — {new Date(a.assigned_at).toLocaleDateString("en-IN")}</option>)}
    </select>
    </>}
   </div>
