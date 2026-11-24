@@ -144,15 +144,22 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
     <div style={{...card,gridColumn:"span 1"}}><h3 style={{margin:"0 0 4px",fontSize:18}}>Holistic Sub-Domain Competency Radar</h3><p style={{fontSize:12,color:palette.muted,margin:"0 0 14px"}}>Percentage mastery across all checklist sub-domains for active student</p><Radar domains={domains}/></div>
     <div style={card}><h3 style={{margin:"0 0 4px",fontSize:18}}>Rating Distribution</h3><p style={{fontSize:12,color:palette.muted,margin:"0 0 14px"}}>Breakdown of 0–3 scores & NA items</p><RatingDoughnut counts={counts} total={assessed}/><p style={{fontSize:12,color:"#64748b",background:"#f8fafc",borderRadius:10,padding:12,marginTop:14}}>Assessed {assessed} of {items.length} indicators ({counts[4].count} marked NA).</p></div>
    </div>
-   <div style={card}><h3 style={{margin:"0 0 5px",fontSize:18}}>Sub-Domain Readiness Breakdown (%)</h3>
-    <p style={{fontSize:13,color:palette.muted}}>Independent ≥80% · Developing 50–79% · Needs Support below 50%. Categories with no numeric ratings are shown as not scored.</p>
-    {domains.map(d=><div key={d.id} style={{padding:"12px 0",borderBottom:"1px solid #e2e8e5"}}>
-     <small style={{color:palette.muted}}>{d.area}</small>
-     <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}><strong>{d.name}</strong><strong style={{color:bandColor(d.mastery)}}>{d.mastery===null?"N/A":Math.round(d.mastery)+"%"} · {band(d.mastery)}</strong></div>
-     <div style={{height:11,marginTop:8,background:"#edf1ee",borderRadius:10,overflow:"hidden"}}><div style={{width:(d.mastery??0)+"%",height:"100%",background:bandColor(d.mastery)}}/></div>
-     <small style={{color:palette.muted}}>{d.numeric} rated of {d.count} indicators · {d.na} NA</small>
-    </div>)}
-   </div>
+   <section style={{...card,padding:14,marginBottom:14}}>
+    <h3 style={{fontSize:15,margin:"0 0 5px",fontWeight:700}}>Sub-Domain Readiness Breakdown (%)</h3>
+    <p style={{fontSize:11,color:palette.muted,margin:"0 0 12px"}}>Independent ≥80% · Developing 50–79% · Needs Support &lt;50% · NA excluded</p>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,360px),1fr))",gap:"7px 18px"}}>
+     {domains.map(d=><div key={d.id} style={{padding:"6px 0",borderBottom:"1px solid #edf1ee",minWidth:0}}>
+      <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:10}}>
+       <span style={{fontSize:12,fontWeight:600,lineHeight:1.35,flex:"1 1 auto"}}>{d.name}</span>
+       <strong style={{color:bandColor(d.mastery),fontSize:12,flexShrink:0}}>{d.mastery===null?"N/A":Math.round(d.mastery)+"%"}</strong>
+      </div>
+      <div style={{height:5,marginTop:5,background:"#edf1ee",borderRadius:8,overflow:"hidden"}}>
+       <div style={{width:(d.mastery??0)+"%",height:"100%",background:bandColor(d.mastery)}}/>
+      </div>
+      <span style={{fontSize:10,color:palette.muted}}>{d.numeric} scored · {d.na} NA · {band(d.mastery)}</span>
+     </div>)}
+    </div>
+   </section>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:15}}>
     <section style={{...card,borderColor:"#bbf7d0"}}><h3 style={{margin:"0 0 6px",fontSize:17}}>Observed Strengths (Score 3 & Talents)</h3><p style={{fontSize:13,color:palette.muted}}>Skills rated independently in this assessment; observations appear only if recorded.</p>
      {!strengths.length?<p>No score-3 indicators recorded.</p>:strengths.map(q=><div key={q.id} style={{padding:"11px 0",borderBottom:"1px solid #e2e8e5"}}>
