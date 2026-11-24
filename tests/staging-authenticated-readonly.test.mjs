@@ -81,21 +81,29 @@ if(missing.length){
    assert.ifError(assignmentsError);
    const visibleIds=new Set((assignments||[]).map(a=>a.id));
    const approvedIds=new Set((assignments||[]).filter(a=>a.status==="reviewed").map(a=>a.id));
+   const unapprovedIds=new Set((assignments||[]).filter(a=>a.status!=="reviewed").map(a=>a.id));
+   assert.ok(approvedIds.size>=1,label+" must have a reviewed assessment fixture");
+   assert.ok(unapprovedIds.size>=1,label+" must have an unreviewed assessment fixture");
    const {data:reports,error:reportsError}=await client.from("assessment_results")
     .select("assignment_id").limit(500);
    assert.ifError(reportsError);
    assert.ok((reports||[]).every(item=>approvedIds.has(item.assignment_id)),
     label+" could read an unapproved or unlinked assessment result");
+   assert.ok((reports||[]).some(item=>approvedIds.has(item.assignment_id)),
+    label+" cannot read its approved assessment fixture");
    const {data:goals,error:goalsError}=await client.from("student_development_goals")
     .select("assignment_id").limit(500);
    assert.ifError(goalsError);
    assert.ok((goals||[]).every(item=>approvedIds.has(item.assignment_id)),
     label+" could read an unapproved or unlinked IDP");
+   assert.ok((goals||[]).some(item=>approvedIds.has(item.assignment_id)),
+    label+" cannot read its approved IDP fixture");
    const {data:ack,error:ackError}=await client.from("parent_notification_acknowledgements")
     .select("parent_user_id").limit(500);
    assert.ifError(ackError);
    assert.ok((ack||[]).every(item=>item.parent_user_id===userId),
     label+" could read another parent's notification acknowledgements");
+   assert.ok((ack||[]).length>=1,label+" cannot read its own acknowledgement fixture");
    const {data:announcements,error:announceError}=await client.from("parent_announcements")
     .select("target_parent_user_id,active,expires_at").limit(500);
    assert.ifError(announceError);
@@ -103,6 +111,10 @@ if(missing.length){
     (item.target_parent_user_id===null||item.target_parent_user_id===userId)&&
     (item.expires_at===null||Date.parse(item.expires_at)>Date.now())),
     label+" could read an inactive, expired, or other parent's announcement");
+   assert.ok((announcements||[]).some(item=>item.target_parent_user_id===userId),
+    label+" cannot see its own targeted notice");
+   assert.ok((announcements||[]).some(item=>item.target_parent_user_id===null),
+    label+" cannot see the general notice");
    const {data:allAssessments,error:allError}=await client.from("assessment_assignments")
     .select("id,student_id").limit(500);
    assert.ifError(allError);
