@@ -7,7 +7,8 @@ import {supabase} from "../../lib/supabase";
 type BasicStudent={id:string;student_code:string|null;full_name:string};
 type Assigned={id:string;student_id:string;assigned_at:string;due_date:string|null;status:string};
 type Activity=Assigned&{learning_activities:{title:string;description:string|null}[]|{title:string;description:string|null}|null};
-type Notice={key:string;title:string;description:string;student_id:string;destination:string;timestamp:number};
+type Notice={key:string;title:string;description:string;student_id:string|null;destination:string;timestamp:number};
+type Announcement={id:string;title:string;message:string;created_at:string;target_parent_user_id:string|null};
 
 const panel:React.CSSProperties={background:"#fff",borderRadius:16,padding:22,width:"min(540px,calc(100vw - 28px))",maxHeight:"min(80vh,720px)",overflowY:"auto",boxShadow:"0 24px 70px rgba(15,23,42,.25)"};
 const button:React.CSSProperties={border:0,borderRadius:9,padding:"10px 14px",background:"#176b58",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:13};
@@ -20,6 +21,7 @@ export default function ParentNotifications({students,assessments,customAssessme
  const router=useRouter();
  const [userId,setUserId]=useState("");
  const [acknowledged,setAcknowledged]=useState<string[]>([]);
+ const [announcements,setAnnouncements]=useState<Announcement[]>([]);
  const [ready,setReady]=useState(false);
  const [open,setOpen]=useState(false);
  const [firstLoad,setFirstLoad]=useState(false);
@@ -47,8 +49,12 @@ export default function ParentNotifications({students,assessments,customAssessme
     build(a,"activity","New learning activity",info?.title||"A teacher assigned a learning activity.","/parent/dashboard?tab=Learning%20Activities",a.assigned_at);
    }
   }
+  for(const a of announcements){
+   all.push({key:"announcement:"+a.id,title:a.title,description:a.message,student_id:null,
+    destination:"",timestamp:Date.parse(a.created_at)||0});
+  }
   return all.sort((a,b)=>b.timestamp-a.timestamp).slice(0,50);
- },[assessments,customAssessments,activities]);
+ },[assessments,customAssessments,activities,announcements]);
  const unread=notices.filter(n=>!acknowledged.includes(n.key));
  useEffect(()=>{
   let live=true;
@@ -56,11 +62,19 @@ export default function ParentNotifications({students,assessments,customAssessme
    if(!supabase)return;
    const {data:auth}=await supabase.auth.getUser();
    if(!auth.user||!live)return;
-   const {data,error:e}=await supabase.from("parent_notification_acknowledgements")
-    .select("notification_key").eq("parent_user_id",auth.user.id).limit(500);
+   const [acks,news]=await Promise.all([
+    supabase.from("parent_notification_acknowledgements")
+     .select("notification_key").eq("parent_user_id",auth.user.id).limit(500),
+    supabase.from("parent_announcements")
+     .select("id,title,message,created_at,target_parent_user_id")
+     .eq("active",true).order("created_at",{ascending:false}).limit(50)
+   ]);
    if(!live)return;
-   if(e){setError("Notification history could not be loaded.");return;}
-   setUserId(auth.user.id);setAcknowledged((data||[]).map(x=>x.notification_key));setReady(true);
+   if(acks.error||news.error){setError("Notifications could not be loaded.");return;}
+   setUserId(auth.user.id);
+   setAcknowledged((acks.data||[]).map(x=>x.notification_key));
+   setAnnouncements((news.data||[]) as Announcement[]);
+   setReady(true);
   }
   void load();return()=>{live=false;};
  },[]);
@@ -107,9 +121,9 @@ export default function ParentNotifications({students,assessments,customAssessme
          <strong style={{fontSize:14,color:"#183a35"}}>{n.title}</strong>
          {!acknowledged.includes(n.key)&&<span style={{fontSize:11,fontWeight:700,color:"#176b58"}}>New</span>}
         </div>
-        <p style={{fontSize:12,margin:"6px 0",color:"#475569"}}>{student?student.full_name+" ("+student.student_code+")":"Linked student"}</p>
+        <p style={{fontSize:12,margin:"6px 0",color:"#475569"}}>{n.student_id?(student?student.full_name+" ("+student.student_code+")":"Linked student"):"Clinic Announcement"}</p>
         <p style={{fontSize:13,margin:"6px 0 9px"}}>{n.description}</p>
-        <button disabled={busy} onClick={()=>void acknowledgeAndClose(n.destination)} type="button" style={{...button,padding:"7px 10px"}}>View details</button>
+        {n.destination&&<button disabled={busy} onClick={()=>void acknowledgeAndClose(n.destination)} type="button" style={{...button,padding:"7px 10px"}}>View details</button>}
        </div>;
       })}
      </div>}
