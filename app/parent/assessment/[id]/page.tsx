@@ -94,6 +94,7 @@ export default function ParentAssessmentPage() {
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [successPopup, setSuccessPopup] = useState(false);
   const [activeArea, setActiveArea] = useState(0);
+  const [showUnanswered, setShowUnanswered] = useState(false);
   const [language, setLanguage] = useState<"en"|"ml">("en");
   useEffect(() => {
     try { if(window.localStorage.getItem("swastha-assessment-language")==="ml")setLanguage("ml"); }
@@ -336,6 +337,7 @@ export default function ParentAssessmentPage() {
     }
 
     if (finalSubmit && completed !== total) {
+      setShowUnanswered(true);
       setMessage("Please answer the highlighted questions. Select NA if you cannot assess an item.");
       if(missingQuestions.length > 0)jumpToQuestion(missingQuestions[0].areaIndex,missingQuestions[0].id);
       setConfirmSubmit(false);
@@ -671,7 +673,7 @@ export default function ParentAssessmentPage() {
           </section>
         ) : (
           <>
-            {missingQuestions.length > 0 && (
+            {showUnanswered && missingQuestions.length > 0 && (
               <section style={{...card, border:"2px solid #f59e0b", background:"#fffbeb"}}>
                 <h3 style={{color:"#92400e",marginTop:0}}>
                   {tr("Unanswered questions","ഉത്തരം നൽകാത്ത ചോദ്യങ്ങൾ")}: {missingQuestions.length}
@@ -830,8 +832,8 @@ export default function ParentAssessmentPage() {
                             style={{
                               padding: "18px 10px",
                               borderBottom: "1px solid #e2e8f0",
-                              background: answer?.score == null ? "#fffbeb" : "transparent",
-                              borderLeft: answer?.score == null ? "4px solid #f59e0b" : "4px solid transparent",
+                              background: showUnanswered && answer?.score == null ? "#fffbeb" : "transparent",
+                              borderLeft: showUnanswered && answer?.score == null ? "4px solid #f59e0b" : "4px solid transparent",
                               borderRadius:8,
                               scrollMarginTop: "24px",
                             }}
@@ -1046,6 +1048,7 @@ export default function ParentAssessmentPage() {
                     disabled={saving}
                     onClick={() => {
                       if (completed !== total) {
+                        setShowUnanswered(true);
                         setMessage("Please answer the highlighted questions in the Unanswered questions list.");
                         if(missingQuestions.length > 0)jumpToQuestion(missingQuestions[0].areaIndex,missingQuestions[0].id);
                         return;
