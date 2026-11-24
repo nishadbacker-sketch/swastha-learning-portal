@@ -22,6 +22,27 @@ Updated: 2026-11-24. This runbook covers the live Swastha Learning Clinic Next.j
 5. If Git clone fails, reconnect the GitHub integration or redeploy; **do not** delete/recreate the site or wipe variables and student data.
 6. Keep a tested database backup/restore plan and the previous known-good deployment available for rollback. GitHub source control is not a backup of Supabase data.
 
+## Read-only authenticated staging checks (added 2026-11-24)
+
+The CI workflow runs `tests/staging-authenticated-readonly.test.mjs` after the build and anonymous security checks. It tests **real authentication and Row Level Security** for two distinct staged parents and an active staged teacher, using read-only application queries.
+
+It verifies parent ownership restrictions for child records, assessments, activity assignments and parent–child links; approved results/IDP only; private notification acknowledgements; audience/expiry restrictions on announcements; and teacher visibility of assigned students.
+
+**This step is SKIPPED, not passed, when dedicated staging credentials are not configured.** The test deliberately refuses the production Supabase project `cyhfsfwwpqgsxefcxkzp`. Never supply production account credentials or copy real student data into staging.
+
+To enable the checks:
+1. Create an **isolated Supabase project** with the schema, functions, policies and triggers migrated from production, but **only synthetic accounts and students**. Do not copy family records.
+2. In that staging project create two `parent` accounts, one active `teacher` account, and at least one different test child linked to each parent. Ensure the staged teacher is assigned synthetic students.
+3. In GitHub repository **Settings → Secrets and variables → Actions**, add these eight staging secrets:
+   `SWASTHA_STAGING_SUPABASE_URL`, `SWASTHA_STAGING_SUPABASE_ANON_KEY`,
+   `SWASTHA_STAGING_PARENT_A_EMAIL`, `SWASTHA_STAGING_PARENT_A_PASSWORD`,
+   `SWASTHA_STAGING_PARENT_B_EMAIL`, `SWASTHA_STAGING_PARENT_B_PASSWORD`,
+   `SWASTHA_STAGING_TEACHER_EMAIL`, `SWASTHA_STAGING_TEACHER_PASSWORD`.
+4. Re-run GitHub Actions, and confirm the staging step shows actual **passed tests, not skipped tests**. Never log credentials.
+5. If tests fail, inspect schema/policies and session state. Do not widen production RLS just to make a test pass.
+
+This suite does **not** submit an assessment, register or delete a child, approve a result, publish an announcement or modify IDP goals. Those **write workflows** still require isolated end-to-end browser tests in staging with explicit cleanup and their own permissions checks. Parent–teacher testing of the live Hostinger runtime is likewise not yet verified.
+
 ## Required isolated end-to-end role tests (staging or dedicated test accounts)
 
 These are **manual until a dedicated staging environment and suitable nonproduction accounts are available**. Use unique fake student information, and never reuse real families' data.
