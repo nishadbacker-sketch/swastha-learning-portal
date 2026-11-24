@@ -1,0 +1,55 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
+const sql=read("sql/parent_reviewed_assessment_certificate_download.sql");
+const parent=read("app/parent/assessment-certificates/page.tsx");
+const staff=read("app/staff/assessment-certificates/page.tsx");
+const dashboard=read("app/parent/dashboard/page.tsx");
+test("Only approved, Teacher-reviewed assessments of linked children may be claimed",()=>{
+ assert.match(sql,/public\.claim_reviewed_assessment_certificate\(p_assignment_id uuid\)/);
+ assert.match(sql,/a\.status<>'reviewed'/);
+ assert.match(sql,/r\.reviewed_at IS NOT NULL/);
+ assert.match(sql,/l\.parent_user_id=auth\.uid\(\)/);
+ assert.match(sql,/auth\.uid\(\) IS NULL OR NOT \(public\.has_role\('parent'\) OR public\.has_role\('student'\)\)/);
+ assert.match(sql,/WHERE id=p_assignment_id FOR UPDATE/);
+ assert.match(sql,/SELECT c\.id INTO certificate_id/);
+ assert.match(sql,/RETURN certificate_id;/);
+ assert.match(sql,/c\.revoked_at IS NOT NULL/);
+ assert.match(sql,/signers\.configured_by/);
+ assert.doesNotMatch(sql,/INSERT INTO public\.assessment_assignments|UPDATE public\.assessment_results|UPDATE public\.students/);
+});
+test("Official signatories are set once by authorised staff, not invented or editable by Parents",()=>{
+ assert.match(sql,/CREATE TABLE IF NOT EXISTS public\.assessment_certificate_signatories/);
+ assert.match(sql,/ALTER TABLE public\.assessment_certificate_signatories ENABLE ROW LEVEL SECURITY/);
+ assert.match(sql,/REVOKE ALL ON public\.assessment_certificate_signatories FROM PUBLIC,anon,authenticated/);
+ assert.match(sql,/configure_assessment_certificate_signatories/);
+ assert.match(sql,/public\.has_role\('admin'\) OR public\.has_role\('clinic_admin'\)/);
+ assert.match(sql,/ON CONFLICT\(id\) DO UPDATE/);
+ assert.match(sql,/Clinic certificate names are not configured yet/);
+ assert.match(staff,/\.rpc\("configure_assessment_certificate_signatories"/);
+ assert.match(staff,/Save Official Certificate Names/);
+ assert.match(staff,/role!=="teacher"&&<section/);
+});
+test("Parent/Learner portal lists eligible reviewed assessments with instant PDF download and no score exposure",()=>{
+ assert.match(parent,/\.from\("assessment_assignments"\)/);
+ assert.match(parent,/\.eq\("status","reviewed"\)/);
+ assert.match(parent,/\.from\("assessment_results"\)/);
+ assert.match(parent,/\.not\("reviewed_at","is",null\)/);
+ assert.match(parent,/\.rpc\("claim_reviewed_assessment_certificate"/);
+ assert.match(parent,/downloadAssessmentCertificatePDF\(c\)/);
+ assert.match(parent,/Reviewed Assessments — Download Certificate/);
+ assert.match(parent,/Download Certificate \(PDF\)/);
+ assert.match(parent,/Download Certificate Again \(PDF\)/);
+ assert.match(parent,/\["parent","student"\]\.includes\(role\.role\)/);
+ assert.match(dashboard,/\/parent\/assessment-certificates/);
+ assert.doesNotMatch(parent,/\.insert\(|\.update\(|\.upsert\(|\.delete\(/);
+});
+test("Revoked or unreviewed certificates disappear from Parent access and public verification",()=>{
+ assert.match(sql,/DROP POLICY IF EXISTS "Parents read linked issued assessment completion certificates"/);
+ assert.match(sql,/revoked_at IS NULL/);
+ assert.match(sql,/a\.status='reviewed'/);
+ assert.match(sql,/c\.reference_code=p_reference_code AND c\.revoked_at IS NULL/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.verify_assessment_completion_certificate\(text\) TO anon,authenticated/);
+ assert.doesNotMatch(sql,/TRUNCATE|DROP TABLE|DELETE FROM public\./);
+});
