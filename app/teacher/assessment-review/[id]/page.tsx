@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLogo from "../../../components/brand-logo";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
@@ -138,7 +139,7 @@ export default function TeacherAssessmentReview(){
  if(!assignment||!student)return null;
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
   <header style={{background:"#0f4c5c",color:"white",padding:"18px 5%",display:"flex",gap:14,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
-   <strong>Swastha Learning Clinic · Teacher Assessment Review</strong>
+   <span style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><BrandLogo /> <strong>Teacher Assessment Review</strong></span>
    <button style={{...btn,background:"#fff",color:"#0f4c5c"}} onClick={()=>router.push("/teacher/dashboard")}>Back to Dashboard</button>
   </header>
   <div style={{maxWidth:1080,margin:"auto",padding:"25px 16px 70px"}}>
