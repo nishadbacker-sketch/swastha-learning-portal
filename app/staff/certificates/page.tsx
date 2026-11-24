@@ -14,6 +14,7 @@ const btn:React.CSSProperties={padding:"11px 14px",border:0,borderRadius:9,backg
 export default function StaffCertificates(){
  const router=useRouter();
  const [ready,setReady]=useState(false);
+ const [role,setRole]=useState("");
  const [registrations,setRegistrations]=useState<Registration[]>([]);
  const [students,setStudents]=useState<Student[]>([]);
  const [packages,setPackages]=useState<Package[]>([]);
@@ -48,8 +49,8 @@ export default function StaffCertificates(){
    const {data:{user}}=await supabase.auth.getUser();
    if(!user){router.replace("/login");return;}
    const {data:role,error:roleError}=await supabase.from("user_roles").select("role").eq("user_id",user.id).maybeSingle();
-   if(roleError||!role||!["owner","admin","clinic_admin"].includes(role.role)){router.replace("/login");return;}
-   if(active){setReady(true);void load();}
+   if(roleError||!role||!["owner","admin","clinic_admin","teacher"].includes(role.role)){router.replace("/login");return;}
+   if(active){setRole(role.role);setReady(true);void load();}
   }
   void init();return()=>{active=false;};
  },[router]);
@@ -82,7 +83,7 @@ export default function StaffCertificates(){
    <p style={{fontSize:13,color:"#64748b"}}>Issue only after verifying actual attendance and completion against a confirmed, consented course registration. Certificates are saved as permanent reference records; a QR code links to independent public verification.</p>
    {error&&<section role="alert" style={{...card,color:"#b42318"}}>{error}</section>}
    {message&&<section role="status" style={{...card,color:"#176b58"}}>{message}</section>}
-   <section style={card}>
+   {role!=="teacher"&&<section style={card}>
     <h2>Issue Verified Certificate</h2>
     {!available.length&&<p>No eligible confirmed course registrations without certificates are available. Do not issue a certificate based on assessments or learning activities alone.</p>}
     <form onSubmit={issue} style={{display:"grid",gap:12,maxWidth:620}}>
@@ -102,9 +103,9 @@ export default function StaffCertificates(){
      <label>Clinical Director — official full name
       <input value={director} required minLength={2} maxLength={120} onChange={e=>setDirector(e.target.value)} placeholder="Enter authorised director's name" style={{display:"block",padding:10,marginTop:5,width:"100%"}}/>
      </label>
-     <button type="submit" disabled={!registration||saving} style={{...btn,opacity:!registration||saving?.6:1}}>{saving?"Issuing...":"Confirm Completion & Issue Certificate"}</button>
+     <button type="submit" disabled={!registration||saving} style={{...btn,opacity:(!registration||saving)?0.6:1}}>{saving?"Issuing...":"Confirm Completion & Issue Certificate"}</button>
     </form>
-   </section>
+   </section>}
    <section style={card}>
     <h2>Issued Certificates</h2>
     {!certificates.length?<p>No certificates have been issued.</p>:
