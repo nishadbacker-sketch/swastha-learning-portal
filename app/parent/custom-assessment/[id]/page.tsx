@@ -4,24 +4,15 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 
-type Question={id:string;text:string;text_ml:string};
+type Choice={id:"1"|"2"|"3";text:string;text_ml:string};
+type Question={id:string;text:string;text_ml:string;response_type?:"rating"|"multiple_choice";options?:Choice[]};
 type Category={id:string;title:string;questions:Question[]};
 type Section={id:string;title:string;categories:Category[]};
-type ScoreCode="0"|"1"|"2"|"3"|"NA";
-type ScoringCard=Record<ScoreCode,{en:string;ml:string}>;
-const fallbackCard:ScoringCard={
- "0":{en:"Not demonstrated",ml:"പ്രകടിപ്പിച്ചിട്ടില്ല"},
- "1":{en:"Substantial support",ml:"കൂടുതൽ പിന്തുണ ആവശ്യമാണ്"},
- "2":{en:"Developing",ml:"വികസിച്ചുവരുന്നു"},
- "3":{en:"Independent",ml:"സ്വതന്ത്രമായി ചെയ്യുന്നു"},
- "NA":{en:"Not assessed",ml:"വിലയിരുത്തിയിട്ടില്ല"}
-};
-type Template={id:string;title:string;description:string;level:string;structure:Section[];status:string;scoring_guide:ScoringCard};
-type Answer={score:string|null;observation:string};
+type Template={id:string;title:string;description:string;level:string;structure:Section[];status:string};
+type Answer={score?:string|null;choice?:string|null;observation:string};
 type Assignment={id:string;student_id:string;status:string;due_date:string|null;answers:Record<string,Answer>;teacher_feedback:string|null;reviewed_at:string|null;template_id:string};
 const palette:[string,string,string][]=[
- ["0","Not demonstrated","#ef4444"],
- ["1","Substantial support","#f97316"],
+ ["1","Needs support","#f97316"],
  ["2","Developing","#0284c7"],
  ["3","Independent","#10b981"],
  ["NA","Not assessed","#64748b"]
@@ -53,7 +44,7 @@ export default function CustomAssessmentPage(){
    if(role.error||role.data?.role!=="parent"){router.replace("/login");return;}
    const {data:a,error:aError}=await supabase.from("custom_assessment_assignments").select("id,student_id,status,due_date,answers,teacher_feedback,reviewed_at,template_id").eq("id",params.id).single();
    if(aError||!a)throw new Error("Assessment not found or access denied.");
-   const {data:t,error:tError}=await supabase.from("custom_assessment_templates").select("id,title,description,level,status,structure,scoring_guide").eq("id",a.template_id).single();
+   const {data:t,error:tError}=await supabase.from("custom_assessment_templates").select("id,title,description,level,status,structure").eq("id",a.template_id).single();
    if(tError||!t)throw new Error("Assessment template unavailable.");
    const {data:s,error:sError}=await supabase.from("students").select("full_name").eq("id",a.student_id).single();
    if(sError||!s)throw new Error("Child information unavailable.");
@@ -62,18 +53,16 @@ export default function CustomAssessmentPage(){
   finally{setLoading(false);}
  }load();},[params.id,router]);
  const ml=language==="ml";
- const cardLabels:ScoringCard={...fallbackCard,...template?.scoring_guide};
- const scoreLabel=(code:string)=>{const item=cardLabels[code as ScoreCode];return (ml?item?.ml||item?.en:item?.en)||code;};
  const tr=(en:string,translation:string)=>ml?translation:en;
  const sections=template?.structure||[];
- const items=sections.flatMap((section,si)=>section.categories.flatMap((category,ci)=>category.questions.map((q,qi)=>({id:q.id,section:section.title,category:category.title,si,ci,qi,text:q.text,text_ml:q.text_ml}))));
- const missing=items.filter(x=>answers[x.id]?.score==null);
+ const items=sections.flatMap((section,si)=>section.categories.flatMap((category,ci)=>category.questions.map((q,qi)=>({id:q.id,section:section.title,category:category.title,si,ci,qi,text:q.text,text_ml:q.text_ml,response_type:q.response_type,options:q.options}))));
+ const missing=items.filter(x=>x.response_type==="multiple_choice" ? answers[x.id]?.choice==null : answers[x.id]?.score==null);
  const total=items.length,done=total-missing.length;
  const status=assessment?.status||"assigned";
  const readOnly=status==="submitted"||status==="reviewed";
  const progress=total?Math.round(done/total*100):0;
  function answer(id:string,patch:Partial<Answer>){
-  setAnswers(previous=>({...previous,[id]:{score:previous[id]?.score??null,observation:previous[id]?.observation??"",...patch}}));
+  setAnswers(previous=>({...previous,[id]:{score:previous[id]?.score??null,choice:previous[id]?.choice??null,observation:previous[id]?.observation??"",...patch}}));
   setMessage("");
  }
  function languageChange(next:"en"|"ml"){setLanguage(next);try{localStorage.setItem("swastha-assessment-language",next);}catch{/* optional */}}
@@ -110,12 +99,12 @@ export default function CustomAssessmentPage(){
    {readOnly?
     <section style={panel}><h2>{status==="reviewed"?tr("Teacher Review Complete","അധ്യാപക പരിശോധന പൂർത്തിയായി"):tr("Submitted for Review","പരിശോധനയ്ക്കായി സമർപ്പിച്ചു")}</h2>
      <p>{tr("Your submitted answers are locked.","സമർപ്പിച്ച ഉത്തരങ്ങൾ ഇനി തിരുത്താൻ കഴിയില്ല.")}</p>
-     {status==="reviewed"&&<><section style={{...panel,background:"#fff"}}><h3>{tr("Scoring Card","സ്കോറിംഗ് കാർഡ്")}</h3>
-     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{palette.map(([score,,color])=><span key={score} style={{padding:10,border:"1px solid "+color,borderRadius:8}}><strong style={{color}}>{score}</strong> — {scoreLabel(score)}</span>)}</div>
-     </section><section style={{...panel,background:"#f0f7f5"}}><h3>{tr("Scoring Summary","സ്കോറിംഗ് സംഗ്രഹം")}</h3>{(()=>{
-      const vals=items.map(item=>answers[item.id]?.score).filter(v=>v==="0"||v==="1"||v==="2"||v==="3") as string[];
-      const na=items.filter(item=>answers[item.id]?.score==="NA").length;
-      return <p>{tr("Rated questions","സ്കോർ ചെയ്ത ചോദ്യങ്ങൾ")}: {vals.length}/{total} · NA: {na} · {tr("Average","ശരാശരി")}: <strong>{vals.length?(vals.reduce((sum,v)=>sum+Number(v),0)/vals.length).toFixed(2)+" / 3":tr("Not rated","സ്കോർ ലഭ്യമല്ല")}</strong></p>;
+     {status==="reviewed"&&<section style={{...panel,background:"#f0f7f5"}}><h3>{tr("Scoring Summary","സ്കോറിംഗ് സംഗ്രഹം")}</h3>{(()=>{
+      const ratingItems=items.filter(item=>item.response_type!=="multiple_choice");
+      const vals=ratingItems.map(item=>answers[item.id]?.score).filter(v=>v==="0"||v==="1"||v==="2"||v==="3") as string[];
+      const na=ratingItems.filter(item=>answers[item.id]?.score==="NA").length;
+      const choices=items.filter(item=>item.response_type==="multiple_choice"&&answers[item.id]?.choice!=null).length;
+      return <p>{tr("Rated questions","സ്കോർ ചെയ്ത ചോദ്യങ്ങൾ")}: {vals.length}/{ratingItems.length} · NA: {na} · {tr("Choices answered","തിരഞ്ഞെടുത്ത ഉത്തരങ്ങൾ")}: {choices} · {tr("Average","ശരാശരി")}: <strong>{vals.length?(vals.reduce((sum,v)=>sum+Number(v),0)/vals.length).toFixed(2)+" / 3":tr("Not rated","സ്കോർ ലഭ്യമല്ല")}</strong></p>;
      })()}<p style={{fontSize:12,color:"#64748b"}}>{tr("NA is excluded from the average. This is a descriptive score, not a diagnosis.","ശരാശരി കണക്കാക്കുമ്പോൾ NA ഉൾപ്പെടുത്തുന്നില്ല. ഇത് ഒരു വിവരണാത്മക സ്കോറാണ്, രോഗനിർണയമല്ല.")}</p></section><h3>{tr("Teacher Feedback","അധ്യാപകന്റെ അഭിപ്രായം")}</h3><p style={{whiteSpace:"pre-wrap"}}>{assessment.teacher_feedback||tr("No written feedback provided.","രേഖാമൂലമുള്ള അഭിപ്രായം നൽകിയിട്ടില്ല.")}</p></>}
      <button style={btn} onClick={()=>router.push("/parent/dashboard")}>{tr("Return to Dashboard","ഡാഷ്‌ബോർഡിലേക്ക് മടങ്ങുക")}</button>
     </section>
@@ -127,8 +116,8 @@ export default function CustomAssessmentPage(){
       <strong>{String.fromCharCode(65+x.ci)}.{x.qi+1}</strong> — {ml&&x.text_ml?x.text_ml:x.text}
      </button>)}
     </section>}
-    <section style={panel}><h3>{tr("Scoring Guide","മൂല്യനിർണയ മാർഗനിർദേശം")}</h3><p>{tr("Select NA if you cannot assess a question.","ഒരു ചോദ്യം വിലയിരുത്താൻ കഴിയുന്നില്ലെങ്കിൽ NA തിരഞ്ഞെടുക്കുക.")}</p>
-     <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>{palette.map(([score,label,color])=><span key={score} style={{border:"1px solid "+color,borderRadius:8,padding:9}}><strong style={{color}}>{score}</strong> — {scoreLabel(score)}</span>)}</div>
+    <section style={panel}><h3>{tr("How to Answer","ഉത്തരം നൽകേണ്ട വിധം")}</h3>
+     <p>{tr("For rating questions choose 1, 2 or 3 (or NA). For multiple-choice questions choose one of the three written answers.","റേറ്റിംഗ് ചോദ്യങ്ങൾക്ക് 1, 2, 3 അല്ലെങ്കിൽ NA തിരഞ്ഞെടുക്കുക. മൂന്ന് ഉത്തരങ്ങളുള്ള ചോദ്യങ്ങൾക്ക് നൽകിയിരിക്കുന്ന ഉത്തരങ്ങളിൽ ഒന്ന് തിരഞ്ഞെടുക്കുക.")}</p>
     </section>
     <section style={panel}><h3>{tr("Assessment Sections","വിലയിരുത്തൽ വിഭാഗങ്ങൾ")}</h3><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{sections.map((s,si)=>{
      const ids=s.categories.flatMap(c=>c.questions.map(q=>q.id));
@@ -140,11 +129,19 @@ export default function CustomAssessmentPage(){
       <h3 style={{background:"#e0f2f1",padding:13,borderRadius:8}}>{cat.title}</h3>
       {cat.questions.map((q,qi)=>{
        const a=answers[q.id];
-       return <div key={q.id} id={"custom-question-"+q.id} style={{padding:"17px 12px",borderBottom:"1px solid #e2e8f0",borderLeft:showUnanswered&&a?.score==null?"4px solid #f59e0b":"4px solid transparent",background:showUnanswered&&a?.score==null?"#fffbeb":"transparent",scrollMarginTop:100}}>
+       return <div key={q.id} id={"custom-question-"+q.id} style={{padding:"17px 12px",borderBottom:"1px solid #e2e8f0",borderLeft:showUnanswered&&(q.response_type==="multiple_choice"?a?.choice==null:a?.score==null)?"4px solid #f59e0b":"4px solid transparent",background:showUnanswered&&(q.response_type==="multiple_choice"?a?.choice==null:a?.score==null)?"#fffbeb":"transparent",scrollMarginTop:100}}>
         <p style={{fontWeight:700,lineHeight:1.6}}>{String.fromCharCode(65+ci)}.{qi+1} — {ml&&q.text_ml?q.text_ml:q.text}</p>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
-         {palette.map(([score,label,color])=><button key={score} title={scoreLabel(score)} aria-pressed={a?.score===score} style={{border:"1px solid "+color,background:a?.score===score?color:"white",color:a?.score===score?"white":color,padding:"10px 16px",borderRadius:8,fontWeight:700,cursor:"pointer"}} onClick={()=>answer(q.id,{score})}>{score}</button>)}
-        </div>
+        {q.response_type==="multiple_choice"
+        ? <div role="radiogroup" aria-label={tr("Choose one answer","ഒരു ഉത്തരം തിരഞ്ഞെടുക്കുക")} style={{display:"grid",gap:9,marginBottom:12}}>
+           {(q.options||[]).map(opt=><button type="button" role="radio" aria-checked={a?.choice===opt.id} key={opt.id}
+             onClick={()=>answer(q.id,{score:null,choice:opt.id})}
+             style={{padding:"12px 15px",borderRadius:8,background:a?.choice===opt.id?"#d9f3e7":"white",border:a?.choice===opt.id?"2px solid #176b58":"1px solid #cbd5e1",textAlign:"left",color:"#183a35",cursor:"pointer",fontWeight:a?.choice===opt.id?700:400}}>
+             <strong>{opt.id}.</strong> {ml&&opt.text_ml?opt.text_ml:opt.text}
+           </button>)}
+          </div>
+        : <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+           {palette.map(([score,label,color])=><button key={score} title={label} aria-pressed={a?.score===score} style={{border:"1px solid "+color,background:a?.score===score?color:"white",color:a?.score===score?"white":color,padding:"10px 16px",borderRadius:8,fontWeight:700,cursor:"pointer"}} onClick={()=>answer(q.id,{choice:null,score})}>{score}</button>)}
+          </div>}
         <textarea style={{...control,minHeight:62}} value={a?.observation||""} maxLength={2000} placeholder={tr("Observation or example (optional)","നിരീക്ഷണം അല്ലെങ്കിൽ ഉദാഹരണം (നിർബന്ധമല്ല)")} onChange={e=>answer(q.id,{observation:e.target.value})}/>
        </div>;
       })}
