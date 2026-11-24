@@ -66,6 +66,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       - name: Verify staging parent and teacher isolation (read-only, opt-in)
+        if: ${{ vars.SWASTHA_RUN_STAGING_AUTH_TESTS == 'true' }}
         run: node --test tests/staging-authenticated-readonly.test.mjs
         env:
           SWASTHA_STAGING_SUPABASE_URL: ${{ secrets.SWASTHA_STAGING_SUPABASE_URL }}
