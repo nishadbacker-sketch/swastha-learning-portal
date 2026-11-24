@@ -91,7 +91,7 @@ export default function AdminDashboard(){
  <section style={box}>
   <h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Oversight</h2>
   <p style={{fontSize:13}}>Monitor assessments awaiting teacher review, overdue assignments and approved reports. Review student IDs and open authorised follow-up actions without changing existing records.</p>
-  <button type="button" style={action} onClick={()=>router.push("/admin/assessment-oversight")}>Open Assessment Oversight</button>
+  <button type="button" style={action} onClick={()=>router.push("/admin/assessment-oversight")}>Open Assessment Oversight</button> <button type="button" style={{...action,marginLeft:8}} onClick={()=>router.push("/staff/notifications")}>Staff Notifications</button>
  </section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Question Bank</h2><p style={{fontSize:13}}>Review every LP, UP, HS and HSS question, amend standard wording and review custom questionnaires with revision protection.</p><button style={action} onClick={()=>router.push("/admin/questions")}>Manage All Questions</button></section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Administrator Audit Logs</h2><p style={{fontSize:13}}>Review student updates, assessment approvals, appointment changes, IDP progress and staff permission history.</p><button style={action} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button></section>
