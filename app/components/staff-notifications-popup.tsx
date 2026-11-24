@@ -7,6 +7,7 @@ import {supabase} from "../../lib/supabase";
 type Event={id:string;student_id:string;event_type:string;source_id:string;created_at:string};
 type Student={full_name:string;student_code:string|null};
 type FollowupAlert={id:string;child_name:string;next_followup_date:string;status:string};
+type FollowupHistory={id:string;enquiry_id:string;followup_date:string;kind:"due_tomorrow"|"due_today"|"overdue";created_at:string};
 const indiaDate=()=>{
  const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
  const field=(type:string)=>parts.find(p=>p.type===type)?.value||"";
@@ -29,6 +30,7 @@ export default function StaffNotificationsPopup(){
  const [userId,setUserId]=useState("");
  const [events,setEvents]=useState<Event[]>([]);
  const [followups,setFollowups]=useState<FollowupAlert[]>([]);
+ const [followupHistory,setFollowupHistory]=useState<FollowupHistory[]>([]);
  const [students,setStudents]=useState<Record<string,Student>>({});
  const [acknowledged,setAcknowledged]=useState<string[]>([]);
  const [open,setOpen]=useState(false);
@@ -45,7 +47,7 @@ export default function StaffNotificationsPopup(){
   const {data:role,error:roleError}=await supabase.from("user_roles").select("role").eq("user_id",user).single();
   if(roleError||!role||!["teacher","admin","clinic_admin","owner"].includes(role.role)){setLoading(false);return;}
   setUserId(user);
-  const [result,acks,followupResult]=await Promise.all([
+  const [result,acks,followupResult,historyResult]=await Promise.all([
    supabase.from("portal_notification_events").select("id,student_id,event_type,source_id,created_at")
     .eq("recipient_user_id",user).in("event_type",["assessment_submitted","custom_assessment_submitted","teacher_assigned"])
     .order("created_at",{ascending:false}).limit(100),
@@ -53,9 +55,14 @@ export default function StaffNotificationsPopup(){
    supabase.from("appointment_enquiries")
     .select("id,child_name,next_followup_date,status")
     .not("next_followup_date","is",null)
-    .order("next_followup_date",{ascending:true}).limit(250)
+    .order("next_followup_date",{ascending:true}).limit(250),
+   supabase.from("appointment_followup_notification_history")
+    .select("id,enquiry_id,followup_date,kind,created_at")
+    .eq("recipient_user_id",user)
+    .order("created_at",{ascending:false}).limit(100)
   ]);
-  if(result.error||acks.error||followupResult.error){setError("Could not load notifications. Please try again.");setLoading(false);return;}
+  if(result.error||acks.error||followupResult.error||historyResult.error){setError("Could not load notifications. Please try again.");setLoading(false);return;}
+  setFollowupHistory((historyResult.data||[]) as FollowupHistory[]);
   setFollowups(dueFollowups((followupResult.data||[]).filter(r=>r.next_followup_date) as FollowupAlert[],indiaDate()));
   const rows=(result.data||[]) as Event[];
   setEvents(rows);
@@ -112,8 +119,16 @@ export default function StaffNotificationsPopup(){
       </div>;
      })}
     </section>}
+    {!loading&&view==="history"&&followupHistory.length>0&&<section aria-label="Appointment reminder history" style={{marginBottom:14}}>
+     <h3 style={{fontSize:15,color:"#183a35",margin:"8px 0"}}>Appointment reminder history</h3>
+     {followupHistory.slice(0,50).map(item=><div key={item.id} style={{border:"1px solid #dce8e1",borderRadius:10,padding:12,marginBottom:8}}>
+      <strong style={{fontSize:13,color:"#183a35"}}>{item.kind==="overdue"?"Overdue":item.kind==="due_today"?"Due today":"Due tomorrow"} · Follow-up {item.followup_date}</strong>
+      <p style={{fontSize:12,color:"#64748b",margin:"6px 0"}}>Recorded {new Date(item.created_at).toLocaleString("en-IN")} · Appointment reference {item.enquiry_id.slice(0,8)}</p>
+      <button type="button" style={{...button,padding:"7px 10px"}} onClick={()=>{setOpen(false);router.push("/teacher/appointments");}}>Open Appointment Follow-up</button>
+     </div>)}
+    </section>}
     {loading?<p>Loading notifications...</p>:(
-     (view==="updates"?unread:events).length===0?(view==="updates"&&followups.length>0?null:<p style={{fontSize:14}}>{view==="updates"?"No new notifications.":"No notification history yet."}</p>):
+     (view==="updates"?unread:events).length===0?((view==="updates"&&followups.length>0||view==="history"&&followupHistory.length>0)?null:<p style={{fontSize:14}}>{view==="updates"?"No new notifications.":"No notification history yet."}</p>):
      <div style={{display:"grid",gap:9}}>
       {(view==="updates"?unread:events).slice(0,50).map(e=>{
        const info=eventMeta[e.event_type];if(!info)return null;
