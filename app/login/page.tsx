@@ -34,6 +34,7 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -88,6 +89,7 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
           email: email.trim(),
           password,
           options: {
+            emailRedirectTo: window.location.origin + "/login",
             data: {
               full_name: fullName.trim(),
               whatsapp_number: whatsappNumber.trim(),
@@ -114,7 +116,9 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
           }
         }
 
-        // Show registration success popup on the dedicated /register page.
+        // A null session means email confirmation may be required.
+        setNeedsEmailConfirmation(!data.session);
+        // Show the appropriate confirmation or registration status.
         setPassword("");
         setConfirmPassword("");
         setShowSuccessPopup(true);
@@ -378,6 +382,13 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
                   : "Sign in"}
             </button>
           </form>
+          {!isRegister && (
+            <p style={{marginTop:10,fontSize:13,textAlign:"right"}}>
+              <button type="button" style={{background:"none",border:0,color:"#176b58",cursor:"pointer",textDecoration:"underline"}} onClick={()=>router.push("/forgot-password")}>
+                Forgot password?
+              </button>
+            </p>
+          )}
 
           {message && (
             <p className="auth-message" role="status">
@@ -460,7 +471,7 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
                 margin: "0 0 12px",
               }}
             >
-              Registration Completed!
+              {needsEmailConfirmation ? "Check your email" : "Registration Completed!"}
             </h2>
 
             <p
@@ -470,9 +481,9 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
                 margin: "0 0 24px",
               }}
             >
-              Your account and child registration have been
-              completed successfully. You can now sign in
-              to your account.
+              {needsEmailConfirmation
+                ? "Your registration request was received. Please check your email for a verification link before signing in. If you do not receive it, contact support@swasthalearning.com."
+                : "Your account and child registration have been completed successfully. You can now sign in to your account."}
             </p>
 
             <button
