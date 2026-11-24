@@ -57,3 +57,14 @@ Environment variables must be set **only in the server environment**, not in pub
 - Staff notification remains **off**, even when Supabase Auth verification emails work. These are distinct delivery systems.
 - Supabase Auth uses its own custom SMTP settings; the optional operational sender needs separate Hostinger Web App secrets (variable names confirmed present).
 - Backups and authenticated user-isolation tests remain outstanding release gates.
+
+## Phase 2 update — duplicate protection and server-only rate limiting (24 November 2026)
+
+- Added `appointment_enquiries.submission_key` with a unique partial index. Existing rows retain NULL, and the portal appointment form reuses one random UUID across retries.
+- Added `swastha_private.appointment_rate_limits`, an atomic counter table with RLS and no anon/authenticated access.
+- Added `public.swastha_limit_appointment_request(text,text)`: only `service_role` may execute. The server HMAC-hashes IP and WhatsApp numbers before passing identifiers to the limiter. Limits: 120 total and eight per identifier per 15 minutes; three per phone identifier per 60 minutes. The IP value comes from proxy forwarding headers: the global limit provides a backstop if those headers are manipulated.
+- The appointment API now requires `SUPABASE_SERVICE_ROLE_KEY` as a server-only Hostinger environment variable; the user reported adding a new Supabase secret key under that name. The app credentials and live SMTP delivery have not been independently verified.
+- Explicit `service_role` SELECT/INSERT grants were added to `public.appointment_enquiries` after verifying none existed; public and normal users still have no table INSERT grants.
+- The limiter fails closed with 503 if its RPC cannot be reached; rejected submissions receive 429.
+- New appointments must still be tested from both the main website and the portal with synthetic details. The queue worker and SMTP sending remain disabled.
+- Important: request-id deduplication only works for sources submitting the same key. The main website legacy form has not yet been updated to send a key; abuse prevention requires a proper bot challenge and reliable trusted-proxy configuration. The rate limiter has simple fixed windows, not a sophisticated distributed anti-spam service.
