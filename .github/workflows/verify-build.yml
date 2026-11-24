@@ -47,6 +47,17 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Verify staging parent and teacher isolation (read-only, opt-in)
+        run: node --test tests/staging-authenticated-readonly.test.mjs
+        env:
+          SWASTHA_STAGING_SUPABASE_URL: ${{ secrets.SWASTHA_STAGING_SUPABASE_URL }}
+          SWASTHA_STAGING_SUPABASE_ANON_KEY: ${{ secrets.SWASTHA_STAGING_SUPABASE_ANON_KEY }}
+          SWASTHA_STAGING_PARENT_A_EMAIL: ${{ secrets.SWASTHA_STAGING_PARENT_A_EMAIL }}
+          SWASTHA_STAGING_PARENT_A_PASSWORD: ${{ secrets.SWASTHA_STAGING_PARENT_A_PASSWORD }}
+          SWASTHA_STAGING_PARENT_B_EMAIL: ${{ secrets.SWASTHA_STAGING_PARENT_B_EMAIL }}
+          SWASTHA_STAGING_PARENT_B_PASSWORD: ${{ secrets.SWASTHA_STAGING_PARENT_B_PASSWORD }}
+          SWASTHA_STAGING_TEACHER_EMAIL: ${{ secrets.SWASTHA_STAGING_TEACHER_EMAIL }}
+          SWASTHA_STAGING_TEACHER_PASSWORD: ${{ secrets.SWASTHA_STAGING_TEACHER_PASSWORD }}
       - name: Show logs on failure
         if: failure()
         run: cat /tmp/swastha-smoke.log 2>/dev/null || true
