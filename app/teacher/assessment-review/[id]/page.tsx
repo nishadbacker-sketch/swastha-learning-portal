@@ -148,6 +148,7 @@ export default function TeacherAssessmentReview(){
    </section>
    {error&&<section role="alert" style={{...card,color:"#b42318",background:"#fff4f3"}}>{error}</section>}
    {message&&<section role="status" style={{...card,background:"#eaf6ed",color:"#176b58"}}>{message}</section>}
+   {assignment.status==="reviewed"&&<section style={{...card,background:"#eefaf5"}}><strong>Teacher-approved report is available for parents and teachers.</strong><div style={{marginTop:11}}><button style={btn} onClick={()=>router.push("/assessment-report/"+assignment.id)}>Open Complete Approved Report / Print PDF</button></div></section>}
    <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:assignment.student_id,full_name:student.full_name}]} />
    <section style={card}><h2>Domain-wise Rating Summary</h2>
     {domains.map(d=><div key={d.name} style={{padding:"10px 0",borderBottom:"1px solid #e2e8f0"}}>
