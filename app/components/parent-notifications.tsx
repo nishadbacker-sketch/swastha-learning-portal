@@ -1,0 +1,122 @@
+"use client";
+
+import {useEffect,useMemo,useState} from "react";
+import {useRouter} from "next/navigation";
+import {supabase} from "../../lib/supabase";
+
+type BasicStudent={id:string;student_code:string|null;full_name:string};
+type Assigned={id:string;student_id:string;assigned_at:string;due_date:string|null;status:string};
+type Activity=Assigned&{learning_activities:{title:string;description:string|null}[]|{title:string;description:string|null}|null};
+type Notice={key:string;title:string;description:string;student_id:string;destination:string;timestamp:number};
+
+const panel:React.CSSProperties={background:"#fff",borderRadius:16,padding:22,width:"min(540px,calc(100vw - 28px))",maxHeight:"min(80vh,720px)",overflowY:"auto",boxShadow:"0 24px 70px rgba(15,23,42,.25)"};
+const button:React.CSSProperties={border:0,borderRadius:9,padding:"10px 14px",background:"#176b58",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:13};
+function recent(value:string,days=45){const time=Date.parse(value);return Number.isFinite(time)&&time>=Date.now()-days*86400000;}
+function dueSoon(value:string|null){if(!value)return false;const d=new Date(value+"T23:59:59");return d.getTime()>=Date.now()-86400000&&d.getTime()<=Date.now()+3*86400000;}
+
+export default function ParentNotifications({students,assessments,customAssessments,activities}:{
+ students:BasicStudent[];assessments:Assigned[];customAssessments:Assigned[];activities:Activity[];
+}){
+ const router=useRouter();
+ const [userId,setUserId]=useState("");
+ const [acknowledged,setAcknowledged]=useState<string[]>([]);
+ const [ready,setReady]=useState(false);
+ const [open,setOpen]=useState(false);
+ const [firstLoad,setFirstLoad]=useState(false);
+ const [busy,setBusy]=useState(false);
+ const [error,setError]=useState("");
+ const notices=useMemo(()=>{
+  const all:Notice[]=[];
+  const build=(item:Assigned,kind:string,title:string,description:string,destination:string,timestamp:string)=>all.push({
+   key:kind+":"+item.id+":"+item.status,
+   title,description,student_id:item.student_id,destination,timestamp:Date.parse(timestamp)||0
+  });
+  for(const a of assessments){
+   if(a.status==="reviewed"&&recent(a.assigned_at,365))build(a,"standard","Assessment report ready","Your child's assessment has been reviewed and approved.","/assessment-report/"+a.id,a.assigned_at);
+   else if(["assigned","in_progress"].includes(a.status)&&recent(a.assigned_at))build(a,"standard","Assessment requires attention","A learning assessment has been assigned. You can complete or continue it.","/parent/assessment/"+a.id,a.assigned_at);
+   if(["assigned","in_progress"].includes(a.status)&&dueSoon(a.due_date))build(a,"standard-due","Assessment due soon","Please review the approaching assessment due date.","/parent/assessment/"+a.id,a.assigned_at);
+  }
+  for(const a of customAssessments){
+   if(a.status==="reviewed"&&recent(a.assigned_at,365))build(a,"custom","Custom assessment report ready","A teacher has reviewed your child's custom assessment.","/custom-assessment-report/"+a.id,a.assigned_at);
+   else if(["assigned","in_progress"].includes(a.status)&&recent(a.assigned_at))build(a,"custom","New custom assessment","A custom questionnaire is ready for your attention.","/parent/custom-assessment/"+a.id,a.assigned_at);
+   if(["assigned","in_progress"].includes(a.status)&&dueSoon(a.due_date))build(a,"custom-due","Custom assessment due soon","Please check the assessment's due date.","/parent/custom-assessment/"+a.id,a.assigned_at);
+  }
+  for(const a of activities){
+   if(a.status!=="completed"&&recent(a.assigned_at)){
+    const info=Array.isArray(a.learning_activities)?a.learning_activities[0]:a.learning_activities;
+    build(a,"activity","New learning activity",info?.title||"A teacher assigned a learning activity.","/parent/dashboard?tab=Learning%20Activities",a.assigned_at);
+   }
+  }
+  return all.sort((a,b)=>b.timestamp-a.timestamp).slice(0,50);
+ },[assessments,customAssessments,activities]);
+ const unread=notices.filter(n=>!acknowledged.includes(n.key));
+ useEffect(()=>{
+  let live=true;
+  async function load(){
+   if(!supabase)return;
+   const {data:auth}=await supabase.auth.getUser();
+   if(!auth.user||!live)return;
+   const {data,error:e}=await supabase.from("parent_notification_acknowledgements")
+    .select("notification_key").eq("parent_user_id",auth.user.id).limit(500);
+   if(!live)return;
+   if(e){setError("Notification history could not be loaded.");return;}
+   setUserId(auth.user.id);setAcknowledged((data||[]).map(x=>x.notification_key));setReady(true);
+  }
+  void load();return()=>{live=false;};
+ },[]);
+ useEffect(()=>{
+  if(ready&&!firstLoad){
+   setFirstLoad(true);
+   if(unread.length)setOpen(true);
+  }
+ },[ready,firstLoad,unread.length]);
+ async function acknowledgeAndClose(destination?:string){
+  if(!supabase||!userId||busy)return;
+  setBusy(true);setError("");
+  const keys=unread.slice(0,50).map(n=>n.key);
+  if(keys.length){
+   const {error:e}=await supabase.from("parent_notification_acknowledgements")
+    .upsert(keys.map(key=>({parent_user_id:userId,notification_key:key})),{onConflict:"parent_user_id,notification_key",ignoreDuplicates:true});
+   if(e){setError("Could not save notification acknowledgement. Please retry.");setBusy(false);return;}
+   setAcknowledged(old=>[...new Set([...old,...keys])]);
+  }
+  setOpen(false);setBusy(false);
+  if(destination){
+   if(destination.includes("?tab="))router.push("/parent/dashboard");
+   else router.push(destination);
+  }
+ }
+ return <>
+  <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58",border:"1px solid #cce3d5"}} onClick={()=>{setError("");setOpen(true);}} aria-label={"Notifications"+(unread.length?" ("+unread.length+" unread)":"")}>
+   Notifications {unread.length>0?"("+unread.length+")":""}
+  </button>
+  {open&&<div role="presentation" style={{position:"fixed",inset:0,background:"rgba(15,23,42,.63)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:12}}>
+   <section role="dialog" aria-modal="true" aria-labelledby="parent-notification-title" style={panel}>
+    <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"flex-start"}}>
+     <div><h2 id="parent-notification-title" style={{margin:"0 0 5px",fontSize:21,color:"#0f4c5c"}}>Parent Notifications</h2>
+      <p style={{margin:"0 0 14px",fontSize:13,color:"#64748b"}}>Updates from your child's learning portal. No WhatsApp or email messages are sent.</p></div>
+     <button type="button" aria-label="Close notifications" disabled={busy} onClick={()=>void acknowledgeAndClose()} style={{...button,background:"#f1f5f9",color:"#334155"}}>Close</button>
+    </div>
+    {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
+    {!notices.length?<p style={{fontSize:14}}>No notifications at the moment.</p>:
+     <div style={{display:"grid",gap:9}}>
+      {notices.slice(0,15).map(n=>{
+       const student=students.find(s=>s.id===n.student_id);
+       return <div key={n.key} style={{border:"1px solid #dce8e1",borderRadius:10,padding:12,background:acknowledged.includes(n.key)?"#fff":"#f0f8f4"}}>
+        <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
+         <strong style={{fontSize:14,color:"#183a35"}}>{n.title}</strong>
+         {!acknowledged.includes(n.key)&&<span style={{fontSize:11,fontWeight:700,color:"#176b58"}}>New</span>}
+        </div>
+        <p style={{fontSize:12,margin:"6px 0",color:"#475569"}}>{student?student.full_name+" ("+student.student_code+")":"Linked student"}</p>
+        <p style={{fontSize:13,margin:"6px 0 9px"}}>{n.description}</p>
+        <button disabled={busy} onClick={()=>void acknowledgeAndClose(n.destination)} type="button" style={{...button,padding:"7px 10px"}}>View details</button>
+       </div>;
+      })}
+     </div>}
+    <div style={{display:"flex",justifyContent:"flex-end",marginTop:16}}>
+     <button type="button" disabled={busy} style={button} onClick={()=>void acknowledgeAndClose()}>{busy?"Saving...":"Got it"}</button>
+    </div>
+   </section>
+  </div>}
+ </>;
+}
