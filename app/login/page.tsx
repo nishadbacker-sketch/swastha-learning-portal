@@ -133,7 +133,9 @@ export default function LoginPage() {
 
         if (roleError) throw roleError;
 
-        if (roleData.role === "admin") {
+        if (roleData.role === "owner") {
+          router.push("/owner/dashboard");
+        } else if (roleData.role === "admin") {
           router.push("/admin/dashboard");
         } else if (roleData.role === "clinic_admin") {
           router.push("/clinic-admin/dashboard");
