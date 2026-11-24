@@ -13,6 +13,8 @@ type Goal={id:string;assignment_id:string;title:string};
 type Assessment={id:string;student_id:string;status:string};
 type GoalLink={session_id:string;goal_id:string};
 type Published={id:string;session_id:string;student_id:string;summary:string;approved_at:string};
+type AppointmentLink={enquiry_id:string;student_id:string};
+type Change={id:number;session_id:string;changed_at:string;previous_status:string;new_status:string;previous_activities:string;new_activities:string;previous_notes:string;new_notes:string};
 const card:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:12,padding:16,marginBottom:12};
 const button:React.CSSProperties={padding:"10px 14px",border:0,borderRadius:8,color:"white",background:"#176b58",cursor:"pointer",fontWeight:700};
 const field:React.CSSProperties={padding:10,border:"1px solid #cbd5e1",borderRadius:8,maxWidth:"100%",width:"100%",background:"#fff",color:"#183a35"};
@@ -30,6 +32,9 @@ export default function SessionManager({role}:{role:"teacher"|"admin"|"clinic_ad
  const [goals,setGoals]=useState<Goal[]>([]);
  const [goalLinks,setGoalLinks]=useState<GoalLink[]>([]);
  const [published,setPublished]=useState<Published[]>([]);
+ const [appointments,setAppointments]=useState<AppointmentLink[]>([]);
+ const [changes,setChanges]=useState<Change[]>([]);
+ const [appointmentId,setAppointmentId]=useState("");
  const [uid,setUid]=useState("");
  const [studentId,setStudentId]=useState("");
  const [teacherId,setTeacherId]=useState("");
@@ -73,17 +78,20 @@ export default function SessionManager({role}:{role:"teacher"|"admin"|"clinic_ad
    const visible=(raw.data||[]) as Session[];
    const ownSessions=visible.filter(s=>ids.includes(s.student_id));
    const sessionIds=ownSessions.map(x=>x.id);
-   let publishedRows:Published[]=[];let goalRows:GoalLink[]=[];
+   let publishedRows:Published[]=[];let goalRows:GoalLink[]=[];let historyRows:Change[]=[];let appointmentRows:AppointmentLink[]=[];
    if(sessionIds.length){
-    const [p,g]=await Promise.all([
+    const [p,g,h]=await Promise.all([
      db.from("clinic_session_parent_updates").select("id,session_id,student_id,summary,approved_at").in("session_id",sessionIds),
-     db.from("clinic_session_goal_links").select("session_id,goal_id").in("session_id",sessionIds)
+     db.from("clinic_session_goal_links").select("session_id,goal_id").in("session_id",sessionIds),
+     db.from("clinic_session_history").select("id,session_id,changed_at,previous_status,new_status,previous_activities,new_activities,previous_notes,new_notes").in("session_id",sessionIds).order("changed_at",{ascending:false}).limit(500)
     ]);
-    if(p.error||g.error)throw Error("Unable to load approved summaries or IDP links.");
+    if(p.error||g.error||h.error)throw Error("Unable to load approved summaries, IDP links or session history.");
     publishedRows=(p.data||[]) as Published[];
     goalRows=(g.data||[]) as GoalLink[];
+    historyRows=(h.data||[]) as Change[];
    }
    let as:Assessment[]=[];let gg:Goal[]=[];
+   if(ids.length){const a=await db.from("appointment_registration_links").select("enquiry_id,student_id").in("student_id",ids).limit(500);if(!a.error)appointmentRows=(a.data||[]) as AppointmentLink[];}
    if(ids.length){
     const r=await db.from("assessment_assignments").select("id,student_id,status").in("student_id",ids).eq("status","reviewed").limit(1000);
     if(r.error)throw r.error;as=(r.data||[]) as Assessment[];
@@ -93,7 +101,7 @@ export default function SessionManager({role}:{role:"teacher"|"admin"|"clinic_ad
     }
    }
    setStudents(ss);setTeachers(activeTeachers);setLinks(teacherLinks);setSessions(ownSessions);
-   setPublished(publishedRows);setGoalLinks(goalRows);setAssessments(as);setGoals(gg);
+   setPublished(publishedRows);setGoalLinks(goalRows);setAssessments(as);setGoals(gg);setChanges(historyRows);setAppointments(appointmentRows);
    setDrafts(Object.fromEntries(ownSessions.map(s=>[s.id,{
     status:s.status,activities_done:s.activities_done,teacher_notes:s.teacher_notes,
     summary:publishedRows.find(x=>x.session_id===s.id)?.summary||"",goal_id:""
@@ -107,6 +115,8 @@ export default function SessionManager({role}:{role:"teacher"|"admin"|"clinic_ad
   const teacherIds=new Set(links.filter(l=>l.student_id===chosenStudent).map(l=>l.teacher_id));
   return teachers.filter(t=>teacherIds.has(t.id));
  },[teachers,links,chosenStudent]);
+ const eligibleAppointments=appointments.filter(x=>x.student_id===chosenStudent);
+ const chosenAppointment=eligibleAppointments.some(x=>x.enquiry_id===appointmentId)?appointmentId:"";
  const chosenTeacher=isLeadership?(availableTeachers.some(t=>t.user_id===teacherId)?teacherId:availableTeachers[0]?.user_id||""):uid;
  const studentName=(id:string)=>{const s=students.find(s=>s.id===id);return s?s.full_name+" ("+(s.student_code||"ID pending")+")":"Student";};
  const eligibleGoals=(id:string)=>{const approved=new Set(assessments.filter(a=>a.student_id===id).map(a=>a.id));return goals.filter(g=>approved.has(g.assignment_id));};
@@ -116,9 +126,10 @@ export default function SessionManager({role}:{role:"teacher"|"admin"|"clinic_ad
   setBusy("create");setError("");setNotice("");
   const {error:e1}=await supabase.from("clinic_sessions").insert({
    student_id:chosenStudent,teacher_user_id:chosenTeacher,scheduled_at:new Date(when).toISOString(),
-   duration_minutes:duration,session_type:sessionType,created_by:uid
+   duration_minutes:duration,session_type:sessionType,created_by:uid,
+   appointment_enquiry_id:chosenAppointment||null
   });
-  if(e1)setError(e1.message);else{setNotice("Student session scheduled.");setWhen("");await refresh();}
+  if(e1)setError(e1.message);else{setNotice("Student session scheduled.");setWhen("");setAppointmentId("");await refresh();}
   setBusy("");
  }
  async function saveSession(s:Session){
@@ -170,6 +181,7 @@ export default function SessionManager({role}:{role:"teacher"|"admin"|"clinic_ad
      {!students.length?<p>No assigned students available.</p>:
      <form onSubmit={createSession} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:12,alignItems:"end"}}>
       <label>Student<select required style={field} value={chosenStudent} onChange={e=>{setStudentId(e.target.value);setTeacherId("");}}>{students.map(x=><option key={x.id} value={x.id}>{studentName(x.id)}</option>)}</select></label>
+      {eligibleAppointments.length>0&&<label>Linked Appointment (optional)<select style={field} value={chosenAppointment} onChange={e=>setAppointmentId(e.target.value)}><option value="">No appointment linked</option>{eligibleAppointments.map(x=><option key={x.enquiry_id} value={x.enquiry_id}>Appointment {x.enquiry_id.slice(0,8)}</option>)}</select></label>}
       {isLeadership&&<label>Assigned Teacher<select required style={field} value={chosenTeacher} onChange={e=>setTeacherId(e.target.value)}>{availableTeachers.map(x=><option key={x.user_id} value={x.user_id}>{x.user_id===uid?"My Teacher account":x.user_id.slice(0,8)}</option>)}</select></label>}
       <label>Date and Time<input required type="datetime-local" style={field} value={when} onChange={e=>setWhen(e.target.value)}/></label>
       <label>Duration (minutes)<input required type="number" min={5} max={240} style={field} value={duration} onChange={e=>setDuration(Number(e.target.value))}/></label>
@@ -186,7 +198,7 @@ export default function SessionManager({role}:{role:"teacher"|"admin"|"clinic_ad
       const linksForSession=goalLinks.filter(g=>g.session_id===s.id);
       return <article key={s.id} style={{...card,background:"#fcfefd"}}>
        <h3 style={{fontSize:16,margin:"0 0 5px"}}>{studentName(s.student_id)} · {fmt(s.scheduled_at)}</h3>
-       <p style={{fontSize:12,color:"#64748b"}}>{s.session_type.replace(/_/g," ")} · {s.duration_minutes} min · Teacher: {s.teacher_user_id.slice(0,8)} · {s.status}</p>
+       <p style={{fontSize:12,color:"#64748b"}}>{s.session_type.replace(/_/g," ")} · {s.duration_minutes} min · Teacher: {s.teacher_user_id.slice(0,8)} · {s.status}{s.appointment_enquiry_id?" · Linked appointment "+s.appointment_enquiry_id.slice(0,8):""}</p>
        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:10}}>
         <label>Attendance / Session Status<select style={field} value={d.status} onChange={e=>setDrafts(x=>({...x,[s.id]:{...d,status:e.target.value}}))}>{statuses.map(v=><option key={v} value={v}>{v.replace(/_/g," ")}</option>)}</select></label>
         <label>Activities Conducted<textarea rows={3} style={field} maxLength={4000} value={d.activities_done} onChange={e=>setDrafts(x=>({...x,[s.id]:{...d,activities_done:e.target.value}}))}/></label>
@@ -204,6 +216,7 @@ export default function SessionManager({role}:{role:"teacher"|"admin"|"clinic_ad
          <button type="button" style={button} disabled={!d.goal_id||!!busy} onClick={()=>void linkGoal(s)}>Link Goal</button>
         </div>}
        </div>
+       <details style={{marginTop:12}}><summary style={{cursor:"pointer",fontWeight:700}}>Session change history ({changes.filter(x=>x.session_id===s.id).length})</summary>{changes.filter(x=>x.session_id===s.id).map(x=><div key={x.id} style={{borderTop:"1px solid #dce8e1",marginTop:7,paddingTop:7,fontSize:12}}><strong>{fmt(x.changed_at)}</strong> · {x.previous_status} → {x.new_status}<p style={{whiteSpace:"pre-wrap"}}>Activities: {x.new_activities||"Not recorded"} · Private observation: {x.new_notes||"Not recorded"}</p></div>)}</details>
        {isLeadership&&<section style={{...card,background:"#f0f8f3",marginTop:12,marginBottom:0}}>
         <h4 style={{margin:"0 0 6px"}}>Approve Parent-Visible Summary</h4>
         <p style={{fontSize:12}}>Only leadership approval publishes a summary. Private notes remain restricted. Session must be attended.</p>
