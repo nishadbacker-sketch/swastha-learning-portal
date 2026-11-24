@@ -29,6 +29,19 @@ This is an operational assessment of the **Swastha Learning Clinic** portal, not
 - The staging fixture and isolated account procedure are documented in `docs/STAGING_SETUP.md`. Do not copy real family data.
 - Do not point the public Hostinger portal to the staging Supabase project.
 
+## Mandatory GitHub Actions database-security gate
+
+The detailed GitHub Actions logs on 2026-11-24 showed that anonymous Supabase access checks had been **skipped**, because GitHub Actions secrets were absent. A successful build with skipped security checks was misleading.
+
+The `main` workflow now explicitly **fails** unless both repository **Actions secrets** are present:
+
+- `NEXT_PUBLIC_SUPABASE_URL` — URL of the **production** Supabase project.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the **public/anonymous** API key for that project, NOT a service-role key.
+
+Configuration: GitHub repository → **Settings → Secrets and variables → Actions → New repository secret**. Use the values from Supabase project `cyhfsfwwpqgsxefcxkzp` → Project Settings → API Keys. Never paste API keys into an issue, PR, chat or public commit. Do **not** change Hostinger production variables simply because CI variables are missing.
+
+Until these are set, a red security gate is **intentional and correct**. Re-run the workflow, confirm the database-security tests actually execute and pass, and separately check staging tests are not falsely counted as passing. Staging checks remain optional but should be completed before real-user launch.
+
 ## Go/no-go blockers for onboarding real families at scale
 
 1. **Deployment:** Confirm latest tested `main` SHA in Hostinger deployment logs. Verify `/login`, `/register`, `/parent/dashboard`, `/teacher/dashboard`, `/admin/dashboard` using authorized accounts.
