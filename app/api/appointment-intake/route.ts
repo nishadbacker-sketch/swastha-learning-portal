@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
   const note = text(raw.message ?? raw.reason, 1500);
   const reason = [support, note].filter(Boolean).join(" — ").slice(0, 2000);
   const consent = raw.consent === true;
+  const submissionKey = typeof raw.submission_key === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw.submission_key) ? raw.submission_key : null;
   const phonePattern = /^[+\d\s()-]{8,20}$/;
   const validDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(new Date(d + "T00:00:00Z").getTime()) && new Date(d + "T00:00:00Z").toISOString().slice(0,10) === d;
   if (guardian_name.length < 2 || child_name.length < 2 || !phonePattern.test(whatsapp_number) || (contact_differs && !phonePattern.test(contact_number || "")) || !consent ||
@@ -88,10 +89,15 @@ export async function POST(request: NextRequest) {
   if (!url || !key) return fail("Appointment intake is unavailable.", 503, origin);
   const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await db.from("appointment_enquiries").insert({
-    guardian_name, whatsapp_number, contact_differs, contact_number, child_name, date_of_birth, age_range, current_class,
+    submission_key: submissionKey, guardian_name, whatsapp_number, contact_differs, contact_number, child_name, date_of_birth, age_range, current_class,
     preferred_date, preferred_time, reason, consent: true, source: origin === "https://portal.swasthalearning.com" ? "portal_appointment" : "website_appointment"
   });
   if (error) {
+    // A replayed submission_key already saved the first request successfully.
+    // The unique index also ensures that no second outbox alert is queued.
+    if (submissionKey && error.code === "23505" && /submission_key/i.test(error.message || "")) {
+      return NextResponse.json({ ok: true, message: "Appointment request already received." }, { status: 200, headers: cors(origin) });
+    }
     console.error("Appointment intake failed:", error.code);
     return fail("We could not record your appointment. Please try again.", 503, origin);
   }
