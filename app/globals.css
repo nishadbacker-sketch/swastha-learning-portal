@@ -278,3 +278,61 @@ textarea,
 option {
   font-family: var(--swastha-font) !important;
 }
+
+
+/* Portal-wide compact design system.
+   The previous landing-page h1/h2 styles leaked into dashboards and made cards huge. */
+:root {
+  --portal-content-max: 1180px;
+  --portal-card-padding: 16px;
+  --portal-space: 14px;
+}
+
+/* Base dashboard headings (individual inline heading sizes can still override). */
+body h1 {
+  max-width: none;
+  font-size: clamp(23px, 2.3vw, 30px);
+  line-height: 1.22;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+body h2 {
+  font-size: clamp(19px, 1.8vw, 23px);
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  margin: 0 0 11px;
+}
+body h3 {
+  font-size: 16px;
+  line-height: 1.38;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+}
+body p { line-height: 1.55; }
+body button, body input, body select, body textarea { max-width: 100%; }
+body button { min-height: 34px; }
+body textarea { resize: vertical; }
+body section, body article, body main, body div { min-width: 0; }
+
+/* Keep the authentication screen intentional and comfortably compact. */
+body .auth-section { padding: 30px 16px; min-height: calc(100vh - 75px); }
+body .auth-card { max-width: 440px; padding: 28px; }
+body .auth-title { font-size: clamp(25px, 3vw, 31px); margin: 12px 0 9px; line-height: 1.2; }
+body .auth-description { margin-bottom: 18px; }
+body .auth-label { margin-bottom: 12px; }
+body .auth-input { padding: 10px 12px; margin-top: 6px; }
+body .auth-button { padding: 11px 13px; }
+body .auth-switch { margin: 16px 0 13px; }
+
+/* Retain keyboard navigation and readable form controls. */
+body :focus-visible { outline: 2px solid #2a9d8f; outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  :root { --portal-card-padding: 13px; --portal-space: 10px; }
+  body h1 { font-size: 23px; }
+  body h2 { font-size: 19px; }
+  body h3 { font-size: 15px; }
+  body .auth-card { padding: 20px 16px; }
+}
