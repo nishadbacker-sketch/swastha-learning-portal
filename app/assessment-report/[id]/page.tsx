@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { CHECKLIST_DATA, type AssessmentLevel } from "../../../lib/assessment-data";
 import AssessmentAnalytics from "../../teacher/assessment-analytics";
+import DevelopmentPlan from "../../components/development-plan";
 
 type Assignment={id:string;student_id:string;assessment_level:AssessmentLevel;status:string;assigned_at:string;due_date:string|null};
 type Student={id:string;full_name:string;current_class:string|null};
@@ -72,6 +73,7 @@ export default function AssessmentReportPage(){
     <p><strong>Reviewed:</strong> {review.reviewed_at?new Date(review.reviewed_at).toLocaleDateString("en-IN"):"Not recorded"} · <strong>Status:</strong> Teacher Approved</p>
    </section>
    <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:student.id,full_name:student.full_name}]}/>
+   <DevelopmentPlan assignmentId={assignment.id} canEdit={role==="teacher"||role==="admin"}/>
    <section style={card}>
     <h2>Approved Teacher Observations & Recommendations</h2>
     <h3>Overall teacher-approved rating</h3>
