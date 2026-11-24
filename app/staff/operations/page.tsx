@@ -16,7 +16,6 @@ type Enquiry={id:string;status:string;next_followup_date:string|null};
 const card:React.CSSProperties={padding:16,background:"#fff",border:"1px solid #dce8e1",borderRadius:12};
 const action:React.CSSProperties={background:"#176b58",color:"#fff",border:0,borderRadius:8,padding:"10px 14px",fontWeight:700,cursor:"pointer"};
 const d=(value:string)=>new Date(value).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"});
-const localDate=(value:Date)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(value);
 const toDate=(value:Date)=>{const f=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(value);const get=(t:string)=>f.find(x=>x.type===t)?.value||"";return get("year")+"-"+get("month")+"-"+get("day");};
 const csvCell=(x:unknown)=>{const v=String(x??"");const safe=/^[=+@\-\t\r]/.test(v)?"'"+v:v;return '"'+safe.replace(/"/g,'""')+'"';};
 const dlCsv=(filename:string,rows:unknown[][])=>{const blob=new Blob([rows.map(row=>row.map(csvCell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);};
@@ -121,12 +120,13 @@ export default function ClinicOperations(){
  const attendancePct=attendanceDenom?Math.round(done/attendanceDenom*100):null;
  const openFollowups=enquiries.filter(e=>!["completed","not_interested"].includes(e.status));
  const overdueFollowups=openFollowups.filter(e=>e.next_followup_date&&e.next_followup_date<today);
- const start=anchor?new Date(anchor+"T00:00:00+05:30"):new Date();
- const end=new Date(start);
- if(view==="week"){const weekday=(start.getUTCDay()+6)%7;start.setUTCDate(start.getUTCDate()-weekday);end.setTime(start.getTime());end.setUTCDate(end.getUTCDate()+7);}
- else{start.setUTCDate(1);end.setTime(start.getTime());end.setUTCMonth(end.getUTCMonth()+1);}
- const dateSeries=Array.from({length:view==="week"?7:Math.round((end.getTime()-start.getTime())/86400000)},(_,i)=>{const v=new Date(start);v.setUTCDate(v.getUTCDate()+i);return toDate(v);});
- const inWindow=visible.filter(s=>s.scheduled_at>=start.toISOString()&&s.scheduled_at<end.toISOString());
+ const shiftDate=(iso:string,days:number)=>{const x=new Date(iso+"T12:00:00Z");x.setUTCDate(x.getUTCDate()+days);return x.toISOString().slice(0,10);};
+ const firstDate=anchor||today;
+ const calendarStart=view==="week"?shiftDate(firstDate,-((new Date(firstDate+"T12:00:00Z").getUTCDay()+6)%7)):firstDate.slice(0,7)+"-01";
+ const calendarEnd=view==="week"?shiftDate(calendarStart,7):(()=>{const x=new Date(calendarStart+"T12:00:00Z");x.setUTCMonth(x.getUTCMonth()+1);return x.toISOString().slice(0,10);})();
+ const dayCount=Math.round((Date.parse(calendarEnd+"T12:00:00Z")-Date.parse(calendarStart+"T12:00:00Z"))/86400000);
+ const dateSeries=Array.from({length:dayCount},(_,i)=>shiftDate(calendarStart,i));
+ const inWindow=visible.filter(s=>{const day=toDate(new Date(s.scheduled_at));return day>=calendarStart&&day<calendarEnd;});
  const grouped=Object.groupBy(inWindow,s=>toDate(new Date(s.scheduled_at)));
  const student=(id:string)=>{const s=students.find(x=>x.id===id);return s?s.full_name+" ("+(s.student_code||"ID pending")+")":"Student";};
  const sessionRoute=role==="teacher"?"/teacher/sessions":role==="clinic_admin"?"/clinic-admin/sessions":"/admin/sessions";
