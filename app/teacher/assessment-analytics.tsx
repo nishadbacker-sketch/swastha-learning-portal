@@ -70,25 +70,26 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
  const available=assessments.filter(a=>["submitted","reviewed"].includes(a.status));
  const [selected,setSelected]=useState("");
  const [responses,setResponses]=useState<Response[]>([]);
+ const [loadedAssessmentId,setLoadedAssessmentId]=useState("");
  const [loading,setLoading]=useState(false);
  const [error,setError]=useState("");
  useEffect(()=>{if(!available.some(a=>a.id===selected))setSelected(available[0]?.id||"");},[assessments,selected]);
  useEffect(()=>{let cancelled=false;async function load(){
-  if(!selected){setResponses([]);return;}
-  if(!supabase){setError("Supabase is not configured.");return;}
-  setLoading(true);setError("");setResponses([]);
+  if(!selected){setResponses([]);setLoadedAssessmentId("");return;}
+  setLoading(true);setError("");setLoadedAssessmentId("");setResponses([]);
+  if(!supabase){setError("Supabase is not configured.");setLoading(false);return;}
   const {data,error:e}=await supabase.from("assessment_responses").select("question_id,score,observation").eq("assignment_id",selected);
-  if(!cancelled){if(e)setError(e.message);else setResponses((data||[]) as Response[]);setLoading(false);}
+  if(!cancelled){if(e){setError(e.message);setResponses([]);}else setResponses((data||[]) as Response[]);setLoadedAssessmentId(selected);setLoading(false);}
  }void load();return()=>{cancelled=true;};},[selected]);
  const assignment=available.find(a=>a.id===selected);
  const items=useMemo<Item[]>(()=>{
   if(!assignment)return [];
-  const byId=new Map(responses.map(r=>[r.question_id,r]));
+  const byId=new Map((loadedAssessmentId===selected?responses:[]).map(r=>[r.question_id,r]));
   return CHECKLIST_DATA[assignment.assessment_level].areas.flatMap(area=>area.subDomains.flatMap(domain=>domain.items.map((question,i)=>{
    const id=domain.id+"_"+(i+1),res=byId.get(id);
    return {id,question,domain:domain.title,area:area.title,score:res?.score??null,observation:res?.observation||""};
   })));
- },[assignment,responses]);
+ },[assignment,responses,loadedAssessmentId,selected]);
  const domains=useMemo<Domain[]>(()=>{
   if(!assignment)return [];
   return CHECKLIST_DATA[assignment.assessment_level].areas.flatMap(area=>area.subDomains.map(d=>{
@@ -119,7 +120,7 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
    </>}
   </div>
   {error&&<p role="alert" style={{color:palette.red}}>{error}</p>}
-  {loading?<p>Loading live assessment analytics...</p>:!responses.length?<p>No recorded responses found for the selected assessment.</p>:<>
+  {loading||loadedAssessmentId!==selected?<p>Loading submitted answers for the selected assessment...</p>:error?<p role="alert">Analytics are unavailable because the saved responses could not be loaded.</p>:!responses.length?<p>No recorded responses found for the selected assessment.</p>:<>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:16,marginBottom:19}}>
     {[
      ["Overall Readiness",readiness===null?"—":Math.round(readiness)+"%",readiness===null?"Awaiting Scores":band(readiness),"Weighted across assessed items (excl. NA)","#0f4c5c","◉"],
