@@ -30,7 +30,7 @@ function Donut({title,items}:{title:string;items:Item[]}){const total=items.redu
 function List({items}:{items:unknown[]}){return items?.length?<ul>{items.map((x,i)=><li key={i}>{typeof x==="string"?x:JSON.stringify(x)}</li>)}</ul>:<p>No observations published yet.</p>}
 export default function ParentDashboard(){
  const router=useRouter();
- const [name,setName]=useState(""),[email,setEmail]=useState(""),[profile,setProfile]=useState<Profile|null>(null);
+ const [name,setName]=useState(""),[accountId,setAccountId]=useState(""),[email,setEmail]=useState(""),[profile,setProfile]=useState<Profile|null>(null);
  const [students,setStudents]=useState<Student[]>([]),[activities,setActivities]=useState<Activity[]>([]),[assessments,setAssessments]=useState<Assessment[]>([]),[responses,setResponses]=useState<Response[]>([]),[results,setResults]=useState<Result[]>([]);
  const [customAssessments,setCustomAssessments]=useState<CustomAssessment[]>([]);
  const [tab,setTab]=useState("Overview"),[child,setChild]=useState("all"),[opened,setOpened]=useState(""),[loading,setLoading]=useState(true),[error,setError]=useState("");
@@ -61,7 +61,7 @@ export default function ParentDashboard(){
  useEffect(()=>{async function load(){const db=supabase;if(!db){setError("Supabase is not configured.");setLoading(false);return;}const errors:string[]=[];try{
  const {data:auth,error:authError}=await db.auth.getUser();if(authError||!auth.user){router.replace("/login");return;}const user=auth.user;
  const role=await db.from("user_roles").select("role").eq("user_id",user.id).single();if(role.error||!role.data){router.replace("/login");return;}if(!["parent","student"].includes(role.data.role)){router.replace(role.data.role==="admin"?"/admin/dashboard":role.data.role==="teacher"?"/teacher/dashboard":"/login");return;}
- setName(user.user_metadata?.full_name||user.email||"Learner");setEmail(user.email||"");
+ setName(user.user_metadata?.full_name||user.email||"Learner");setAccountId(user.id);setEmail(user.email||"");
  const pr=await db.from("profiles").select("full_name,phone,contact_number_differs,additional_contact_number").eq("id",user.id).single();if(pr.error)errors.push("Unable to load profile.");else{setProfile(pr.data);if(pr.data.full_name)setName(pr.data.full_name);}
  const links=await db.from("parent_student_links").select("student_id").eq("parent_user_id",user.id);if(links.error)throw new Error(links.error.message);const ids=(links.data||[]).map(x=>x.student_id);if(!ids.length)return;
  const [s,a,q]=await Promise.all([db.from("students").select("id,student_code,full_name,date_of_birth,current_class,status").in("id",ids),db.from("student_activity_assignments").select("id,student_id,assigned_at,due_date,status,learning_activities(title,description)").in("student_id",ids).order("assigned_at",{ascending:false}),db.from("assessment_assignments").select("id,student_id,assessment_level,assigned_at,due_date,status").in("student_id",ids).order("assigned_at",{ascending:false})]);
@@ -84,7 +84,7 @@ export default function ParentDashboard(){
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
  <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><p style={{fontSize:12}}>PARENT & LEARNER PORTAL</p></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><button style={btn} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={btn} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div></header>
  <div style={{maxWidth:1250,margin:"auto",padding:"24px 16px"}}>
- <section style={{...card,background:"#0f4c5c",color:"white"}}><small>LEARN • GROW • THRIVE</small><h1>Welcome, {name}!</h1><p>Track your child's learning journey, assessments and development.</p></section>
+ <section style={{...card,background:"#0f4c5c",color:"white"}}><small>LEARN • GROW • THRIVE</small><h1 style={{overflowWrap:"anywhere"}}>Welcome, {name}!{accountId&&<span style={{fontSize:"0.58em",fontWeight:500}}> (Account ID: {accountId})</span>}</h1><p>Track your child's learning journey, assessments and development.</p></section>
  {error&&<p role="alert" style={{...card,color:"#b42318"}}>{error}</p>}
  <nav style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:20}}>{["Overview","My Child","Assessments","Learning Activities","My Profile"].map(t=><button key={t} style={{...btn,background:tab===t?green:"#e8f2ed",color:tab===t?"white":"#183a35"}} onClick={()=>setTab(t)}>{t}</button>)}</nav>
  {tab!=="My Profile"&&<section style={card}><label>Select Child {" "}<select value={child} onChange={e=>{setChild(e.target.value);setOpened("");}} style={{padding:10,maxWidth:"100%"}}><option value="all">All Children</option>{students.map(s=><option key={s.id} value={s.id}>{s.full_name} ({s.student_code})</option>)}</select></label></section>}
