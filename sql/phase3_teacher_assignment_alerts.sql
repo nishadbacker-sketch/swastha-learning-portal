@@ -42,5 +42,24 @@ CREATE TRIGGER swastha_notify_teacher_assignment
 AFTER INSERT ON public.teacher_assignments
 FOR EACH ROW EXECUTE FUNCTION public.swastha_notify_teacher_assignment();
 
+-- Staging's existing acknowledgement policy allows only assessment events.
+-- Add an explicitly recipient-scoped teacher-assignment acknowledgement route.
+CREATE POLICY "Assigned teacher acknowledges assignment alerts"
+ON public.staff_notification_acknowledgements
+FOR INSERT TO authenticated
+WITH CHECK (
+  user_id = (SELECT auth.uid())
+  AND EXISTS (
+    SELECT 1 FROM public.portal_notification_events AS e
+    WHERE e.id = event_id
+      AND e.recipient_user_id = (SELECT auth.uid())
+      AND e.event_type = 'teacher_assigned'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.user_roles AS r
+    WHERE r.user_id = (SELECT auth.uid()) AND r.role = 'teacher'
+  )
+);
+
 -- The original recipient-only RLS SELECT policy and staff-acknowledgement policy remain unchanged.
 COMMIT;
