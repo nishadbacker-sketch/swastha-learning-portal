@@ -63,6 +63,8 @@ jobs:
         run: node --test tests/staff-notification-popup.test.mjs
       - name: Verify appointment follow-up alert guards (read-only)
         run: node --test tests/appointment-followup-alerts.test.mjs
+      - name: Verify Phase 5 Owner-identity authorization and audit controls
+        run: node --test tests/phase5-security-hardening.test.mjs
       - name: Require production anonymous security test configuration
         run: |
           if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
