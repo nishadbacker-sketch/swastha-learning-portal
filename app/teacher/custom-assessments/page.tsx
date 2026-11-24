@@ -27,6 +27,7 @@ function questionsOf(t:Template){return (t.structure||[]).flatMap(s=>s.categorie
 export default function CustomAssessmentBuilder(){
  const router=useRouter();
  const [userId,setUserId]=useState("");
+ const [roleName,setRoleName]=useState("");
  const [mode,setMode]=useState<"builder"|"assign"|"review">("builder");
  const [templates,setTemplates]=useState<Template[]>([]);
  const [students,setStudents]=useState<Student[]>([]);
@@ -64,7 +65,8 @@ export default function CustomAssessmentBuilder(){
    const {data:auth,error:authError}=await supabase.auth.getUser();
    if(authError||!auth.user){router.replace("/login");return;}
    const {data:role,error:roleError}=await supabase.from("user_roles").select("role").eq("user_id",auth.user.id).single();
-   if(roleError||!role||!["teacher","admin"].includes(role.role)){router.replace("/login");return;}
+   if(roleError||!role||!["teacher","admin","clinic_admin"].includes(role.role)){router.replace("/login");return;}
+   setRoleName(role.role);
    setUserId(auth.user.id);await refresh();
   }catch(e){setError(e instanceof Error?e.message:"Unable to load custom assessments");}
   finally{setLoading(false);}
@@ -165,7 +167,7 @@ export default function CustomAssessmentBuilder(){
  return <main style={{fontFamily:"Arial,sans-serif",background:"#f8faf7",minHeight:"100vh",color:"#183a35"}}>
   <header style={{position:"sticky",top:0,zIndex:30,background:"#0f4c5c",color:"white",padding:"14px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
    <div><strong>Swastha Learning Clinic</strong><div style={{fontSize:12,marginTop:4}}>CUSTOM ASSESSMENT BUILDER</div></div>
-   <button style={{...outline,background:"#fff"}} onClick={()=>router.push("/teacher/dashboard")}>Back to Teacher Dashboard</button>
+   <button style={{...outline,background:"#fff"}} onClick={()=>router.push(roleName==="clinic_admin"?"/clinic-admin/dashboard":roleName==="admin"?"/admin/dashboard":"/teacher/dashboard")}>Back to Dashboard</button>
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"24px 16px 70px"}}>
    <h1>Create & Manage Custom Assessments</h1>
