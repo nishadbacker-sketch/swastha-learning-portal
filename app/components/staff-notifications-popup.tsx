@@ -36,12 +36,12 @@ export default function StaffNotificationsPopup(){
    supabase.from("portal_notification_events").select("id,student_id,event_type,source_id,created_at")
     .eq("recipient_user_id",id).in("event_type",["assessment_submitted","custom_assessment_submitted"])
     .order("created_at",{ascending:false}).limit(100),
-   supabase.from("staff_notification_acknowledgements").select("notification_id")
-    .eq("recipient_user_id",id).limit(500)
+   supabase.from("staff_notification_acknowledgements").select("event_id")
+    .eq("user_id",id).limit(500)
   ]);
   if(result.error||ack.error){setError("Notifications could not be loaded.");setLoading(false);return;}
   const items=(result.data||[]) as Notice[];
-  setEvents(items);setRead((ack.data||[]).map(x=>x.notification_id));
+  setEvents(items);setRead((ack.data||[]).map(x=>x.event_id));
   const ids=[...new Set(items.map(x=>x.student_id))];
   const map:Record<string,Student>={};
   for(let i=0;i<ids.length;i+=100){
@@ -58,8 +58,8 @@ export default function StaffNotificationsPopup(){
   if(!unread.length){setOpen(false);if(destination)router.push(destination);return;}
   setSaving(true);setError("");
   const {error:saveError}=await supabase.from("staff_notification_acknowledgements")
-   .upsert(unread.map(x=>({recipient_user_id:userId,notification_id:x.id})),
-    {onConflict:"recipient_user_id,notification_id",ignoreDuplicates:true});
+   .upsert(unread.map(x=>({user_id:userId,event_id:x.id})),
+    {onConflict:"user_id,event_id",ignoreDuplicates:true});
   if(saveError){setError("Could not save notification status.");setSaving(false);return;}
   setRead(old=>[...new Set([...old,...unread.map(x=>x.id)])]);
   setSaving(false);setOpen(false);if(destination)router.push(destination);
