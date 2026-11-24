@@ -91,6 +91,7 @@ export default function TeacherStudentProgress(){
     <div><BrandLogo/><div style={{fontSize:12,color:"#64748b"}}>TEACHER · STUDENT PROGRESS</div></div>
     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
      <button type="button" style={button} onClick={()=>router.push("/teacher/idp")}>Manage IDP goals</button>
+     <button type="button" style={{...button,background:"#0f4c5c"}} onClick={()=>router.push("/teacher/progress-report")}>Student Progress Report</button>
      <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push("/teacher/dashboard")}>Back to dashboard</button>
     </div>
    </header>
