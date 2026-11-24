@@ -40,14 +40,14 @@ export async function downloadCourseCertificatePDF(c:CourseCertificate){
  pdf.setDrawColor(184,151,51);pdf.setLineWidth(.55);pdf.rect(7,6,w-14,h-12,"S");
  pdf.setDrawColor(216,195,131);pdf.setLineWidth(.24);pdf.rect(10,9,w-20,h-18,"S");
 
- // Deliberately use branded text instead of an unverified substitute logo.
- // When the exact uploaded logo is committed as a public asset, it can replace this header.
- pdf.setFont("helvetica","bold");pdf.setTextColor(13,36,77);pdf.setFontSize(23);
- pdf.text("SWASTHA",w/2,29,{align:"center"});
- pdf.setFont("helvetica","normal");pdf.setFontSize(11);
- pdf.text("LEARNING CLINIC",w/2,36,{align:"center"});
- pdf.setTextColor(16,106,71);pdf.setFontSize(7.7);
- pdf.text("Solutions For All Learning Difficulties",w/2,43,{align:"center"});
+ // Original Swastha logo provided and approved for this certificate.
+ const officialLogo=await new Promise<HTMLImageElement>((resolve,reject)=>{
+  const img=new Image();
+  img.onload=()=>resolve(img);
+  img.onerror=()=>reject(new Error("Approved Swastha logo could not be loaded."));
+  img.src="/certificate-assets/swastha-official-logo.jpg";
+ });
+ pdf.addImage(officialLogo,"JPEG",112,9,73,44);
  pdf.setTextColor(10,86,46);pdf.setFont("times","bold");pdf.setFontSize(29);
  pdf.text("CERTIFICATE OF COMPLETION",w/2,65,{align:"center"});
  pdf.setDrawColor(184,151,51);pdf.setLineWidth(.45);
