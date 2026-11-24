@@ -75,7 +75,13 @@ export default function CustomAssessmentBuilder(){
  function editQuestion(si:number,ci:number,qi:number,key:"text"|"text_ml",value:string){changeStructure(s=>{s[si].categories[ci].questions[qi][key]=value;return s;});}
  function setQuestionType(si:number,ci:number,qi:number,value:"rating"|"multiple_choice"){changeStructure(s=>{
   const q=s[si].categories[ci].questions[qi];q.response_type=value;
-  if(value==="multiple_choice" && (!q.options||q.options.length!==3))q.options=makeOptions();
+  if(value==="multiple_choice" && (!q.options||q.options.length===0))q.options=makeOptions();
+  return s;
+ });}
+ function changeOptionCount(si:number,ci:number,qi:number,count:number){changeStructure(s=>{
+  const q=s[si].categories[ci].questions[qi];
+  const current=q.options||makeOptions();
+  q.options=Array.from({length:count},(_,i)=>current[i]||{id:String(i+1) as "1"|"2"|"3",text:"",text_ml:""});
   return s;
  });}
  function editOption(si:number,ci:number,qi:number,optionIndex:number,key:"text"|"text_ml",value:string){changeStructure(s=>{
@@ -102,8 +108,8 @@ export default function CustomAssessmentBuilder(){
     for(const q of c.questions){
       if(q.text.trim().length<3)throw new Error("Enter English text for every question.");
       if(q.response_type==="multiple_choice" &&
-        (q.options?.length!==3 || q.options.some(opt=>opt.text.trim().length<1)))
-        throw new Error("Each multiple-choice question needs all 3 answer options.");
+        (!q.options?.length || q.options.length>3 || q.options.some(opt=>opt.text.trim().length<1)))
+        throw new Error("Each multiple-choice question needs 1–3 written answer choices.");
       total++;
     }
    }
@@ -189,12 +195,18 @@ export default function CustomAssessmentBuilder(){
          <select style={input} value={q.response_type||"rating"}
           onChange={e=>setQuestionType(si,ci,qi,e.target.value as "rating"|"multiple_choice")}>
           <option value="rating">Select a rating: 1, 2 or 3 (or NA)</option>
-          <option value="multiple_choice">Choose one of three written answers</option>
+          <option value="multiple_choice">Choose from 1–3 written answers</option>
          </select>
         </label>
         {(q.response_type||"rating")==="multiple_choice"&&<div style={{...card,background:"#f8faf7",marginTop:12}}>
-         <strong>Enter 3 answer choices for this question</strong>
-         <p style={{fontSize:13,color:"#64748b"}}>Students and parents will see these choices and select one. Leave optional Malayalam empty to show the English choice.</p>
+         <strong>Answer choices for this question</strong>
+         <label style={{display:"block",marginTop:10}}>Number of answer choices (1–3)
+           <select style={input} value={(q.options||makeOptions()).length}
+            onChange={e=>changeOptionCount(si,ci,qi,Number(e.target.value))}>
+             <option value={1}>1 answer</option><option value={2}>2 answers</option><option value={3}>3 answers</option>
+           </select>
+         </label>
+         <p style={{fontSize:13,color:"#64748b"}}>Students and parents will see the choices and select one. Leave optional Malayalam empty to show the English choice.</p>
          {(q.options||makeOptions()).map((opt,optionIndex)=><div key={opt.id} style={{marginTop:12}}>
           <strong>Choice {opt.id}</strong>
           <label style={{display:"block",marginTop:6}}>English answer *
@@ -217,7 +229,7 @@ export default function CustomAssessmentBuilder(){
       <button style={outline} disabled={busy} onClick={()=>persist(false)}>{busy?"Saving...":"Save Draft"}</button>
       <button style={btn} disabled={busy} onClick={()=>persist(true)}>{busy?"Publishing...":"Publish Test"}</button>
      </div>
-     <p style={{fontSize:13,color:"#64748b"}}>For each question choose a 1–3 rating (NA allowed), or enter 3 multiple-choice answers. Older published rating tests stay compatible. Publishing locks questions so saved answers remain consistent.</p>
+     <p style={{fontSize:13,color:"#64748b"}}>For each question choose a 1–3 rating (NA allowed), or enter 1–3 multiple-choice answers. Older published rating tests stay compatible. Publishing locks questions so saved answers remain consistent.</p>
     </section>
     <section style={card}><h2>Saved Tests ({templates.length})</h2>
      {!templates.length&&<p>No custom tests created yet.</p>}
