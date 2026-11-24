@@ -19,13 +19,16 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "@supabase/supabase-js": "^2.57.4",
-    "nodemailer": "^7.0.10"
+    "nodemailer": "^7.0.10",
+    "jspdf": "^3.0.3",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.7",
     "typescript": "^5.8.3",
-    "@types/nodemailer": "^7.0.4"
+    "@types/nodemailer": "^7.0.4",
+    "@types/qrcode": "^1.5.5"
   }
 }
