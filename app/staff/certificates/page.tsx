@@ -97,7 +97,7 @@ export default function StaffCertificates(){
      <label>Actual completion date
       <input type="date" value={date} required max={new Date().toLocaleDateString("en-CA")} onChange={e=>setDate(e.target.value)} style={{display:"block",padding:10,marginTop:5}}/>
      </label>
-     <label>Programme Coordinator — official full name
+     <label>Programmer — official full name
       <input value={coordinator} required minLength={2} maxLength={120} onChange={e=>setCoordinator(e.target.value)} placeholder="Enter authorised coordinator's name" style={{display:"block",padding:10,marginTop:5,width:"100%"}}/>
      </label>
      <label>Clinical Director — official full name
