@@ -110,7 +110,9 @@ export default function CustomAssessmentPage(){
    {readOnly?
     <section style={panel}><h2>{status==="reviewed"?tr("Teacher Review Complete","അധ്യാപക പരിശോധന പൂർത്തിയായി"):tr("Submitted for Review","പരിശോധനയ്ക്കായി സമർപ്പിച്ചു")}</h2>
      <p>{tr("Your submitted answers are locked.","സമർപ്പിച്ച ഉത്തരങ്ങൾ ഇനി തിരുത്താൻ കഴിയില്ല.")}</p>
-     {status==="reviewed"&&<><section style={{...panel,background:"#f0f7f5"}}><h3>{tr("Scoring Summary","സ്കോറിംഗ് സംഗ്രഹം")}</h3>{(()=>{
+     {status==="reviewed"&&<><section style={{...panel,background:"#fff"}}><h3>{tr("Scoring Card","സ്കോറിംഗ് കാർഡ്")}</h3>
+     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{palette.map(([score,,color])=><span key={score} style={{padding:10,border:"1px solid "+color,borderRadius:8}}><strong style={{color}}>{score}</strong> — {scoreLabel(score)}</span>)}</div>
+     </section><section style={{...panel,background:"#f0f7f5"}}><h3>{tr("Scoring Summary","സ്കോറിംഗ് സംഗ്രഹം")}</h3>{(()=>{
       const vals=items.map(item=>answers[item.id]?.score).filter(v=>v==="0"||v==="1"||v==="2"||v==="3") as string[];
       const na=items.filter(item=>answers[item.id]?.score==="NA").length;
       return <p>{tr("Rated questions","സ്കോർ ചെയ്ത ചോദ്യങ്ങൾ")}: {vals.length}/{total} · NA: {na} · {tr("Average","ശരാശരി")}: <strong>{vals.length?(vals.reduce((sum,v)=>sum+Number(v),0)/vals.length).toFixed(2)+" / 3":tr("Not rated","സ്കോർ ലഭ്യമല്ല")}</strong></p>;
