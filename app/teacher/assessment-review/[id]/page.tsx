@@ -8,7 +8,7 @@ import AssessmentAnalytics from "../../assessment-analytics";
 import DevelopmentPlan from "../../../components/development-plan";
 
 type Assignment={id:string;student_id:string;assessment_level:AssessmentLevel;status:string;assigned_at:string;due_date:string|null};
-type Student={full_name:string;current_class:string|null};
+type Student={full_name:string;student_code:string;current_class:string|null};
 type Response={question_id:string;score:string|null;observation:string|null};
 type PriorReview={teacher_feedback:string|null;recommendations:string|null;strengths:unknown;support_needs:unknown};
 type Question={id:string;title:string;domain:string;area:string;score:string|null;observation:string};
@@ -70,7 +70,7 @@ export default function TeacherAssessmentReview(){
    if(!["submitted","reviewed"].includes(a.status))throw new Error("Only submitted assessments can be reviewed.");
    if(!["LP","UP","HS","HSS"].includes(a.assessment_level))throw new Error("Unsupported assessment level.");
    const [s,r,prior]=await Promise.all([
-    supabase.from("students").select("full_name,current_class").eq("id",a.student_id).single(),
+    supabase.from("students").select("full_name,student_code,current_class").eq("id",a.student_id).single(),
     supabase.from("assessment_responses").select("question_id,score,observation").eq("assignment_id",a.id),
     supabase.from("assessment_results").select("teacher_feedback,recommendations,strengths,support_needs").eq("assignment_id",a.id).maybeSingle()
    ]);
@@ -139,7 +139,7 @@ export default function TeacherAssessmentReview(){
   </header>
   <div style={{maxWidth:1080,margin:"auto",padding:"25px 16px 70px"}}>
    <section style={card}><h1 style={{marginTop:0}}>Review Submitted Assessment</h1>
-    <p><strong>Student:</strong> {student.full_name} · <strong>Class:</strong> {student.current_class||"—"} · <strong>Level:</strong> {assignment.assessment_level}</p>
+    <p><strong>Student:</strong> {student.full_name} · {student.student_code} · <strong>Class:</strong> {student.current_class||"—"} · <strong>Level:</strong> {assignment.assessment_level}</p>
     <p><strong>Status:</strong> {assignment.status} · <strong>Assigned:</strong> {date(assignment.assigned_at)} · <strong>Due:</strong> {date(assignment.due_date)}</p>
     <p><strong>Automatically calculated rating total:</strong> {total} / {answered.length*3} across {answered.length} numerically scored questions · <strong>NA:</strong> {na} · <strong>Average:</strong> {average===null?"Not scored":average.toFixed(2)+"/3"} · <strong>Unanswered:</strong> {questions.length-answered.length-na}</p>
     <div style={{display:"flex",gap:9,flexWrap:"wrap",margin:"12px 0"}}>
@@ -150,7 +150,7 @@ export default function TeacherAssessmentReview(){
    {error&&<section role="alert" style={{...card,color:"#b42318",background:"#fff4f3"}}>{error}</section>}
    {message&&<section role="status" style={{...card,background:"#eaf6ed",color:"#176b58"}}>{message}</section>}
    {assignment.status==="reviewed"&&<section style={{...card,background:"#eefaf5"}}><strong>Teacher-approved report is available for parents and teachers.</strong><div style={{marginTop:11}}><button style={btn} onClick={()=>router.push("/assessment-report/"+assignment.id)}>Open Complete Approved Report / Print PDF</button></div></section>}
-   <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:assignment.student_id,full_name:student.full_name}]} />
+   <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:assignment.student_id,full_name:student.full_name,student_code:student.student_code}]} />
    {assignment.status==="reviewed"&&<DevelopmentPlan assignmentId={assignment.id} canEdit/>}
    {assignment.status!=="reviewed"&&<section style={{...card,background:"#fffaf0"}}><strong>Individual Development Plan (IDP)</strong><p style={{margin:"7px 0 0",fontSize:13}}>Approve this assessment to start creating the student’s development goals, support activities and progress tracking.</p></section>}
    <section style={card}><h2>Domain-wise Rating Summary</h2>
