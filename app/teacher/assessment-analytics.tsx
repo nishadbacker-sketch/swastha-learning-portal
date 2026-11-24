@@ -66,7 +66,7 @@ function RatingDoughnut({counts,total}:{counts:{score:string;count:number}[];tot
  </div>;
 }
 
-export default function AssessmentAnalytics({assessments,students}:{assessments:InputAssessment[];students:InputStudent[]}){
+export default function AssessmentAnalytics({assessments,students,hideSelector=false}:{assessments:InputAssessment[];students:InputStudent[];hideSelector?:boolean}){
  const available=assessments.filter(a=>["submitted","reviewed"].includes(a.status));
  const [selected,setSelected]=useState("");
  const [responses,setResponses]=useState<Response[]>([]);
@@ -111,10 +111,12 @@ export default function AssessmentAnalytics({assessments,students}:{assessments:
   <div style={{...card,background:"#f8fafc"}}>
    <h2 style={{marginTop:0,fontSize:22,color:"#0f4c5c"}}>Analytics Dashboard</h2>
    <p style={{fontSize:13,color:palette.muted}}>Live, question-level analysis of submitted responses. Select an assessment to view its readiness indicators and support priorities. These are educational screening indicators, not a diagnosis.</p>
+   {!hideSelector && <>
    <label style={{display:"block",fontWeight:700,marginBottom:6}} htmlFor="analytics-assessment">Select student and assessment</label>
    <select id="analytics-assessment" value={selected} onChange={e=>setSelected(e.target.value)} style={{padding:12,borderRadius:9,border:"1px solid #a9bfb5",maxWidth:"100%",width:650}}>
     {available.map(a=><option key={a.id} value={a.id}>{students.find(s=>s.id===a.student_id)?.full_name||"Student"} — {a.assessment_level} — {a.status} — {new Date(a.assigned_at).toLocaleDateString("en-IN")}</option>)}
    </select>
+   </>}
   </div>
   {error&&<p role="alert" style={{color:palette.red}}>{error}</p>}
   {loading?<p>Loading live assessment analytics...</p>:!responses.length?<p>No recorded responses found for the selected assessment.</p>:<>
