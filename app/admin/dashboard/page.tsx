@@ -74,6 +74,12 @@ export default function AdminDashboard(){
  <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><div><strong>SWASTHA LEARNING CLINIC</strong><div style={{color:"#64748b",fontSize:12,marginTop:5}}>{creatorMode?"CREATOR / OWNER PORTAL":"SUPER ADMIN PORTAL"}</div></div><button style={action} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></header>
  <div style={{maxWidth:1100,margin:"auto",padding:"30px 16px"}}>
  <section style={{...box,background:"#0f4c5c",color:"white"}}><p>LEARN • GROW • THRIVE</p><h1>Welcome, {name}</h1><p>Manage student-to-teacher assignments.</p></section>
+ <section style={{background:"#eef7f2",padding:16,borderRadius:12,border:"1px solid #c8e3d4",marginBottom:14}}>
+   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+    <div><h2 style={{fontSize:19,margin:"0 0 6px"}}>Student Management & Progress</h2><p style={{margin:0,fontSize:13,color:"#527063"}}>Teachers lead assessments, activities, and development plans. Review student progress and coordinate coverage or teacher reassignment.</p></div>
+    <button style={action} onClick={()=>router.push("/admin/students")}>Open Student Management</button>
+   </div>
+  </section>
  <AppointmentEscalations/>
  {creatorMode&&<SuperAdminManagement/>}
  <ClinicAdminManagement/>
