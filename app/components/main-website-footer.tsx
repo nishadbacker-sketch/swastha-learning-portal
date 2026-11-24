@@ -1,0 +1,36 @@
+const logoUrl = "https://storage.googleapis.com/hostinger-agents-public-assets-prod/assets/5e22f354-b41c-4d94-b43f-221d0f2d3db8.jpg";
+
+export default function MainWebsiteFooter() {
+  return (
+    <footer className="swastha-site-footer" aria-label="Swastha Learning Clinic footer">
+      <div className="swastha-site-footer__inner">
+        <div className="swastha-site-footer__about">
+          <a href="https://swasthalearning.com/#top" aria-label="Swastha Learning Clinic home" className="swastha-site-footer__logo-link">
+            {/* User-provided main-website logo; intentionally not used in the dashboards' header. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoUrl} alt="Swastha Learning Clinic logo" width={250} height={90} loading="lazy" className="swastha-site-footer__logo" />
+          </a>
+          <p>Friendly learning and development support for children and adolescents.</p>
+          <p className="swastha-site-footer__service">Child &amp; Adolescent Development Assessment</p>
+        </div>
+        <nav aria-label="Footer quick links">
+          <h2>Quick Links</h2>
+          <ul>
+            <li><a href="https://swasthalearning.com/#top">Home</a></li>
+            <li><a href="https://swasthalearning.com/#appointment">Book an Assessment</a></li>
+            <li><a href="https://swasthalearning.com/#appointment">Appointment Details</a></li>
+            <li><a href="https://swasthalearning.com/#faq">FAQs</a></li>
+          </ul>
+        </nav>
+        <div className="swastha-site-footer__contact">
+          <h2>Contact Us</h2>
+          <ul>
+            <li><a href="https://wa.me/919249056889" target="_blank" rel="noopener noreferrer">WhatsApp: +91 92490 56889</a></li>
+            <li><a href="https://swasthalearning.com/#appointment">Ask for clinic location</a></li>
+          </ul>
+          <p>Appointment support available through WhatsApp.</p>
+        </div>
+      </div>
+    </footer>
+  );
+}

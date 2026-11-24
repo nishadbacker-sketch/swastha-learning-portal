@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import BrandLogo from "./components/brand-logo";
+import MainWebsiteFooter from "./components/main-website-footer";
 
 export const metadata: Metadata = {
   title: "Swastha Learning Portal",
@@ -12,7 +12,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}<footer style={{padding:"24px 16px",background:"#f8faf7",borderTop:"1px solid #dce8e1",display:"flex",justifyContent:"center"}}><BrandLogo footer /></footer></body>
+      <body>{children}<MainWebsiteFooter /></body>
     </html>
   );
 }
