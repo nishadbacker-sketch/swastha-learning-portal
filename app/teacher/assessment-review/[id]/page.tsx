@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { CHECKLIST_DATA, type AssessmentLevel } from "../../../../lib/assessment-data";
+import {checklistForAssignment} from "../../../../lib/assessment-question-versions";
 import AssessmentAnalytics from "../../assessment-analytics";
 import DevelopmentPlan from "../../../components/development-plan";
 
@@ -48,6 +49,7 @@ export default function TeacherAssessmentReview(){
  const router=useRouter();const params=useParams<{id:string}>();
  const [assignment,setAssignment]=useState<Assignment|null>(null);
  const [student,setStudent]=useState<Student|null>(null);
+ const [questionBank,setQuestionBank]=useState<(typeof CHECKLIST_DATA)[AssessmentLevel]|null>(null);
  const [responses,setResponses]=useState<Response[]>([]);
  const [feedback,setFeedback]=useState("");
  const [recommendations,setRecommendations]=useState("");
@@ -77,6 +79,8 @@ export default function TeacherAssessmentReview(){
    if(s.error||!s.data)throw new Error("Could not load student details.");
    if(r.error)throw new Error(r.error.message);
    if(prior.error)throw new Error(prior.error.message);
+   const bank=await checklistForAssignment(a.assessment_level as AssessmentLevel,a.assigned_at);
+   setQuestionBank(bank);
    setAssignment(a as Assignment);setStudent(s.data as Student);setResponses((r.data||[]) as Response[]);
    const saved=prior.data as PriorReview|null;
    if(saved){setFeedback(saved.teacher_feedback||"");setRecommendations(saved.recommendations||"");setStrengths(readList(saved.strengths));setSupportNeeds(readList(saved.support_needs));}
@@ -86,7 +90,7 @@ export default function TeacherAssessmentReview(){
  const questions=useMemo<Question[]>(()=>{
   if(!assignment)return [];
   const byId=new Map(responses.map(r=>[r.question_id,r]));
-  return CHECKLIST_DATA[assignment.assessment_level].areas.flatMap(area=>area.subDomains.flatMap(domain=>domain.items.map((title,index)=>{
+  return (questionBank||CHECKLIST_DATA[assignment.assessment_level]).areas.flatMap(area=>area.subDomains.flatMap(domain=>domain.items.map((title,index)=>{
    const id=domain.id+"_"+(index+1),response=byId.get(id);
    return {id,title,domain:domain.title,area:area.title,score:response?.score||null,observation:response?.observation||""};
   })));
