@@ -4,7 +4,7 @@ import {useCallback,useEffect,useState} from "react";
 import {supabase} from "../../lib/supabase";
 
 type Teacher={id:string;user_id:string;status:string};
-type TeacherView=Teacher&{name:string;assignedCount:number};
+type TeacherView=Teacher&{name:string;staff_code:string|null;assignedCount:number};
 const panel:React.CSSProperties={background:"#fff",padding:16,border:"1px solid #dce8e1",borderRadius:13,marginBottom:14};
 const btn:React.CSSProperties={border:0,background:"#176b58",color:"white",padding:"9px 12px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer"};
 
@@ -24,14 +24,14 @@ export default function TeacherManagement(){
    const rows=(staff||[]) as Teacher[];
    const ids=rows.map(t=>t.user_id);
    const [p,a]=await Promise.all([
-    ids.length?supabase.from("profiles").select("id,full_name").in("id",ids):Promise.resolve({data:[],error:null}),
+    ids.length?supabase.from("profiles").select("id,full_name,staff_code").in("id",ids):Promise.resolve({data:[],error:null}),
     supabase.from("teacher_assignments").select("teacher_id")
    ]);
    if(p.error)throw p.error;
    if(a.error)throw a.error;
-   const names=new Map((p.data||[]).map(x=>[x.id,x.full_name||""]));
+   const names=new Map((p.data||[]).map(x=>[x.id,x]));
    const assignments=(a.data||[]) as {teacher_id:string}[];
-   setTeachers(rows.map(t=>({...t,name:names.get(t.user_id)||"Teacher account",assignedCount:assignments.filter(x=>x.teacher_id===t.id).length})));
+   setTeachers(rows.map(t=>({...t,name:names.get(t.user_id)?.full_name||"Teacher account",staff_code:names.get(t.user_id)?.staff_code||null,assignedCount:assignments.filter(x=>x.teacher_id===t.id).length})));
    setError("");
   }catch(e){setError(e instanceof Error?e.message:"Could not load teacher accounts.");}
   finally{setLoading(false);}
@@ -59,14 +59,14 @@ export default function TeacherManagement(){
   {loading?<p style={{fontSize:13,marginTop:14}}>Loading teachers...</p>:teachers.length===0?<p style={{fontSize:13,marginTop:14}}>No teacher accounts found.</p>:
    <div style={{display:"grid",gap:9,marginTop:15}}>
     {teachers.map(t=><div key={t.id} style={{display:"flex",alignItems:"center",gap:12,justifyContent:"space-between",flexWrap:"wrap",border:"1px solid #e2e8e0",borderRadius:9,padding:12,background:"#f8faf7"}}>
-     <div><strong style={{fontSize:14}}>{t.name}</strong>
+     <div><strong style={{fontSize:14}}>{t.name}{t.staff_code?" · "+t.staff_code:""}</strong>
       <div style={{fontSize:12,marginTop:5,color:"#64748b"}}>{t.assignedCount} assigned student(s) · <strong style={{color:t.status==="active"?"#176b58":"#b45309"}}>{t.status==="active"?"Active":"Inactive"}</strong></div>
      </div>
      <button type="button" style={{...btn,background:t.status==="active"?"#fff1f2":"#eaf4ef",color:t.status==="active"?"#9f1239":"#176b58",border:"1px solid #e2e8f0"}} disabled={!!busy} onClick={()=>setSelected(t)}>{t.status==="active"?"Deactivate":"Reactivate"}</button>
     </div>)}
    </div>}
   {selected&&<div role="dialog" aria-modal="true" aria-label="Confirm teacher status change" style={{marginTop:15,border:"1px solid #dfdac6",background:"#fffaf0",borderRadius:10,padding:14}}>
-   <strong>{selected.status==="active"?"Deactivate":"Reactivate"} {selected.name}?</strong>
+   <strong>{selected.status==="active"?"Deactivate":"Reactivate"} {selected.name}{selected.staff_code?" · "+selected.staff_code:""}?</strong>
    <p style={{fontSize:13,margin:"9px 0"}}>{selected.status==="active"
     ?"This teacher will immediately lose teacher-level access. Their account, assessment history, and existing student assignments are preserved. Consider assigning another active teacher to their students."
     :"This teacher will regain teacher-level access to their existing student assignments."}</p>
