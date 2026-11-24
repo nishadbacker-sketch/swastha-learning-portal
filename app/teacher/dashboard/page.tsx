@@ -430,6 +430,32 @@ export default function TeacherDashboard() {
 
   const [userId, setUserId] = useState("");
   const [teacherName, setTeacherName] = useState("Teacher");
+  const [pendingFollowupCount, setPendingFollowupCount] = useState<number | null>(null);
+
+  // Refresh the shared appointment queue count when the dashboard is opened,
+  // revisited, or remains open while follow-ups are being processed.
+  useEffect(() => {
+    let active = true;
+    async function refreshPendingFollowups() {
+      if (!supabase) return;
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+      const { count, error } = await supabase
+        .from("appointment_enquiries")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["new", "contacted", "appointment_scheduled"]);
+      if (active) setPendingFollowupCount(error ? null : (count ?? 0));
+    }
+    void refreshPendingFollowups();
+    const interval = window.setInterval(() => { void refreshPendingFollowups(); }, 60000);
+    window.addEventListener("focus", refreshPendingFollowups);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshPendingFollowups);
+    };
+  }, []);
+
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 
@@ -1012,7 +1038,7 @@ export default function TeacherDashboard() {
           </button>
           <button type="button" onClick={()=>router.push("/teacher/appointments")}
             style={{...primaryButton,background:"#eaf4ef",color:"#176b58"}}>
-            Appointment Follow-up
+            Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
           </button>
           <button type="button" onClick={()=>router.push("/teacher/idp")}
             style={{...primaryButton,background:"#0f4c5c",color:"white"}}>
