@@ -34,7 +34,10 @@ Applied both Phase 7 migrations to the *isolated staging* Supabase project. In r
 - All test data and transient role changes were rolled back.
 
 ## Deployment and launch notes
-- Run schema migrations **in order**: `phase7_clinic_sessions`, then `phase7_clinic_session_history`. Production has not been changed while auditing and testing.
+- **Released 24 November 2026:** Production received all three additive migrations in order: `phase7_clinic_sessions`, `phase7_clinic_session_history`, and `phase7_clinic_admin_approved_idp_visibility`. PR #16 merged as `24aa158`; PR #17 merged as `5a516c3`. GitHub CI #320 and #322 passed. Post-migration checks confirmed 7 existing students, 14 Teacher links, 3 appointments and no fabricated sessions, Parent summaries or audit entries.
 - The first new empty tables will not generate sessions or summaries until authorised staff records genuine encounters. Never fabricate student intervention outcomes.
 - These additive tables do not alter existing appointments, student/Teacher links, assessments, notifications, parent profile, or dashboard layout.
 - Before live operational use, check Hostinger build against the merged GitHub `main` commit and exercise an authenticated Teacher/Admin/Parent flow in a browser; those checks require independent access to Hostinger and test accounts.
+
+## External release verification
+Hostinger authenticated browser deployment has not been verified from available connections. Confirm Hostinger is running the latest `main` commit and exercise Teacher (`/teacher/sessions`), Super Admin (`/admin/sessions`), Clinic Admin (`/clinic-admin/sessions`) and Parent (`/parent/dashboard`, Learning Activities) in real sessions. Supabase leaked-password protection and broader Phase 5 role-positive sign-in tests remain separate existing security follow-ups.
