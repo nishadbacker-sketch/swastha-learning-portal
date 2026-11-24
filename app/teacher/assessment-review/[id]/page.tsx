@@ -94,7 +94,7 @@ export default function TeacherAssessmentReview(){
    const id=domain.id+"_"+(index+1),response=byId.get(id);
    return {id,title,domain:domain.title,area:area.title,score:response?.score||null,observation:response?.observation||""};
   })));
- },[assignment,responses]);
+ },[assignment,responses,questionBank]);
  const answered=questions.filter(q=>["0","1","2","3"].includes(q.score||""));
  const total=answered.reduce((sum,q)=>sum+Number(q.score),0);
  const average=answered.length?Math.round(total/answered.length*100)/100:null;
