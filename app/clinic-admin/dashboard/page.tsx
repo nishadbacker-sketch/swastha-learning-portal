@@ -75,6 +75,7 @@ export default function ClinicAdminDashboard(){
    <section style={card}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Question Bank</h2><p style={{fontSize:13}}>Review and revise standard assessment questions and view custom questionnaire questions.</p><button style={action} onClick={()=>router.push("/admin/questions")}>Manage Assessment Questions</button></section>
   <TeacherStudentAssignments/>
   <TeacherManagement/>
+   <section style={card}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Administrator Audit Logs</h2><p style={{fontSize:13}}>View critical changes and follow-up histories in one read-only timeline.</p><button type="button" style={action} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button></section>
    <AppointmentEscalations/>
   </div>
  </main>;
