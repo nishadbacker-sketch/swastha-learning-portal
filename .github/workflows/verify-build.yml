@@ -40,6 +40,8 @@ jobs:
         run: node --test tests/phase1-smoke.test.mjs
         env:
           SWASTHA_SMOKE_BASE_URL: http://127.0.0.1:3100
+      - name: Run parent portal source-regression checks (no user data writes)
+        run: node --test tests/parent-portal-regression.test.mjs
       - name: Verify Supabase anonymous access (read-only)
         run: node --test tests/phase1-database-security.test.mjs
         env:
