@@ -30,7 +30,8 @@ test("Parent and staff certificate access is RLS scoped; anonymous verification 
  assert.match(parent,/\.from\("course_completion_certificates"\)/);
  assert.match(parent,/\["parent","student"\]\.includes\(role\.role\)/);
  assert.match(staff,/\.rpc\("issue_course_completion_certificate"/);
- assert.match(staff,/\["owner","admin","clinic_admin"\]\.includes\(role\.role\)/);
+ assert.match(staff,/\["owner","admin","clinic_admin","teacher"\]\.includes\(role\.role\)/);
+ assert.match(staff,/role!=="teacher"&&<section/);
 });
 test("Certificate PDF is downloadable and QR always points to a live verification route",()=>{
  assert.match(pdf,/import\("jspdf"\)/);
@@ -39,6 +40,8 @@ test("Certificate PDF is downloadable and QR always points to a live verificatio
  assert.match(pdf,/programme_coordinator/);
  assert.match(pdf,/approving_director/);
  assert.match(pdf,/pdf\.addImage\(qr/);
+ assert.match(pdf,/certificate-assets\/swastha-official-logo\.jpg/);
+ assert.match(pdf,/pdf\.addImage\(officialLogo/);
  assert.match(pdf,/pdf\.save\(/);
  assert.match(pdf,/https:\/\/portal\.swasthalearning\.com\/verify\/certificate\//);
  assert.match(verify,/verify_course_completion_certificate/);
