@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ProfileTopTab from "./components/profile-top-tab";
 
 export const metadata: Metadata = {
   title: "Swastha Learning Portal",
@@ -11,7 +12,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><ProfileTopTab />{children}</body>
     </html>
   );
 }
