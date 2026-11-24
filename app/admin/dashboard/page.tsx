@@ -88,6 +88,11 @@ export default function AdminDashboard(){
    <p style={{fontSize:13}}>Monitor shared student responsibilities, outstanding work, progress notes, assessments, and IDP goal counts without taking over teachers' work.</p>
    <button style={action} onClick={()=>router.push("/teacher/coordination")}>Open Coordination Overview</button>
   </section>
+ <section style={box}>
+  <h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Oversight</h2>
+  <p style={{fontSize:13}}>Monitor assessments awaiting teacher review, overdue assignments and approved reports. Review student IDs and open authorised follow-up actions without changing existing records.</p>
+  <button type="button" style={action} onClick={()=>router.push("/admin/assessment-oversight")}>Open Assessment Oversight</button>
+ </section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Question Bank</h2><p style={{fontSize:13}}>Review every LP, UP, HS and HSS question, amend standard wording and review custom questionnaires with revision protection.</p><button style={action} onClick={()=>router.push("/admin/questions")}>Manage All Questions</button></section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Administrator Audit Logs</h2><p style={{fontSize:13}}>Review student updates, assessment approvals, appointment changes, IDP progress and staff permission history.</p><button style={action} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button></section>
  <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Parent Portal Announcements</h2><p style={{fontSize:13}}>Send in-portal notices to all parents or selected families without WhatsApp or email.</p><button type="button" style={action} onClick={()=>router.push("/admin/announcements")}>Manage Announcements</button></section>
