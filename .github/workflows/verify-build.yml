@@ -91,6 +91,8 @@ jobs:
         run: node --test tests/phase7-clinic-admin-idp-visibility.test.mjs
       - name: Verify Phase 8 clinic conflict detection and operations access controls
         run: node --test tests/phase8-clinic-operations.test.mjs
+      - name: Verify numbered holistic radar skills and unscored competencies
+        run: node --test tests/holistic-radar-skill-markers.test.mjs
       - name: Verify staging parent and teacher isolation (read-only, opt-in)
         if: ${{ vars.SWASTHA_RUN_STAGING_AUTH_TESTS == 'true' }}
         run: node --test tests/staging-authenticated-readonly.test.mjs
