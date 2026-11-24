@@ -11,7 +11,7 @@ type Section={id:string;title:string;categories:Category[]};
 type Template={id:string;title:string;description:string;level:string;structure:Section[]};
 type Answer={score?:string|null;choice?:string|null;written_answer?:string|null;observation?:string|null};
 type Assessment={id:string;student_id:string;template_id:string;status:string;answers:Record<string,Answer>;assigned_at:string;reviewed_at:string|null;teacher_feedback:string|null};
-type Student={full_name:string;current_class:string|null};
+type Student={full_name:string;student_code:string;current_class:string|null};
 type Entry={number:string;section:string;category:string;question:Question;answer:Answer};
 const panel:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:12,padding:16,marginBottom:14,breakInside:"avoid"};
 const button:React.CSSProperties={background:"#176b58",color:"white",padding:"10px 15px",border:0,borderRadius:8,cursor:"pointer",fontWeight:700};
@@ -42,7 +42,7 @@ export default function CustomAssessmentReport(){
    if(!["submitted","reviewed"].includes(a.status))throw new Error("The assessment has not yet been submitted.");
    const [t,s]=await Promise.all([
     supabase.from("custom_assessment_templates").select("id,title,description,level,structure").eq("id",a.template_id).single(),
-    supabase.from("students").select("full_name,current_class").eq("id",a.student_id).single()
+    supabase.from("students").select("full_name,student_code,current_class").eq("id",a.student_id).single()
    ]);
    if(t.error||!t.data||s.error||!s.data)throw new Error("Could not read report details.");
    setAssessment(a as Assessment);setTemplate(t.data as Template);setStudent(s.data as Student);
@@ -101,7 +101,7 @@ export default function CustomAssessmentReport(){
     <h1>{tr("Child Assessment Report","കുട്ടിയുടെ വിലയിരുത്തൽ റിപ്പോർട്ട്")}</h1>
     <h2 style={{fontSize:19}}>{template.title}</h2>
     {template.description&&<p style={{whiteSpace:"pre-wrap"}}>{template.description}</p>}
-    <p><strong>{tr("Student","വിദ്യാർത്ഥി")}:</strong> {student.full_name} · <strong>{tr("Class","ക്ലാസ്")}:</strong> {student.current_class||"—"} · <strong>{tr("Level","തലം")}:</strong> {template.level}</p>
+    <p><strong>{tr("Student","വിദ്യാർത്ഥി")}:</strong> {student.full_name} · {student.student_code} · <strong>{tr("Class","ക്ലാസ്")}:</strong> {student.current_class||"—"} · <strong>{tr("Level","തലം")}:</strong> {template.level}</p>
     <p><strong>{tr("Assigned","നൽകിയത്")}:</strong> {date(assessment.assigned_at)} · <strong>{tr("Status","നില")}:</strong> {assessment.status==="reviewed"?tr("Approved","അംഗീകരിച്ചു"):tr("Awaiting review","പരിശോധന ബാക്കി")}</p>
     {assessment.reviewed_at&&<p><strong>{tr("Reviewed","പരിശോധിച്ചത്")}:</strong> {date(assessment.reviewed_at)}</p>}
    </section>
