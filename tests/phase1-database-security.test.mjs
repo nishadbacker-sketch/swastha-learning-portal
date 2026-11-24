@@ -37,21 +37,9 @@ if (!url || !anonKey) {
   }
 
 
-  for (const [fn, params] of [
-    ["admin_publish_parent_announcement", {p_title: "Anonymous test", p_message: "Must not publish"}],
-    ["admin_parent_announcement_stats", undefined],
-    ["admin_parent_announcement_recipients", undefined],
-    ["admin_audit_timeline", undefined],
-    ["admin_student_progress_summary", undefined],
-    ["admin_assign_teacher_to_student", {p_student_id:"00000000-0000-0000-0000-000000000001",p_teacher_id:"00000000-0000-0000-0000-000000000001"}],
-    ["add_child_for_parent", {p_full_name:"Synthetic blocked child",p_date_of_birth:"2017-01-01",p_current_class:"3",p_preferred_language:"en"}],
-  ]) {
-    test(`anonymous user cannot execute sensitive RPC ${fn}`, async () => {
-      const {error, data} = await client.rpc(fn, params);
-      assert.ok(error, `Anonymous RPC was permitted: ${fn} (response: ${JSON.stringify(data)})`);
-    });
-  }
-
+  // This suite never calls write-capable RPCs against production, even
+  // with an anonymous key. Permission regressions are audited via
+  // read-only PostgreSQL metadata checks instead.
   test("anonymous users cannot call privileged student progress summary", async () => {
     const {error, data} = await client.rpc("admin_student_progress_summary");
     assert.ok(error || !data || data.length === 0, "Anonymous user received student progress information");
