@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { CHECKLIST_DATA, type AssessmentLevel } from "../../../lib/assessment-data";
+import {checklistForAssignment} from "../../../lib/assessment-question-versions";
 import AssessmentAnalytics from "../../teacher/assessment-analytics";
 import DevelopmentPlan from "../../components/development-plan";
 import ShareReportWhatsApp from "../../components/share-report-whatsapp";
@@ -22,6 +23,7 @@ export default function AssessmentReportPage(){
  const [role,setRole]=useState("");
  const [assignment,setAssignment]=useState<Assignment|null>(null);
  const [student,setStudent]=useState<Student|null>(null);
+ const [questionBank,setQuestionBank]=useState<(typeof CHECKLIST_DATA)[AssessmentLevel]|null>(null);
  const [review,setReview]=useState<Review|null>(null);
  const [answers,setAnswers]=useState<Answer[]>([]);
  const [loading,setLoading]=useState(true);
@@ -47,6 +49,7 @@ export default function AssessmentReportPage(){
    if(r.error)throw new Error(r.error.message);
    if(!r.data)throw new Error("No approved teacher results are available for this assessment.");
    if(answersResult.error)throw new Error(answersResult.error.message);
+   setQuestionBank(await checklistForAssignment(a.assessment_level as AssessmentLevel,a.assigned_at));
    setRole(access.role);setAssignment(a as Assignment);setStudent(s.data as Student);setReview(r.data as Review);setAnswers((answersResult.data||[]) as Answer[]);
   }catch(e){setError(e instanceof Error?e.message:"Unable to load this assessment report.");}
   finally{setLoading(false);}
@@ -55,7 +58,7 @@ export default function AssessmentReportPage(){
  if(loading)return <main style={{padding:36}}>Loading assessment report...</main>;
  if(!assignment||!student||!review)return <main style={{padding:36,fontFamily:"Arial,sans-serif"}}><h1>Assessment Report</h1><p role="alert">{error||"Report not found."}</p><button style={button} onClick={()=>router.back()}>Go Back</button></main>;
  const responses=new Map(answers.map(a=>[a.question_id,a]));
- const details=CHECKLIST_DATA[assignment.assessment_level].areas.flatMap(area=>area.subDomains.flatMap(domain=>domain.items.map((q,index)=>{
+ const details=(questionBank||CHECKLIST_DATA[assignment.assessment_level]).areas.flatMap(area=>area.subDomains.flatMap(domain=>domain.items.map((q,index)=>{
   const id=domain.id+"_"+(index+1),a=responses.get(id);
   return {id,area:area.title,domain:domain.title,question:q,score:a?.score??null,observation:a?.observation||""};
  })));
