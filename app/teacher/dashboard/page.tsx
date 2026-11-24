@@ -1192,6 +1192,7 @@ export default function TeacherDashboard() {
             style={{...primaryButton,background:"#fff1f2",color:"#b42318",border:"1px solid #fecdd3"}}>
             Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
           </button>
+          <button type="button" style={{...primaryButton,background:"#14532d"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
           <button type="button" style={{...primaryButton,background:"#0f4c5c"}} onClick={()=>router.push("/teacher/sessions")}>Sessions & Attendance</button>
           <button type="button" onClick={()=>router.push("/teacher/student-progress")} style={{...primaryButton,marginRight:8}}>Student Progress Tracking</button>
           <button type="button" onClick={()=>router.push("/teacher/idp")}
