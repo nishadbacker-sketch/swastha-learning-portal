@@ -94,7 +94,7 @@ export default function DevelopmentPlan({assignmentId,canEdit=false}:{assignment
      <label style={{fontSize:12,fontWeight:700}}>Teacher progress notes
       <textarea rows={2} maxLength={4000} style={{...field,display:"block",marginTop:5}} value={drafts[g.id]?.progress_notes??g.progress_notes} onChange={e=>setDrafts(d=>({...d,[g.id]:{status:d[g.id]?.status??g.status,progress_notes:e.target.value}}))}/>
      </label>
-     <div><button type="button" disabled={!!busy} style={{...button,opacity:busy?.65:1}} onClick={()=>save(g)}>{busy===g.id?"Saving...":"Save Progress"}</button></div>
+     <div><button type="button" disabled={!!busy} style={{...button,opacity:busy ? 0.65 : 1}} onClick={()=>save(g)}>{busy===g.id?"Saving...":"Save Progress"}</button></div>
     </div>:g.progress_notes&&<p style={{fontSize:13,whiteSpace:"pre-wrap",margin:"8px 0 0"}}><strong>Progress notes:</strong> {g.progress_notes}</p>}
    </article>)}
    {canEdit&&<form onSubmit={addGoal} style={{...box,background:"#f3f9f6",marginBottom:0}}>
@@ -110,7 +110,7 @@ export default function DevelopmentPlan({assignmentId,canEdit=false}:{assignment
       <input type="date" style={{...field,marginTop:5,maxWidth:240}} value={target} onChange={e=>setTarget(e.target.value)}/>
      </label>
     </div>
-    <button type="submit" disabled={!!busy} style={{...button,marginTop:12,opacity:busy?.65:1}}>{busy==="new"?"Adding...":"Add Goal"}</button>
+    <button type="submit" disabled={!!busy} style={{...button,marginTop:12,opacity:busy ? 0.65 : 1}}>{busy==="new"?"Adding...":"Add Goal"}</button>
    </form>}
   </>}
  </section>;
