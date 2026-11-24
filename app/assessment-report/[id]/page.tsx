@@ -6,6 +6,7 @@ import { supabase } from "../../../lib/supabase";
 import { CHECKLIST_DATA, type AssessmentLevel } from "../../../lib/assessment-data";
 import AssessmentAnalytics from "../../teacher/assessment-analytics";
 import DevelopmentPlan from "../../components/development-plan";
+import ShareReportWhatsApp from "../../components/share-report-whatsapp";
 
 type Assignment={id:string;student_id:string;assessment_level:AssessmentLevel;status:string;assigned_at:string;due_date:string|null};
 type Student={id:string;full_name:string;current_class:string|null};
@@ -64,6 +65,7 @@ export default function AssessmentReportPage(){
    <div style={{display:"flex",gap:9}}>
     <button style={{...button,background:"white",color:"#0f4c5c"}} onClick={back}>Back to Dashboard</button>
     <button style={{...button,background:"#2a9d8f"}} onClick={()=>window.print()}>Print / Save PDF</button>
+    <ShareReportWhatsApp reportPath={"/assessment-report/"+assignment.id}/>
    </div>
   </header>
   <div style={{maxWidth:1180,margin:"auto",padding:"24px 15px 70px"}}>
