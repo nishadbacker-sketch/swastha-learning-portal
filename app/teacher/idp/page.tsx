@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLogo from "../../components/brand-logo";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
@@ -57,7 +58,7 @@ export default function TeacherIDPPage(){
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35"}}>
   <header style={{background:"#fff",borderBottom:"1px solid #dce8e1",padding:"15px 5%"}}>
    <div style={{maxWidth:1120,margin:"auto",display:"flex",gap:12,flexWrap:"wrap",alignItems:"center",justifyContent:"space-between"}}>
-    <div><strong style={{color:"#176b58"}}>SWASTHA LEARNING CLINIC</strong><div style={{fontSize:12,color:"#64748b",marginTop:4}}>INDIVIDUAL DEVELOPMENT PLAN</div></div>
+    <div><BrandLogo /><div style={{fontSize:12,color:"#64748b",marginTop:4}}>INDIVIDUAL DEVELOPMENT PLAN</div></div>
     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
      <button style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push("/teacher/custom-assessments")}>+ Custom Assessment Builder</button>
      <button style={{...button,background:"#edf2f5",color:"#183a35"}} onClick={()=>router.push("/teacher/dashboard")}>Back to Teacher Dashboard</button>
