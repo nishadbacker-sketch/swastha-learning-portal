@@ -14,8 +14,8 @@ const button:React.CSSProperties={border:0,borderRadius:9,padding:"10px 14px",ba
 function recent(value:string,days=45){const time=Date.parse(value);return Number.isFinite(time)&&time>=Date.now()-days*86400000;}
 function dueSoon(value:string|null){if(!value)return false;const d=new Date(value+"T23:59:59");return d.getTime()>=Date.now()-86400000&&d.getTime()<=Date.now()+3*86400000;}
 
-export default function ParentNotifications({students,assessments,customAssessments,activities}:{
- students:BasicStudent[];assessments:Assigned[];customAssessments:Assigned[];activities:Activity[];
+export default function ParentNotifications({students,assessments,customAssessments,activities,onShowActivities}:{
+ students:BasicStudent[];assessments:Assigned[];customAssessments:Assigned[];activities:Activity[];onShowActivities:()=>void;
 }){
  const router=useRouter();
  const [userId,setUserId]=useState("");
@@ -82,7 +82,7 @@ export default function ParentNotifications({students,assessments,customAssessme
   }
   setOpen(false);setBusy(false);
   if(destination){
-   if(destination.includes("?tab="))router.push("/parent/dashboard");
+   if(destination.includes("?tab="))onShowActivities();
    else router.push(destination);
   }
  }
