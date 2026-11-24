@@ -17,3 +17,10 @@ Staging migration applied. Transaction-only positive test used a real reviewed s
 
 ## Exact artwork prerequisite
 Uploaded certificate bitmap has **not** yet been installed in GitHub. As described in `docs/certificate-approved-template-asset.md`, upload the supplied exact cropped image as `public/certificate-assets/approved-certificate-template.png` to activate exact artwork. Until then the fallback PDF is used with the corrected assessment wording. The download image preview is for layout only, not a valid issued assessment certificate.
+
+## Release — 24 November 2026
+- PR #27 merged to `main` as `49d1dd765ee43f9123271efcafe3ca88bf90edb3`.
+- GitHub CI run #347 SUCCESS: Next.js build, existing Parent/Teacher regressions, legacy certificate checks and new reviewed-assessment certificate checks.
+- Staging tested temporary Admin issuance against a real reviewed standard assessment, duplicate rejection, valid/fake QR lookup and full ROLLBACK.
+- Production additive migration `assessment_completion_certificates` applied. Post-release counts: 7 students, 1 reviewed assignment, 0 assessment certificates; RLS on and 2 read policies. No issue or historical score modified.
+- Outstanding: Hostinger actual deployed commit/authenticated browser testing. Upload cropped exact approved PNG to `public/certificate-assets/approved-certificate-template.png` for pixel-for-pixel source artwork instead of fallback, as documented in `docs/certificate-approved-template-asset.md`.
