@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import AssessmentAnalytics from "../assessment-analytics";
 
 type Level = "LP" | "UP" | "HS" | "HSS";
 type Tab = "overview" | "assessments" | "activities" | "students";
@@ -1257,6 +1258,7 @@ export default function TeacherDashboard() {
                 )}
               </div>
             </div>
+            <AssessmentAnalytics assessments={assessments} students={students} />
           </section>
         )}
 
