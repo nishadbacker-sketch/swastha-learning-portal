@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import AppointmentEscalations from "../appointment-escalations";
 import ClinicAdminManagement from "../clinic-admin-management";
+import TeacherManagement from "../../components/teacher-management";
 
 type Student = {id:string;full_name:string;current_class:string|null;status:string;created_at:string};
 type Teacher = {id:string;user_id:string;status:string;profiles?:{full_name:string|null}[]|{full_name:string|null}|null};
@@ -72,6 +73,7 @@ export default function AdminDashboard(){
  <section style={{...box,background:"#0f4c5c",color:"white"}}><p>LEARN • GROW • THRIVE</p><h1>Welcome, {name}</h1><p>Manage student-to-teacher assignments.</p></section>
  <AppointmentEscalations/>
  <ClinicAdminManagement/>
+  <TeacherManagement/>
  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14}}>
  <section style={box}><small>Registered Students</small><h1>{students.length}</h1></section>
  <section style={box}><small>Awaiting Teacher Assignment</small><h1>{students.filter(s=>!assignments.some(a=>a.student_id===s.id)).length}</h1></section>
