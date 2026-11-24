@@ -114,7 +114,8 @@ export default function ParentDashboard(){
     <button style={btn} onClick={()=>router.push("/parent/custom-assessment/"+a.id)}>
      {a.status==="assigned"?"Start Assessment":a.status==="in_progress"?"Continue Assessment":a.status==="reviewed"?"View Approved Review":"View Submission"}
     </button>
-    {a.status==="submitted"&&<p>Submitted successfully. Awaiting teacher review.</p>}
+    {a.status==="reviewed"&&<button style={{...btn,marginLeft:10}} onClick={()=>router.push("/custom-assessment-report/"+a.id)}>View Progress Report / PDF</button>}
+    {a.status==="submitted"&&<p>Submitted successfully. Awaiting teacher review.</p>
     {a.status==="reviewed"&&<p style={{whiteSpace:"pre-wrap"}}>Teacher feedback: {a.teacher_feedback||"No written feedback provided."}</p>}
    </section>;
   })}
