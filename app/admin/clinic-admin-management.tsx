@@ -23,10 +23,10 @@ export default function ClinicAdminManagement(){
   const {data:auth}=await supabase.auth.getUser();
   if(!auth.user){setError("Session expired.");setLoading(false);return;}
   const {data:myRole,error:mine}=await supabase.from("user_roles").select("role").eq("user_id",auth.user.id).single();
-  if(mine||myRole?.role!=="admin"){setError("Only Super Admin can manage Admin roles.");setLoading(false);return;}
+  if(mine||!["owner","admin"].includes(myRole?.role||"")){setError("Only Creator or Super Admin can manage Admin roles.");setLoading(false);return;}
   const {data:roles,error:re}=await supabase.from("user_roles").select("user_id,role").order("role");
   if(re){setError(re.message);setLoading(false);return;}
-  const rows=(roles||[]) as RoleRow[];
+  const rows=((roles||[]) as RoleRow[]).filter(x=>x.role!=="owner");
   if(!rows.length){setUsers([]);setLoading(false);return;}
   const {data:profiles,error:pe}=await supabase.from("profiles").select("id,full_name,phone,staff_code").in("id",rows.map(x=>x.user_id));
   if(pe){setError(pe.message);setLoading(false);return;}
@@ -48,7 +48,7 @@ export default function ClinicAdminManagement(){
 
  return <section style={panel}>
   <h2 style={{fontSize:20,margin:"0 0 6px"}}>Admin Role Management</h2>
-  <p style={{fontSize:13,color:"#64748b",margin:"0 0 14px"}}>Hierarchy: <strong>Super Admin → Admin → Teacher → Parent / Student</strong>. Only Super Admin can grant or revoke Admin access. Admin oversees appointment enquiries and escalations, without Super Admin privileges.</p>
+  <p style={{fontSize:13,color:"#64748b",margin:"0 0 14px"}}>Hierarchy: <strong>Super Admin → Admin → Teacher → Parent / Student</strong>. Creator and Super Admin can grant or revoke Admin access. The protected Creator account cannot be changed here. Admin oversees appointment enquiries and escalations, without Super Admin privileges.</p>
   {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
   {notice&&<p role="status" style={{color:"#176b58",fontSize:13}}>{notice}</p>}
   {loading?<p style={{fontSize:13}}>Loading accounts...</p>:<div style={{display:"grid",gap:9}}>
