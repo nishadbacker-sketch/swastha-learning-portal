@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import DevelopmentPlan from "../../components/development-plan";
 
-type Student = {id:string;full_name:string;current_class:string|null};
+type Student = {id:string;student_code:string;full_name:string;current_class:string|null};
 type Assessment = {id:string;student_id:string;assessment_level:string;assigned_at:string;status:string};
 const card:React.CSSProperties={padding:16,background:"#fff",border:"1px solid #dce8e1",borderRadius:13,marginBottom:14};
 const button:React.CSSProperties={background:"#176b58",color:"#fff",border:0,borderRadius:8,padding:"10px 15px",fontWeight:700,cursor:"pointer",fontSize:13};
@@ -35,7 +35,7 @@ export default function TeacherIDPPage(){
     const ids=[...new Set((links||[]).map(x=>x.student_id))];
     if(!ids.length){if(live){setStudents([]);setAssessments([]);}return;}
     const [s,a]=await Promise.all([
-     supabase.from("students").select("id,full_name,current_class").in("id",ids).order("full_name"),
+     supabase.from("students").select("id,student_code,full_name,current_class").in("id",ids).order("full_name"),
      supabase.from("assessment_assignments").select("id,student_id,assessment_level,assigned_at,status").in("student_id",ids).eq("status","reviewed").order("assigned_at",{ascending:false}),
     ]);
     if(s.error)throw s.error;
@@ -72,7 +72,7 @@ export default function TeacherIDPPage(){
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))",gap:12}}>
       <label style={{fontSize:13,fontWeight:700}}>Select Student
        <select value={selectedChild} onChange={e=>{setChildId(e.target.value);setAssessmentId("");}} style={{display:"block",marginTop:6,padding:10,width:"100%",borderRadius:8,border:"1px solid #cbd5e1"}}>
-        {readyStudents.map(s=><option key={s.id} value={s.id}>{s.full_name}{s.current_class?" · Class "+s.current_class:""}</option>)}
+        {readyStudents.map(s=><option key={s.id} value={s.id}>{s.full_name} · {s.student_code}{s.current_class?" · Class "+s.current_class:""}</option>)}
        </select>
       </label>
       <label style={{fontSize:13,fontWeight:700}}>Approved Assessment
@@ -84,7 +84,7 @@ export default function TeacherIDPPage(){
     </section>
     {selected&&<div key={selected.id}>
      <section style={{...card,background:"#f3f9f6"}}>
-      <strong>{student?.full_name} · {selected.assessment_level} Assessment</strong>
+      <strong>{student?.full_name} · {student?.student_code} · {selected.assessment_level} Assessment</strong>
       <p style={{fontSize:12,color:"#64748b",margin:"6px 0 10px"}}>Plan changes are saved to this approved assessment. Parents can view goals and progress in their approved report.</p>
       <button style={{...button,background:"#0f4c5c"}} onClick={()=>router.push("/assessment-report/"+selected.id)}>Open Complete Assessment Report</button>
      </section>
