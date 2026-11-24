@@ -57,3 +57,15 @@ test("public appointment intake never uses the browser anon key to bypass RLS",(
  assert.doesNotMatch(intake,/process\.env\.NEXT_PUBLIC_SUPABASE_ANON_KEY/);
  assert.match(intake,/if \(!url \|\| !key\) return fail/);
 });
+
+test("rate limiter is atomic and inaccessible to unauthenticated API clients",()=>{
+ const sql=file("supabase/migrations/20261124195000_appointment_rate_limit.sql");
+ assert.match(sql,/primary key \(bucket_key, window_number\)/);
+ assert.match(sql,/on conflict \(bucket_key,window_number\)/);
+ assert.match(sql,/revoke all on function public\.swastha_limit_appointment_request\(text,text\) from PUBLIC,anon,authenticated/);
+ assert.match(sql,/grant execute on function public\.swastha_limit_appointment_request\(text,text\) to service_role/);
+ assert.match(intake,/createHmac\("sha256", key\)/);
+ assert.match(intake,/db\.rpc\("swastha_limit_appointment_request"/);
+ assert.match(intake,/status: 429/);
+ assert.match(intake,/if \(limitError\)/);
+});
