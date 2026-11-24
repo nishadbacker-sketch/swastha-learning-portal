@@ -1,3 +1,4 @@
+import BrandLogo from "../../components/brand-logo";
 "use client";
 
 import {useEffect,useMemo,useState} from "react";
@@ -94,7 +95,7 @@ export default function AdminQuestionsPage(){
  if(!role)return <main style={{padding:30}}>{error||"Access denied"}</main>;
  return <main style={{fontFamily:"Arial,sans-serif",background:"#f8faf7",minHeight:"100vh",color:"#183a35"}}>
   <header style={{background:"#0f4c5c",color:"#fff",padding:"17px 5%",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
-   <div><strong>Swastha Learning Clinic</strong><div style={{fontSize:12,marginTop:4}}>ADMIN · QUESTION BANK</div></div>
+   <div><strong><BrandLogo /></strong><div style={{fontSize:12,marginTop:4}}>ADMIN · QUESTION BANK</div></div>
    <button style={{...btn,background:"#fff",color:"#0f4c5c"}} onClick={()=>router.push(role==="owner"?"/owner/dashboard":role==="admin"?"/admin/dashboard":"/clinic-admin/dashboard")}>Back to Admin Dashboard</button>
   </header>
   <div style={{maxWidth:1170,margin:"auto",padding:"22px 15px 60px",display:"grid",gap:14}}>
