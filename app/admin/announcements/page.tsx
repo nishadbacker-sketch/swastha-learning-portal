@@ -7,6 +7,8 @@ import {supabase} from "../../../lib/supabase";
 
 type Parent={user_id:string;display_name:string};
 type Announcement={id:string;title:string;message:string;target_parent_user_id:string|null;created_at:string;active:boolean;expires_at:string|null};
+type AnnouncementStats={announcement_id:string;target_count:number;acknowledged_count:number};
+type ParentAcknowledgement={parent_user_id:string;parent_display_name:string;acknowledged_at:string|null};
 const button:React.CSSProperties={border:0,borderRadius:9,background:"#176b58",color:"#fff",fontWeight:700,fontSize:13,padding:"10px 14px",cursor:"pointer"};
 const card:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",padding:16,borderRadius:13};
 const input:React.CSSProperties={width:"100%",padding:10,border:"1px solid #cbd5e1",borderRadius:8,boxSizing:"border-box",background:"#fff"};
@@ -17,6 +19,11 @@ export default function ParentAnnouncementManagement(){
  const [ready,setReady]=useState(false);
  const [parents,setParents]=useState<Parent[]>([]);
  const [announcements,setAnnouncements]=useState<Announcement[]>([]);
+ const [stats,setStats]=useState<Record<string,AnnouncementStats>>({});
+ const [detailId,setDetailId]=useState<string|null>(null);
+ const [details,setDetails]=useState<ParentAcknowledgement[]>([]);
+ const [detailLoading,setDetailLoading]=useState(false);
+ const [detailError,setDetailError]=useState("");
  const [title,setTitle]=useState("");
  const [message,setMessage]=useState("");
  const [recipient,setRecipient]=useState("all");
@@ -28,12 +35,17 @@ export default function ParentAnnouncementManagement(){
  const load=useCallback(async()=>{
   if(!supabase)return;
   setLoading(true);
-  const [a,p]=await Promise.all([
+  const [a,p,counts]=await Promise.all([
    supabase.from("parent_announcements").select("id,title,message,target_parent_user_id,created_at,active,expires_at").order("created_at",{ascending:false}).limit(100),
-   supabase.rpc("admin_parent_announcement_recipients")
+   supabase.rpc("admin_parent_announcement_recipients"),
+   supabase.rpc("admin_parent_announcement_stats")
   ]);
-  if(a.error||p.error)setError(a.error?.message||p.error?.message||"Unable to load announcements.");
-  else{setAnnouncements((a.data||[]) as Announcement[]);setParents((p.data||[]) as Parent[]);}
+  if(a.error||p.error||counts.error)setError(a.error?.message||p.error?.message||counts.error?.message||"Unable to load announcements.");
+  else{
+   setAnnouncements((a.data||[]) as Announcement[]);
+   setParents((p.data||[]) as Parent[]);
+   setStats(Object.fromEntries(((counts.data||[]) as AnnouncementStats[]).map(x=>[x.announcement_id,x])));
+  }
   setLoading(false);
  },[]);
  useEffect(()=>{
@@ -51,6 +63,15 @@ export default function ParentAnnouncementManagement(){
   }
   void init();return()=>{live=false;};
  },[router,load]);
+ async function toggleAcknowledgements(id:string){
+  if(detailId===id){setDetailId(null);return;}
+  if(!supabase)return;
+  setDetailId(id);setDetails([]);setDetailError("");setDetailLoading(true);
+  const {data,error:e}=await supabase.rpc("admin_parent_announcement_ack_details",{p_announcement_id:id});
+  if(e)setDetailError(e.message);
+  else setDetails((data||[]) as ParentAcknowledgement[]);
+  setDetailLoading(false);
+ }
  async function publish(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();if(!supabase||busy)return;
   setError("");setSuccess("");setBusy("publish");
@@ -114,7 +135,33 @@ export default function ParentAnnouncementManagement(){
      </div>
      <p style={{whiteSpace:"pre-wrap",fontSize:13}}>{a.message}</p>
      <p style={{fontSize:12,color:"#64748b"}}>Audience: {a.target_parent_user_id?parents.find(p=>p.user_id===a.target_parent_user_id)?.display_name||a.target_parent_user_id:"All parents"} · Published {new Date(a.created_at).toLocaleString("en-IN")}{a.expires_at?" · Expires "+new Date(a.expires_at).toLocaleDateString("en-IN"):""}</p>
-     {a.active&&<button type="button" style={{...button,background:"#fff1f2",color:"#9f1239"}} disabled={!!busy} onClick={()=>void archive(a.id)}>{busy===a.id?"Archiving...":"Archive Announcement"}</button>}
+     <div style={{background:"#f1f7f3",borderRadius:9,padding:12,margin:"12px 0",fontSize:13}}>
+      <strong>Acknowledged: {stats[a.id]?.acknowledged_count??"—"} / {stats[a.id]?.target_count??"—"} parent accounts</strong>
+      {stats[a.id]&&<div style={{height:7,background:"#dce8e1",borderRadius:7,overflow:"hidden",marginTop:8}}>
+       <div style={{height:"100%",width:stats[a.id].target_count?Math.min(100,100*stats[a.id].acknowledged_count/stats[a.id].target_count)+"%":"0%",background:"#176b58"}}/>
+      </div>}
+      <p style={{fontSize:11,color:"#64748b",margin:"8px 0 0"}}>Counts use currently registered parent accounts. Acknowledged means the parent selected Close, Got it or View details; it does not prove the message was read.</p>
+     </div>
+     <div style={{display:"flex",gap:9,flexWrap:"wrap"}}>
+      <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>void toggleAcknowledgements(a.id)}>
+       {detailId===a.id?"Hide Parent Acknowledgements":"View Parent Acknowledgements"}
+      </button>
+      {a.active&&<button type="button" style={{...button,background:"#fff1f2",color:"#9f1239"}} disabled={!!busy} onClick={()=>void archive(a.id)}>{busy===a.id?"Archiving...":"Archive Announcement"}</button>}
+     </div>
+     {detailId===a.id&&<section style={{background:"#f8faf7",border:"1px solid #dce8e1",borderRadius:9,padding:12,marginTop:12}}>
+      <h4 style={{fontSize:14,margin:"0 0 8px"}}>Parent acknowledgement details</h4>
+      {detailLoading?<p>Loading parent acknowledgements...</p>:detailError?<p role="alert" style={{color:"#b42318"}}>{detailError}</p>:
+       details.length===0?<p>No eligible parent accounts found.</p>:
+       <div style={{display:"grid",gap:8}}>
+        {details.map(p=><div key={p.parent_user_id} style={{borderBottom:"1px solid #dce8e1",paddingBottom:8,fontSize:12,display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+         <div><strong>{p.parent_display_name}</strong><div style={{color:"#64748b"}}>Account {p.parent_user_id.slice(0,8)}</div></div>
+         <div style={{color:p.acknowledged_at?"#176b58":"#b45309",fontWeight:600}}>
+          {p.acknowledged_at?"Acknowledged "+new Date(p.acknowledged_at).toLocaleString("en-IN"):"Not acknowledged"}
+         </div>
+        </div>)}
+       </div>}
+      <p style={{fontSize:11,color:"#64748b",marginBottom:0}}>Only authorized administrators can view this list. The list is limited to 5,000 current parent accounts.</p>
+     </section>}
     </article>)}
    </section>
   </div>
