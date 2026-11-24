@@ -27,3 +27,14 @@ test("parent history read uses RLS, is capped and does not expose sensitive fiel
  assert.match(parent,/Notification history/);
  assert.doesNotMatch(parent,/\.select\(".*(reason|diagnosis|answers|whatsapp_number)/);
 });
+
+test("staff inbox is limited to individually addressed submission events",()=>{
+ const staff=read("app/staff/notifications/page.tsx");
+ assert.match(staff,/roleDestination\[access\.role\]/);
+ assert.match(staff,/\.eq\("recipient_user_id",auth\.user\.id\)/);
+ assert.match(staff,/\["assessment_submitted","custom_assessment_submitted"\]/);
+ assert.match(staff,/\.limit\(100\)/);
+ assert.doesNotMatch(staff,/\.from\("portal_notification_events"\)\.insert/);
+ for(const file of ["app/teacher/dashboard/page.tsx","app/admin/dashboard/page.tsx","app/clinic-admin/dashboard/page.tsx"])
+  assert.match(read(file),/\/staff\/notifications/);
+});
