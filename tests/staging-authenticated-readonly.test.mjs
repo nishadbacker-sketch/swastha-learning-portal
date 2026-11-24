@@ -103,6 +103,7 @@ if(missing.length){
    const {data:history,error:historyError}=await client.from("portal_notification_events")
     .select("recipient_user_id,student_id,event_type").limit(500);
    assert.ifError(historyError);
+   assert.ok((history||[]).length>=1,label+" needs a synthetic notification fixture before this test is meaningful");
    assert.ok((history||[]).every(event=>event.recipient_user_id===userId &&
     ownIds.includes(event.student_id)),label+" could read another family's event history");
    const {data:foreignHistory,error:foreignHistoryError}=await client.from("portal_notification_events")
@@ -154,6 +155,7 @@ if(missing.length){
   const {data:events,error:eventError}=await teacher.client.from("portal_notification_events")
    .select("recipient_user_id,event_type").limit(500);
   assert.ifError(eventError);
+  assert.ok((events||[]).length>=1,"Seed a teacher-directed synthetic assessment submission notification");
   assert.ok((events||[]).every(event=>event.recipient_user_id===teacher.userId &&
    ["assessment_submitted","custom_assessment_submitted"].includes(event.event_type)),
    "Teacher could read parent events or notifications addressed to another account");
