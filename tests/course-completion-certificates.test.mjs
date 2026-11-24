@@ -1,0 +1,48 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=(p)=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
+const sql=read("sql/course_completion_certificates.sql");
+const staff=read("app/staff/certificates/page.tsx");
+const parent=read("app/parent/certificates/page.tsx");
+const verify=read("app/verify/certificate/[reference]/page.tsx");
+const pdf=read("lib/course-certificate-pdf.ts");
+const layout=read("app/layout.tsx");
+const parentDashboard=read("app/parent/dashboard/page.tsx");
+test("A course certificate must be issued from confirmed consented registrations and not duplicated",()=>{
+ assert.match(sql,/r\.status<>'confirmed' OR NOT r\.consent_recorded/);
+ assert.match(sql,/registration_id uuid NOT NULL UNIQUE/);
+ assert.match(sql,/SELECT \* INTO r FROM public\.registrations WHERE id=p_registration_id FOR UPDATE/);
+ assert.match(sql,/p_completion_date>current_date/);
+ assert.match(sql,/s\.student_code IS NULL/);
+ assert.match(sql,/issued_by uuid NOT NULL/);
+ assert.match(sql,/public\.has_role\('admin'\) OR public\.has_role\('clinic_admin'\)/);
+ assert.doesNotMatch(sql,/INSERT INTO public\.registrations|INSERT INTO public\.students|TRUNCATE|DROP TABLE/);
+});
+test("Parent and staff certificate access is RLS scoped; anonymous verification is minimal",()=>{
+ assert.match(sql,/ALTER TABLE public\.course_completion_certificates ENABLE ROW LEVEL SECURITY/);
+ assert.match(sql,/REVOKE ALL ON public\.course_completion_certificates FROM anon,authenticated/);
+ assert.match(sql,/parent_user_id=\(SELECT auth\.uid\(\)\)/);
+ assert.match(sql,/GRANT SELECT ON public\.course_completion_certificates TO authenticated/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.verify_course_completion_certificate\(text\) TO anon,authenticated/);
+ assert.match(sql,/left\(c\.student_name,1\)\|\|'\.'/);
+ assert.doesNotMatch(sql.split("CREATE OR REPLACE FUNCTION public.verify_course_completion_certificate")[1],/guardian_name|whatsapp_number|date_of_birth|phone/);
+ assert.match(parent,/\.from\("course_completion_certificates"\)/);
+ assert.match(parent,/\["parent","student"\]\.includes\(role\.role\)/);
+ assert.match(staff,/\.rpc\("issue_course_completion_certificate"/);
+ assert.match(staff,/\["owner","admin","clinic_admin"\]\.includes\(role\.role\)/);
+});
+test("Certificate PDF is downloadable and QR always points to a live verification route",()=>{
+ assert.match(pdf,/import\("jspdf"\)/);
+ assert.match(pdf,/import\("qrcode"\)/);
+ assert.match(pdf,/CERTIFICATE OF COMPLETION/);
+ assert.match(pdf,/programme_coordinator/);
+ assert.match(pdf,/approving_director/);
+ assert.match(pdf,/pdf\.addImage\(qr/);
+ assert.match(pdf,/pdf\.save\(/);
+ assert.match(pdf,/https:\/\/portal\.swasthalearning\.com\/verify\/certificate\//);
+ assert.match(verify,/verify_course_completion_certificate/);
+ assert.match(verify,/Certificate not found or no longer valid/);
+ assert.match(layout,/<MainWebsiteFooter \/>/);
+ assert.match(parentDashboard,/\/parent\/certificates/);
+});
