@@ -82,7 +82,7 @@ async function drawApprovedTemplate(
  // No signature illustration: real authoriser names appear below their designation.
  box(190,818,510,892);
  box(619,818,1005,892);
- drawCentered("Programme Coordinator",356,850,310,11,[4,92,49],"bold");
+ drawCentered("Programmer",356,850,310,11,[4,92,49],"bold");
  drawCentered(c.programme_coordinator,356,881,315,9,[46,49,48]);
  drawCentered("Director",820,850,370,11,[4,92,49],"bold");
  drawCentered(c.approving_director,820,881,370,9,[46,49,48]);
@@ -159,7 +159,7 @@ export async function downloadCourseCertificatePDF(c:CourseCertificate,kind:Cert
 
  pdf.setDrawColor(185,152,54);pdf.line(43,166,108,166);pdf.line(177,166,239,166);
  pdf.setTextColor(8,93,54);pdf.setFont("helvetica","bold");pdf.setFontSize(9);
- pdf.text("Programme Coordinator",75,173,{align:"center"});
+ pdf.text("Programmer",75,173,{align:"center"});
  pdf.text("Director",208,173,{align:"center"});
  pdf.setTextColor(40,45,48);pdf.setFont("helvetica","normal");pdf.setFontSize(8);
  pdf.text(c.programme_coordinator,75,179,{align:"center"});
