@@ -51,7 +51,7 @@ export default function TeacherAppointments(){
   const {data:auth}=await supabase.auth.getUser();
   if(!auth.user){router.replace("/login");return;}
   const {data:role}=await supabase.from("user_roles").select("role").eq("user_id",auth.user.id).single();
-  if(!role||!["teacher","admin"].includes(role.role)){setError("Not authorised to view appointment requests.");setLoading(false);return;}
+  if(!role||!["teacher","clinic_admin","admin"].includes(role.role)){setError("Not authorised to view appointment requests.");setLoading(false);return;}
   setUserId(auth.user.id);
   setAccountRole(role.role);
   await refresh();
@@ -77,7 +77,7 @@ export default function TeacherAppointments(){
   <header style={{background:"white",borderBottom:"1px solid #dce8e1",padding:"15px 5%"}}>
    <div style={{maxWidth:1110,margin:"auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
     <div><strong style={{color:"#176b58"}}>SWASTHA LEARNING CLINIC</strong><div style={{fontSize:12,color:"#667a74",marginTop:3}}>APPOINTMENT FOLLOW-UP</div></div>
-    <button style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push(accountRole==="admin"?"/admin/dashboard":"/teacher/dashboard")}>Back to {accountRole==="admin"?"Admin":"Teacher"} Dashboard</button>
+    <button style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push(accountRole==="admin"?"/admin/dashboard":accountRole==="clinic_admin"?"/clinic-admin/dashboard":"/teacher/dashboard")}>Back to {accountRole==="admin"||accountRole==="clinic_admin"?"Admin":"Teacher"} Dashboard</button>
    </div>
   </header>
   <div style={{maxWidth:1110,margin:"auto",padding:"22px 16px 60px"}}>
