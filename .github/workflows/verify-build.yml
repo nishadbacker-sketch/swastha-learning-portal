@@ -57,6 +57,8 @@ jobs:
         run: node --test tests/email-auth-regression.test.mjs
       - name: Check appointment staff notification safety (no emails sent)
         run: node --test tests/appointment-email-regression.test.mjs
+      - name: Check planned in-portal assessment and activity notification history
+        run: node --test tests/portal-notification-history.test.mjs
       - name: Require production anonymous security test configuration
         run: |
           if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
