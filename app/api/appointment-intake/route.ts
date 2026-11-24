@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createHmac } from "node:crypto";
 
 const origins = new Set([
   "https://swasthalearning.com",
@@ -90,6 +91,37 @@ export async function POST(request: NextRequest) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return fail("Appointment intake is unavailable.", 503, origin);
   const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  // A replay of a previously saved browser request is a successful no-op.
+  // This check runs before throttling, so an ordinary network retry is safe.
+  if (submissionKey) {
+    const { data: existing, error: replayError } = await db
+      .from("appointment_enquiries").select("id").eq("submission_key", submissionKey).maybeSingle();
+    if (replayError) return fail("Appointment intake is unavailable.", 503, origin);
+    if (existing) {
+      return NextResponse.json({ ok: true, message: "Appointment request already received." }, { status: 200, headers: cors(origin) });
+    }
+  }
+
+  // Fail closed when rate-limit storage/RPC is unavailable. HMAC avoids
+  // persisting raw phone/IP values in the limiter table.
+  const suppliedIp = (request.headers.get("x-forwarded-for") || "").split(",")[0].trim();
+  const proxyIp = request.headers.get("x-real-ip")?.trim() || "";
+  const ip = suppliedIp || proxyIp || "unknown";
+  const digest = (value: string) => createHmac("sha256", key).update(value).digest("hex");
+  const { data: allowed, error: limitError } = await db.rpc("swastha_limit_appointment_request", {
+    p_ip_key: digest("ip:" + ip),
+    p_phone_key: digest("phone:" + whatsapp_number.replace(/\\D/g, "")),
+  });
+  if (limitError) {
+    console.error("Appointment rate limiter failed:", limitError.code);
+    return fail("Appointment intake is temporarily unavailable.", 503, origin);
+  }
+  if (allowed !== true) {
+    return NextResponse.json({ ok: false, error: "Too many appointment requests. Please try again later." }, {
+      status: 429, headers: { ...cors(origin), "Retry-After": "900" }
+    });
+  }
+
   const { error } = await db.from("appointment_enquiries").insert({
     submission_key: submissionKey, guardian_name, whatsapp_number, contact_differs, contact_number, child_name, date_of_birth, age_range, current_class,
     preferred_date, preferred_time, reason, consent: true, source: origin === "https://portal.swasthalearning.com" ? "portal_appointment" : "website_appointment"
