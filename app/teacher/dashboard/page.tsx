@@ -1045,6 +1045,8 @@ export default function TeacherDashboard() {
             style={{...primaryButton,background:"#0f4c5c",color:"white"}}>
             Individual Development Plan (IDP)
           </button>
+          <button type="button" onClick={()=>router.push("/my-profile")}
+            style={{...primaryButton,background:"#eaf4ef",color:"#176b58",border:"1px solid #b9d9cc"}}>My Profile</button>
           <button
             type="button"
             onClick={signOut}
