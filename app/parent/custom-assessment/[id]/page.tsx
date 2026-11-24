@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLogo from "../../../components/brand-logo";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
@@ -87,7 +88,7 @@ export default function CustomAssessmentPage(){
  if(!assessment||!template)return <main style={{padding:35}}><h2>Assessment unavailable</h2><p>{error}</p><button style={btn} onClick={()=>router.push("/parent/dashboard")}>Back to Dashboard</button></main>;
  return <main style={{fontFamily:"Arial,sans-serif",background:"#f8faf7",color:"#183a35",minHeight:"100vh"}}>
   <header style={{position:"sticky",top:0,zIndex:35,background:"#0f4c5c",color:"white",padding:"12px 4%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",boxShadow:"0 3px 12px #1232"}}>
-   <div><strong>Swastha Learning Clinic</strong><div style={{fontSize:12}}>{tr("Custom Child Assessment","കുട്ടികളുടെ പ്രത്യേക വിലയിരുത്തൽ")}</div></div>
+   <div><BrandLogo /><div style={{fontSize:12}}>{tr("Custom Child Assessment","കുട്ടികളുടെ പ്രത്യേക വിലയിരുത്തൽ")}</div></div>
    <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
     <label htmlFor="custom-assessment-language">{tr("Language","ഭാഷ")}</label>
     <select id="custom-assessment-language" value={language} onChange={e=>languageChange(e.target.value as "en"|"ml")} style={{padding:10,borderRadius:7,background:"white",color:"#0f4c5c"}}>
