@@ -40,6 +40,11 @@ jobs:
         run: node --test tests/phase1-smoke.test.mjs
         env:
           SWASTHA_SMOKE_BASE_URL: http://127.0.0.1:3100
+      - name: Verify Supabase anonymous access (read-only)
+        run: node --test tests/phase1-database-security.test.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       - name: Show logs on failure
         if: failure()
         run: cat /tmp/swastha-smoke.log 2>/dev/null || true
