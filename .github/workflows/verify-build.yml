@@ -63,6 +63,8 @@ jobs:
         run: node --test tests/staff-notification-popup.test.mjs
       - name: Verify appointment follow-up alert guards (read-only)
         run: node --test tests/appointment-followup-alerts.test.mjs
+      - name: Verify Phase 5 Owner-identity authorization and audit controls
+        run: node --test tests/phase5-security-hardening.test.mjs
       - name: Require production anonymous security test configuration
         run: |
           if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
@@ -91,6 +93,21 @@ jobs:
           SWASTHA_STAGING_PARENT_B_PASSWORD: ${{ secrets.SWASTHA_STAGING_PARENT_B_PASSWORD }}
           SWASTHA_STAGING_TEACHER_EMAIL: ${{ secrets.SWASTHA_STAGING_TEACHER_EMAIL }}
           SWASTHA_STAGING_TEACHER_PASSWORD: ${{ secrets.SWASTHA_STAGING_TEACHER_PASSWORD }}
+      - name: Verify Phase 5 staging Admin and Clinic Admin role protections (opt-in, read-only)
+        if: ${{ vars.SWASTHA_RUN_PHASE5_ROLE_TESTS == 'true' }}
+        run: node --test tests/staging-phase5-role-positive.test.mjs
+        env:
+          SWASTHA_STAGING_SUPABASE_URL: ${{ secrets.SWASTHA_STAGING_SUPABASE_URL }}
+          SWASTHA_STAGING_SUPABASE_ANON_KEY: ${{ secrets.SWASTHA_STAGING_SUPABASE_ANON_KEY }}
+          SWASTHA_STAGING_OWNER_USER_ID: ${{ secrets.SWASTHA_STAGING_OWNER_USER_ID }}
+          SWASTHA_STAGING_PARENT_A_EMAIL: ${{ secrets.SWASTHA_STAGING_PARENT_A_EMAIL }}
+          SWASTHA_STAGING_PARENT_A_PASSWORD: ${{ secrets.SWASTHA_STAGING_PARENT_A_PASSWORD }}
+          SWASTHA_STAGING_TEACHER_EMAIL: ${{ secrets.SWASTHA_STAGING_TEACHER_EMAIL }}
+          SWASTHA_STAGING_TEACHER_PASSWORD: ${{ secrets.SWASTHA_STAGING_TEACHER_PASSWORD }}
+          SWASTHA_STAGING_ADMIN_EMAIL: ${{ secrets.SWASTHA_STAGING_ADMIN_EMAIL }}
+          SWASTHA_STAGING_ADMIN_PASSWORD: ${{ secrets.SWASTHA_STAGING_ADMIN_PASSWORD }}
+          SWASTHA_STAGING_CLINIC_ADMIN_EMAIL: ${{ secrets.SWASTHA_STAGING_CLINIC_ADMIN_EMAIL }}
+          SWASTHA_STAGING_CLINIC_ADMIN_PASSWORD: ${{ secrets.SWASTHA_STAGING_CLINIC_ADMIN_PASSWORD }}
       - name: Show logs on failure
         if: failure()
         run: cat /tmp/swastha-smoke.log 2>/dev/null || true
