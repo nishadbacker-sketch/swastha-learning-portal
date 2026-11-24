@@ -16,7 +16,7 @@ const action:React.CSSProperties={border:0,borderRadius:8,padding:"10px 14px",ba
 const card:React.CSSProperties={padding:15,border:"1px solid #dce8e1",background:"#fff",borderRadius:12,marginBottom:12};
 const fmt=(date:string|null)=>date?new Date(date.length===10?date+"T00:00:00":date).toLocaleDateString("en-IN"):"Not recorded";
 const batches=<T,>(items:T[],n=100)=>Array.from({length:Math.ceil(items.length/n)},(_,i)=>items.slice(i*n,(i+1)*n));
-const localToday=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()).replace(/\//g,"-");
+const localToday=()=>{const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const value=(key:string)=>parts.find(p=>p.type===key)?.value||"";return value("year")+"-"+value("month")+"-"+value("day");};
 
 export default function TeacherProgressReport(){
  const router=useRouter();
@@ -99,9 +99,8 @@ export default function TeacherProgressReport(){
   const goalIds=new Set(ownGoals.map(g=>g.id));
   const ownChanges=changes.filter(c=>goalIds.has(c.goal_id)).sort((a,b)=>b.recorded_at.localeCompare(a.recorded_at));
   const ownActivities=activities.filter(a=>a.student_id===selected.id);
-  const scores=ownAssessments.flatMap(a=>ownResults.filter(r=>r.assignment_id===a.id&&r.overall_score!==null).map(r=>({date:r.reviewed_at||a.assigned_at,score:r.overall_score!,level:a.assessment_level})));
   const today=localToday();
-  return {ownAssessments,ownResults,ownGoals,ownChanges,ownActivities,scores,
+  return {ownAssessments,ownResults,ownGoals,ownChanges,ownActivities,
     achieved:ownGoals.filter(g=>g.status==="achieved").length,
     dueReview:ownGoals.filter(g=>g.target_date&&g.target_date<today&&g.status!=="achieved").length,
     completedActivities:ownActivities.filter(a=>a.status==="completed").length};
@@ -158,7 +157,7 @@ export default function TeacherProgressReport(){
       <h2 style={{fontSize:18}}>Individual Development Goals</h2>
       {!report.ownGoals.length?<p>No goals added from approved assessments yet.</p>:report.ownGoals.map(g=><div key={g.id} style={{borderTop:"1px solid #e2e8f0",padding:"10px 0",fontSize:13}}>
        <strong>{g.title}</strong> · {g.status.replace(/_/g," ")}
-       <p style={{margin:"5px 0"}}>Baseline: {g.baseline_percent??"Not set"}% · Current: {g.current_percent??"Not set"}% · Target: {g.target_percent??"Not set"}% · Review: {fmt(g.target_date)}</p>
+       <p style={{margin:"5px 0"}}>Baseline: {g.baseline_percent===null?"Not set":g.baseline_percent+"%"} · Current: {g.current_percent===null?"Not set":g.current_percent+"%"} · Target: {g.target_percent===null?"Not set":g.target_percent+"%"} · Review: {fmt(g.target_date)}</p>
        {g.current_percent!==null&&<div role="progressbar" aria-label={"Achievement: "+g.title} aria-valuemin={0} aria-valuemax={100} aria-valuenow={g.current_percent} style={{height:7,background:"#e2e8f0",borderRadius:8}}><div style={{height:"100%",width:g.current_percent+"%",background:"#176b58",borderRadius:8}}/></div>}
        {g.progress_notes&&<p style={{whiteSpace:"pre-wrap"}}>Progress notes: {g.progress_notes}</p>}
       </div>)}
@@ -172,7 +171,7 @@ export default function TeacherProgressReport(){
      <section style={card} className="print-section">
       <h2 style={{fontSize:18}}>Goal Progress History</h2>
       {!report.ownChanges.length?<p>No goal progress updates recorded yet.</p>:report.ownChanges.slice(0,100).map(c=><p key={c.id} style={{fontSize:12,borderTop:"1px solid #e2e8f0",paddingTop:7}}>
-       {fmt(c.recorded_at)} · {c.old_status||"—"} → {c.new_status||"—"} · {c.old_current_percent??"Not set"}% → {c.new_current_percent??"Not set"}%
+       {fmt(c.recorded_at)} · {c.old_status||"—"} → {c.new_status||"—"} · {c.old_current_percent===null?"Not set":c.old_current_percent+"%"} → {c.new_current_percent===null?"Not set":c.new_current_percent+"%"}
       </p>)}
       {report.ownChanges.length>100&&<p style={{fontSize:12}}>Showing the 100 most recent changes.</p>}
      </section>
