@@ -135,7 +135,7 @@ export default function DevelopmentPlan({assignmentId,canEdit=false}:{assignment
     {(g.baseline_percent!==null||g.target_percent!==null||g.current_percent!==null)&&<div style={{fontSize:13,margin:"0 0 12px"}}>
       <p style={{margin:"0 0 6px"}}><strong>Baseline:</strong> {g.baseline_percent===null?"Not measured":g.baseline_percent+"%"} · <strong>Current:</strong> {g.current_percent===null?"Not measured":g.current_percent+"%"} · <strong>Target:</strong> {g.target_percent===null?"Not set":g.target_percent+"%"}</p>
       {g.current_percent!==null&&<div role="progressbar" aria-valuenow={g.current_percent} aria-valuemin={0} aria-valuemax={100} aria-label={"Current achievement for "+g.title} style={{height:8,background:"#e2e8f0",borderRadius:8,overflow:"hidden"}}><div style={{width:g.current_percent+"%",height:"100%",background:"#176b58"}}/></div>}
-    </div>
+    </div>}
     {canEdit?<div style={{display:"grid",gap:9}}>
      <label style={{fontSize:12,fontWeight:700}}>Progress status
       <select style={{...field,marginTop:5}} value={drafts[g.id]?.status||g.status} onChange={e=>setDrafts(d=>({...d,[g.id]:{...d[g.id],status:e.target.value as Status}}))}>
