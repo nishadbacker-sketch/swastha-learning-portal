@@ -81,6 +81,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       - name: Verify IDP student progress overview uses assigned approved records
         run: node --test tests/student-progress-overview.test.mjs
+      - name: Verify Phase 6 read-only student progress report access guards
+        run: node --test tests/phase6-student-progress-report.test.mjs
       - name: Verify staging parent and teacher isolation (read-only, opt-in)
         if: ${{ vars.SWASTHA_RUN_STAGING_AUTH_TESTS == 'true' }}
         run: node --test tests/staging-authenticated-readonly.test.mjs
