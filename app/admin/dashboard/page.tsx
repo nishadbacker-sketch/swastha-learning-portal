@@ -8,7 +8,7 @@ import ClinicAdminManagement from "../clinic-admin-management";
 import TeacherManagement from "../../components/teacher-management";
 import SuperAdminManagement from "../../owner/super-admin-management";
 
-type Student = {id:string;full_name:string;current_class:string|null;status:string;created_at:string};
+type Student = {id:string;student_code:string;full_name:string;current_class:string|null;status:string;created_at:string};
 type Teacher = {id:string;user_id:string;status:string;profiles?:{full_name:string|null}[]|{full_name:string|null}|null};
 type Assignment = {id:string;student_id:string;teacher_id:string};
 const box:React.CSSProperties={background:"white",border:"1px solid #dce8e1",borderRadius:13,padding:16,marginBottom:14};
@@ -35,7 +35,7 @@ export default function AdminDashboard(){
    setCreatorMode(role.data.role==="owner");
    setName(auth.user.user_metadata?.full_name||auth.user.email||"Super Admin");
    const [s,t,a]=await Promise.all([
-    db.from("students").select("id,full_name,current_class,status,created_at").order("created_at",{ascending:false}),
+    db.from("students").select("id,student_code,full_name,current_class,status,created_at").order("created_at",{ascending:false}),
     db.from("teachers").select("id,user_id,status").eq("status","active"),
     db.from("teacher_assignments").select("id,student_id,teacher_id")
    ]);
@@ -102,7 +102,7 @@ export default function AdminDashboard(){
  const linked=assignments.filter(a=>a.student_id===s.id);
  return <section key={s.id} style={{...box,background:"#f8faf7"}}>
  <div style={{display:"flex",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
- <div><h3 style={{marginTop:0}}>{s.full_name}</h3><p>Class: {s.current_class||"Not recorded"} · Status: {s.status}</p><p style={{fontSize:13,color:"#64748b"}}>Assigned teacher(s): {linked.length?linked.map(a=>{const t=teachers.find(x=>x.id===a.teacher_id);const profile=Array.isArray(t?.profiles)?t.profiles[0]:t?.profiles;return profile?.full_name&&profile.full_name!=="Name not provided"?profile.full_name:"Teacher "+(teachers.findIndex(x=>x.id===a.teacher_id)+1)}).join(", "):"None"}</p></div>
+ <div><h3 style={{marginTop:0}}>{s.full_name}</h3><p>Student ID: {s.student_code}</p><p>Class: {s.current_class||"Not recorded"} · Status: {s.status}</p><p style={{fontSize:13,color:"#64748b"}}>Assigned teacher(s): {linked.length?linked.map(a=>{const t=teachers.find(x=>x.id===a.teacher_id);const profile=Array.isArray(t?.profiles)?t.profiles[0]:t?.profiles;return profile?.full_name&&profile.full_name!=="Name not provided"?profile.full_name:"Teacher "+(teachers.findIndex(x=>x.id===a.teacher_id)+1)}).join(", "):"None"}</p></div>
  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><select value={selected[s.id]||""} onChange={e=>setSelected(old=>({...old,[s.id]:e.target.value}))} style={{padding:10,maxWidth:"100%"}} aria-label={"Choose teacher for "+s.full_name}><option value="">Select a teacher</option>{teachers.map((t,i)=>{const p=Array.isArray(t.profiles)?t.profiles[0]:t.profiles;return <option value={t.id} key={t.id}>{p?.full_name&&p.full_name!=="Name not provided"?p.full_name:"Teacher "+(i+1)}</option>})}</select><button style={{...action,opacity:busy===s.id?0.6:1}} disabled={busy===s.id} onClick={()=>assign(s)}>{busy===s.id?"Assigning...":"Assign Teacher"}</button></div>
  </div></section>})}
  </section>
