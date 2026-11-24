@@ -19,9 +19,85 @@ export function courseCertificateVerificationUrl(reference:string){
  return verificationBase+encodeURIComponent(reference);
 }
 
+
+/**
+ * The uploaded Swastha template is a single exact background bitmap.
+ * Keep all original geometric corners, logo, branding, type and border;
+ * replace only sample fields and the non-functional QR.
+ *
+ * The source PNG must live at public/certificate-assets/approved-certificate-template.png.
+ * Until the authorised asset is present, the previous working PDF remains the fallback.
+ */
+const approvedTemplateUrl="/certificate-assets/approved-certificate-template.png";
+async function loadApprovedCertificateTemplate():Promise<HTMLImageElement|null>{
+ return new Promise(resolve=>{
+  const image=new Image();
+  image.onload=()=>resolve(image);
+  image.onerror=()=>resolve(null);
+  image.src=approvedTemplateUrl;
+ });
+}
+async function drawApprovedTemplate(
+ pdf:import("jspdf").jsPDF,
+ image:HTMLImageElement,
+ c:CourseCertificate,
+ QRCode:typeof import("qrcode")
+){
+ const width=297,height=220;
+ const sx=(x:number)=>x*width/1345;
+ const sy=(y:number)=>y*height/996;
+ const box=(left:number,top:number,right:number,bottom:number,colour:[number,number,number]=[255,255,255])=>{
+  pdf.setFillColor(...colour);
+  pdf.rect(sx(left),sy(top),sx(right-left),sy(bottom-top),"F");
+ };
+ const drawCentered=(text:string,x:number,y:number,maxWidth:number,initialSize:number,colour:[number,number,number],style:"normal"|"bold"|"italic"|"bolditalic"="normal",family="helvetica")=>{
+  pdf.setFont(family,style);
+  let size=initialSize;
+  pdf.setFontSize(size);
+  while(pdf.getTextWidth(text)>sx(maxWidth)&&size>7){
+   size-=0.5;
+   pdf.setFontSize(size);
+  }
+  pdf.setTextColor(...colour);
+  pdf.text(text,sx(x),sy(y),{align:"center"});
+ };
+ pdf.addImage(image,"PNG",0,0,width,height);
+ // Erase only placeholder text regions from the exact background photograph.
+ box(350,482,1040,583);
+ drawCentered(c.student_name,695,544,670,31,[6,89,48],"italic","times");
+ drawCentered("Student ID: "+c.student_code,695,568,620,9,[38,49,46]);
+ box(489,654,875,701,[3,91,50]);
+ drawCentered(c.course_title,683,690,620,20,[255,255,255],"bolditalic","times");
+ // No signature illustration: real authoriser names appear below their designation.
+ box(190,818,510,892);
+ box(619,818,1005,892);
+ drawCentered("Programme Coordinator",356,850,310,11,[4,92,49],"bold");
+ drawCentered(c.programme_coordinator,356,881,315,9,[46,49,48]);
+ drawCentered("Clinical Director",820,850,370,11,[4,92,49],"bold");
+ drawCentered(c.approving_director,820,881,370,9,[46,49,48]);
+ // Keep the source's original issue-date/reference headings, replace example values.
+ box(282,938,430,984);
+ drawCentered(new Date(c.issued_at).toLocaleDateString("en-GB",{timeZone:"Asia/Kolkata"}),356,968,151,9,[35,43,41]);
+ box(785,936,1008,980);
+ drawCentered(c.reference_code,896,967,221,7,[35,43,41]);
+ // The raster QR was only a mock-up; substitute the real unpredictable reference URL.
+ box(1082,769,1255,935);
+ const qr=await QRCode.toDataURL(courseCertificateVerificationUrl(c.reference_code),{width:512,margin:1,errorCorrectionLevel:"H"});
+ pdf.setDrawColor(8,90,48);pdf.setLineWidth(0.65);
+ pdf.roundedRect(sx(1085),sy(772),sx(168),sy(160),2,2,"S");
+ pdf.addImage(qr,"PNG",sx(1095),sy(781),sx(149),sy(141));
+}
+
 export async function downloadCourseCertificatePDF(c:CourseCertificate){
  const [{jsPDF},QRCode]=await Promise.all([import("jspdf"),import("qrcode")]);
- const pdf=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+ const approvedTemplate=await loadApprovedCertificateTemplate();
+ const pdf=new jsPDF({orientation:"landscape",unit:"mm",format:approvedTemplate?[297,220]:"a4"});
+ if(approvedTemplate){
+  await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode);
+  pdf.setProperties({title:"Swastha Learning Clinic Course Completion - "+c.reference_code,subject:"Verified digital course completion"});
+  pdf.save("Swastha-Course-Certificate-"+c.reference_code+".pdf");
+  return;
+ }
  const w=297,h=210;
  // Green polygonal design based on the uploaded landscape certificate artwork.
  pdf.setFillColor(255,255,255);pdf.rect(0,0,w,h,"F");
