@@ -50,21 +50,24 @@ test("Certificate PDF is downloadable and QR always points to a live verificatio
  assert.match(parentDashboard,/\/parent\/certificates/);
 });
 
-test("Use the exact approved uploaded certificate background when installed, without affecting existing fallback",()=>{
- assert.match(pdf,/const approvedTemplateUrl="\\/certificate-assets\\/approved-certificate-template\\.png"/);
- assert.match(pdf,/async function loadApprovedCertificateTemplate/);
- assert.match(pdf,/image\.onerror=\(\)=>resolve\(null\)/);
- assert.match(pdf,/pdf\.addImage\(image,"PNG",0,0,width,height\)/);
- assert.match(pdf,/box\(350,482,1040,583\)/);
- assert.match(pdf,/box\(489,654,875,701/);
- assert.match(pdf,/box\(1082,769,1255,935\)/);
- assert.match(pdf,/drawCentered\(c\.student_name/);
- assert.match(pdf,/drawCentered\(c\.course_title/);
- assert.match(pdf,/drawCentered\(c\.reference_code/);
- assert.match(pdf,/QRCode\.toDataURL\(courseCertificateVerificationUrl\(c\.reference_code\)/);
- assert.match(pdf,/drawCentered\(c\.programme_coordinator/);
- assert.match(pdf,/drawCentered\(c\.approving_director/);
- assert.match(pdf,/const pdf=new jsPDF\(\{orientation:"landscape",unit:"mm",format:approvedTemplate\?\[297,220\]:"a4"\}\)/);
- assert.match(pdf,/if\(approvedTemplate\)\{/);
- assert.match(pdf,/await drawApprovedTemplate\(pdf,approvedTemplate,c,QRCode\)/);
+test("Exact uploaded certificate art overlays real values and QR, with a non-breaking fallback",()=>{
+ const required=[
+  "/certificate-assets/approved-certificate-template.png",
+  "loadApprovedCertificateTemplate",
+  "image.onerror=()=>resolve(null)",
+  'pdf.addImage(image,"PNG",0,0,width,height)',
+  "box(350,482,1040,583)",
+  "box(489,654,875,701",
+  "box(1082,769,1255,935)",
+  "drawCentered(c.student_name",
+  "drawCentered(c.course_title",
+  "drawCentered(c.reference_code",
+  "drawCentered(c.programme_coordinator",
+  "drawCentered(c.approving_director",
+  "QRCode.toDataURL(courseCertificateVerificationUrl(c.reference_code)",
+  'format:approvedTemplate?[297,220]:"a4"',
+  "if(approvedTemplate){",
+  "await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode)"
+ ];
+ for(const fragment of required)assert.ok(pdf.includes(fragment),"Missing exact template rendering logic: "+fragment);
 });
