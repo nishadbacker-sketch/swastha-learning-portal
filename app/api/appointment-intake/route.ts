@@ -65,6 +65,8 @@ export async function POST(request: NextRequest) {
   if (raw.website) return fail("Invalid appointment submission. Please try again.", 422, origin);
   const guardian_name = text(raw.parent ?? raw.guardian_name, 160);
   const whatsapp_number = text(raw.phone ?? raw.whatsapp_number, 20);
+  const contact_differs = raw.contact_differs === true;
+  const contact_number = contact_differs ? text(raw.contact_number, 20) : null;
   const child_name = text(raw.child ?? raw.child_name, 160);
   const date_of_birth = text(raw.date_of_birth, 10) || null;
   const age_range = text(raw.age ?? raw.age_range, 80) || null;
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest) {
   const consent = raw.consent === true;
   const phonePattern = /^[+\d\s()-]{8,20}$/;
   const validDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(new Date(d + "T00:00:00Z").getTime()) && new Date(d + "T00:00:00Z").toISOString().slice(0,10) === d;
-  if (guardian_name.length < 2 || child_name.length < 2 || !phonePattern.test(whatsapp_number) || !consent ||
+  if (guardian_name.length < 2 || child_name.length < 2 || !phonePattern.test(whatsapp_number) || (contact_differs && !phonePattern.test(contact_number || "")) || !consent ||
       (!age_range && !date_of_birth) || (date_of_birth && (!validDate(date_of_birth) || date_of_birth > new Date().toISOString().slice(0,10))) ||
       (preferred_date && !validDate(preferred_date)))
     return fail("Please complete all required appointment details and consent.", 400, origin);
@@ -87,8 +89,8 @@ export async function POST(request: NextRequest) {
   if (!url || !key) return fail("Appointment intake is unavailable.", 503, origin);
   const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await db.from("appointment_enquiries").insert({
-    guardian_name, whatsapp_number, child_name, date_of_birth, age_range, current_class,
-    preferred_date, preferred_time, reason, consent: true, source: "website_appointment"
+    guardian_name, whatsapp_number, contact_differs, contact_number, child_name, date_of_birth, age_range, current_class,
+    preferred_date, preferred_time, reason, consent: true, source: origin === "https://portal.swasthalearning.com" ? "portal_appointment" : "website_appointment"
   });
   if (error) {
     console.error("Appointment intake failed:", error.code);
