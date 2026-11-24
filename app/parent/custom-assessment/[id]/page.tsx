@@ -46,9 +46,9 @@ export default function CustomAssessmentPage(){
    if(aError||!a)throw new Error("Assessment not found or access denied.");
    const {data:t,error:tError}=await supabase.from("custom_assessment_templates").select("id,title,description,level,status,structure").eq("id",a.template_id).single();
    if(tError||!t)throw new Error("Assessment template unavailable.");
-   const {data:s,error:sError}=await supabase.from("students").select("full_name").eq("id",a.student_id).single();
+   const {data:s,error:sError}=await supabase.from("students").select("full_name,student_code").eq("id",a.student_id).single();
    if(sError||!s)throw new Error("Child information unavailable.");
-   setAssessment(a as Assignment);setTemplate(t as Template);setAnswers(a.answers||{});setChildName(s.full_name);
+   setAssessment(a as Assignment);setTemplate(t as Template);setAnswers(a.answers||{});setChildName(s.full_name+" · "+s.student_code);
   }catch(e){setError(e instanceof Error?e.message:"Unable to open this test.");}
   finally{setLoading(false);}
  }load();},[params.id,router]);
