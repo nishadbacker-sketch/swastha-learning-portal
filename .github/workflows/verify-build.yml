@@ -14,6 +14,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validate encrypted backup script and fail-closed preflight (no database access)
+        run: |
+          set -euo pipefail
+          bash -n scripts/backup-database.sh
+          if env -i PATH="$PATH" bash scripts/backup-database.sh > /tmp/swastha-backup-preflight.out 2>&1; then
+            echo "::error::Backup script unexpectedly ran without required credentials"
+            exit 1
+          fi
+          grep -q "Required GitHub Actions secret" /tmp/swastha-backup-preflight.out
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Build Next.js
