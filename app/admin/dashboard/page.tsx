@@ -6,6 +6,7 @@ import { supabase } from "../../../lib/supabase";
 import AppointmentEscalations from "../appointment-escalations";
 import ClinicAdminManagement from "../clinic-admin-management";
 import TeacherManagement from "../../components/teacher-management";
+import SuperAdminManagement from "../../owner/super-admin-management";
 
 type Student = {id:string;full_name:string;current_class:string|null;status:string;created_at:string};
 type Teacher = {id:string;user_id:string;status:string;profiles?:{full_name:string|null}[]|{full_name:string|null}|null};
@@ -23,13 +24,15 @@ export default function AdminDashboard(){
  const [notice,setNotice]=useState("");
  const [error,setError]=useState("");
  const [name,setName]=useState("Super Admin");
+ const [creatorMode,setCreatorMode]=useState(false);
  const [filter,setFilter]=useState<"all"|"unassigned">("unassigned");
  useEffect(()=>{async function init(){
   const db=supabase;if(!db){setError("Supabase is not configured.");setLoading(false);return;}
   try{
    const {data:auth,error:authError}=await db.auth.getUser();if(authError||!auth.user){router.replace("/login");return;}
    const role=await db.from("user_roles").select("role").eq("user_id",auth.user.id).single();
-   if(role.error||!role.data||role.data.role!=="admin"){router.replace("/login");return;}
+   if(role.error||!role.data||!["owner","admin"].includes(role.data.role)){router.replace("/login");return;}
+   setCreatorMode(role.data.role==="owner");
    setName(auth.user.user_metadata?.full_name||auth.user.email||"Super Admin");
    const [s,t,a]=await Promise.all([
     db.from("students").select("id,full_name,current_class,status,created_at").order("created_at",{ascending:false}),
@@ -68,10 +71,11 @@ export default function AdminDashboard(){
  const available=students.filter(s=>filter==="all"||!assignments.some(a=>a.student_id===s.id));
  if(loading)return <main style={{padding:35}}>Loading Super Admin dashboard...</main>;
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
- <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><div><strong>SWASTHA LEARNING CLINIC</strong><div style={{color:"#64748b",fontSize:12,marginTop:5}}>SUPER ADMIN PORTAL</div></div><button style={action} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></header>
+ <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><div><strong>SWASTHA LEARNING CLINIC</strong><div style={{color:"#64748b",fontSize:12,marginTop:5}}>{creatorMode?"CREATOR / OWNER PORTAL":"SUPER ADMIN PORTAL"}</div></div><button style={action} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></header>
  <div style={{maxWidth:1100,margin:"auto",padding:"30px 16px"}}>
  <section style={{...box,background:"#0f4c5c",color:"white"}}><p>LEARN • GROW • THRIVE</p><h1>Welcome, {name}</h1><p>Manage student-to-teacher assignments.</p></section>
  <AppointmentEscalations/>
+ {creatorMode&&<SuperAdminManagement/>}
  <ClinicAdminManagement/>
   <TeacherManagement/>
  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14}}>
