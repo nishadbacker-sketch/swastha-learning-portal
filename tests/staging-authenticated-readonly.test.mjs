@@ -98,6 +98,18 @@ if(missing.length){
     label+" could read an unapproved or unlinked IDP");
    assert.ok((goals||[]).some(item=>approvedIds.has(item.assignment_id)),
     label+" cannot read its approved IDP fixture");
+   // New event history must be individually scoped by recipient, regardless
+   // of any row-level filters the portal adds in its UI.
+   const {data:history,error:historyError}=await client.from("portal_notification_events")
+    .select("recipient_user_id,student_id,event_type").limit(500);
+   assert.ifError(historyError);
+   assert.ok((history||[]).length>=1,label+" needs a synthetic notification fixture before this test is meaningful");
+   assert.ok((history||[]).every(event=>event.recipient_user_id===userId &&
+    ownIds.includes(event.student_id)),label+" could read another family's event history");
+   const {data:foreignHistory,error:foreignHistoryError}=await client.from("portal_notification_events")
+    .select("id").neq("recipient_user_id",userId).limit(1);
+   assert.ifError(foreignHistoryError);
+   assert.equal((foreignHistory||[]).length,0,label+" could query notifications addressed to another account");
    const {data:ack,error:ackError}=await client.from("parent_notification_acknowledgements")
     .select("parent_user_id").limit(500);
    assert.ifError(ackError);
@@ -140,6 +152,13 @@ if(missing.length){
    .select("id").limit(500);
   assert.ifError(studentsError);
   assert.ok((students||[]).every(s=>allowed.has(s.id)),"Teacher could view unassigned student");
+  const {data:events,error:eventError}=await teacher.client.from("portal_notification_events")
+   .select("recipient_user_id,event_type").limit(500);
+  assert.ifError(eventError);
+  assert.ok((events||[]).length>=1,"Seed a teacher-directed synthetic assessment submission notification");
+  assert.ok((events||[]).every(event=>event.recipient_user_id===teacher.userId &&
+   ["assessment_submitted","custom_assessment_submitted"].includes(event.event_type)),
+   "Teacher could read parent events or notifications addressed to another account");
   const {data:notifications,error:notificationError}=await teacher.client.from("parent_notification_acknowledgements")
    .select("parent_user_id").limit(1);
   assert.ok(notificationError||!notifications?.length,"Teacher could read private parent acknowledgements");
