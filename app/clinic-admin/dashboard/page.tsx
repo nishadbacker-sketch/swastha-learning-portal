@@ -76,6 +76,7 @@ export default function ClinicAdminDashboard(){
   <TeacherStudentAssignments/>
   <TeacherManagement/>
    <section style={card}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Administrator Audit Logs</h2><p style={{fontSize:13}}>View critical changes and follow-up histories in one read-only timeline.</p><button type="button" style={action} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button></section>
+   <section style={card}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Parent Portal Announcements</h2><p style={{fontSize:13}}>Publish popup notifications to all parents or selected families, and archive previous notices.</p><button type="button" style={action} onClick={()=>router.push("/admin/announcements")}>Manage Announcements</button></section>
    <AppointmentEscalations/>
   </div>
  </main>;
