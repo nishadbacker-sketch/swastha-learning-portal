@@ -4,6 +4,7 @@ import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {supabase} from "../../../lib/supabase";
 import AppointmentEscalations from "../../admin/appointment-escalations";
+import TeacherStudentAssignments from "../../components/teacher-student-assignments";
 
 const action:React.CSSProperties={border:0,borderRadius:8,padding:"10px 14px",background:"#176b58",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"};
 const card:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",padding:16,borderRadius:13,marginBottom:14};
@@ -46,7 +47,7 @@ export default function ClinicAdminDashboard(){
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"22px 16px 65px"}}>
    <h1 style={{fontSize:26,margin:"0 0 8px"}}>Welcome, {name}</h1>
-   <p style={{fontSize:13,color:"#64748b"}}>Manage appointment enquiries and oversee timely teacher follow-ups. Super Admin retains exclusive control of user roles and teacher assignments.</p>
+   <p style={{fontSize:13,color:"#64748b"}}>Manage appointment enquiries and oversee timely teacher follow-ups. You can assign active teachers to students and supervise customer follow-ups. Super Admin retains exclusive control over user roles.</p>
    {error&&<section style={{...card,color:"#b42318"}} role="alert">{error}</section>}
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,170px),1fr))",gap:12,marginBottom:14}}>
     <section style={{...card,marginBottom:0}}><small>New queries</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.new}</h2></section>
@@ -57,6 +58,7 @@ export default function ClinicAdminDashboard(){
     <p style={{fontSize:13}}>Review enquiries, contact customers through WhatsApp, and record follow-up outcomes.</p>
     <button style={action} onClick={()=>router.push("/teacher/appointments")}>Open Appointment Follow-up Queue</button>
    </section>
+   <TeacherStudentAssignments/>
    <AppointmentEscalations/>
   </div>
  </main>;
