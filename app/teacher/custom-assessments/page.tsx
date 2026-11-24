@@ -264,6 +264,7 @@ export default function CustomAssessmentBuilder(){
     })}
     {selectedReview&&reviewTemplate&&<section style={{...card,background:"#f7faf8",marginTop:18}}>
      <h3>{reviewTemplate.title} — {studentName(selectedReview.student_id)}</h3>
+     <button type="button" style={{...btn,marginBottom:16}} onClick={()=>router.push("/custom-assessment-report/"+selectedReview.id)}>View Category Report / Print PDF</button>
      {readableAnswers.length>0&&(()=>{
       const ratingQuestions=readableAnswers.filter(q=>(q.response_type||"rating")==="rating");
       const rated=ratingQuestions.map(q=>selectedReview.answers?.[q.id]?.score).filter(v=>v==="0"||v==="1"||v==="2"||v==="3") as string[];
