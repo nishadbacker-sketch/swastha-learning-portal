@@ -1114,7 +1114,11 @@ export default function TeacherDashboard() {
               ).length
             }
             color="#d97706"
-            onClick={() => setActiveTab("assessments")}
+            onClick={() => {
+              const pending = assessments.find((a) => a.status === "submitted");
+              if (pending) router.push("/teacher/assessment-review/" + pending.id);
+              else setActiveTab("assessments");
+            }}
           />
         </section>
 
@@ -1504,11 +1508,21 @@ export default function TeacherDashboard() {
                     fontSize: 13,
                   }}
                 >
-                  The assignment is open. The full
-                  assessment questionnaire and teacher
-                  review controls will be connected
-                  separately.
+                  {selectedAssessment.status === "submitted"
+                    ? "Submitted for teacher review. Open the review to inspect responses and prepare feedback."
+                    : selectedAssessment.status === "reviewed"
+                      ? "This assessment has already been reviewed."
+                      : "The parent can complete the assessment before teacher review."}
                 </p>
+                {["submitted", "reviewed"].includes(selectedAssessment.status) && (
+                  <button
+                    type="button"
+                    style={primaryButton}
+                    onClick={() => router.push("/teacher/assessment-review/" + selectedAssessment.id)}
+                  >
+                    {selectedAssessment.status === "submitted" ? "Open Teacher Review" : "View Reviewed Assessment"}
+                  </button>
+                )}
               </div>
             )}
           </section>
