@@ -49,3 +49,25 @@ test("Certificate PDF is downloadable and QR always points to a live verificatio
  assert.match(layout,/<MainWebsiteFooter \/>/);
  assert.match(parentDashboard,/\/parent\/certificates/);
 });
+
+test("Exact uploaded certificate art overlays real values and QR, with a non-breaking fallback",()=>{
+ const required=[
+  "/certificate-assets/approved-certificate-template.png",
+  "loadApprovedCertificateTemplate",
+  "image.onerror=()=>resolve(null)",
+  'pdf.addImage(image,"PNG",0,0,width,height)',
+  "box(350,482,1040,583)",
+  "box(489,654,875,701",
+  "box(1082,769,1255,935)",
+  "drawCentered(c.student_name",
+  "drawCentered(c.course_title",
+  "drawCentered(c.reference_code",
+  "drawCentered(c.programme_coordinator",
+  "drawCentered(c.approving_director",
+  "QRCode.toDataURL(courseCertificateVerificationUrl(c.reference_code)",
+  'format:approvedTemplate?[297,220]:"a4"',
+  "if(approvedTemplate){",
+  "await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode)"
+ ];
+ for(const fragment of required)assert.ok(pdf.includes(fragment),"Missing exact template rendering logic: "+fragment);
+});
