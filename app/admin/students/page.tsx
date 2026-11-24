@@ -10,6 +10,7 @@ import StudentAppointmentHistory from "../../components/student-appointment-hist
 type Student={id:string;student_code:string|null;full_name:string;date_of_birth:string|null;current_class:string|null;preferred_language:"en"|"ml";status:string;created_at:string};
 type Teacher={id:string;user_id:string;status:string;name:string};
 type Link={id:string;student_id:string;teacher_id:string};
+type StudentContact={school_name:string;emergency_contact_name:string;emergency_contact_phone:string};
 type StudentChange={id:number;student_id:string;changed_by:string|null;changed_at:string;previous_values:Record<string,string|null>;updated_values:Record<string,string|null>};
 type Progress={student_id:string;standard_total:number;standard_reviewed:number;custom_total:number;custom_reviewed:number;activity_total:number;activity_completed:number;goal_total:number;goal_completed:number};
 const card:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:13,padding:16};
@@ -33,6 +34,9 @@ export default function StudentManagementPage(){
  const [notice,setNotice]=useState("");
  const [confirmRemove,setConfirmRemove]=useState<Link|null>(null);
  const [editingChild,setEditingChild]=useState<Student|null>(null);
+ const [editingContactId,setEditingContactId]=useState<string|null>(null);
+ const [contact,setContact]=useState<StudentContact>({school_name:"",emergency_contact_name:"",emergency_contact_phone:""});
+ const [contactLoading,setContactLoading]=useState(false);
  const [historyStudent,setHistoryStudent]=useState<string|null>(null);
  const [history,setHistory]=useState<StudentChange[]>([]);
  const [historyBusy,setHistoryBusy]=useState(false);
@@ -93,6 +97,32 @@ export default function StudentManagementPage(){
    setReplacements(x=>({...x,[studentId+":"+teacherId]:""}));
   }catch(e){setError(e instanceof Error?e.message:"Unable to update teacher assignment.");}
   finally{setBusy("");setConfirmRemove(null);}
+ }
+
+ async function openContactDetails(studentId:string){
+  if(editingContactId===studentId){setEditingContactId(null);return;}
+  if(!supabase)return;
+  setEditingContactId(studentId);setContactLoading(true);setError("");
+  setContact({school_name:"",emergency_contact_name:"",emergency_contact_phone:""});
+  const {data,error:e}=await supabase.from("student_contact_details")
+   .select("school_name,emergency_contact_name,emergency_contact_phone")
+   .eq("student_id",studentId).maybeSingle();
+  if(e){setError(e.message);setEditingContactId(null);}
+  else setContact({school_name:data?.school_name||"",emergency_contact_name:data?.emergency_contact_name||"",emergency_contact_phone:data?.emergency_contact_phone||""});
+  setContactLoading(false);
+ }
+ async function saveContactDetails(e:React.FormEvent<HTMLFormElement>){
+  e.preventDefault();
+  if(!supabase||!editingContactId||busy)return;
+  const id=editingContactId;setBusy(id);setError("");setNotice("");
+  try{
+   const {data,error:e}=await supabase.rpc("admin_save_student_contact_details",{
+    p_student_id:id,p_school_name:contact.school_name,p_emergency_contact_name:contact.emergency_contact_name,p_emergency_contact_phone:contact.emergency_contact_phone
+   });
+   if(e)throw e;
+   setEditingContactId(null);setNotice(typeof data==="string"?data:"Student contact details saved.");
+  }catch(err){setError(err instanceof Error?err.message:"Unable to save student contacts.");}
+  finally{setBusy("");}
  }
 
  async function toggleHistory(studentId:string){
@@ -177,14 +207,34 @@ export default function StudentManagementPage(){
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
        <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58",border:"1px solid #cce3d5"}} onClick={()=>{setError("");setEditingChild({...s});}}>Edit Child Details</button>
+       <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>void openContactDetails(s.id)}>{editingContactId===s.id?"Close Contacts":"School & Emergency Contact"}</button>
        <button type="button" style={{...button,background:"#edf2f5",color:"#183a35"}} onClick={()=>void toggleHistory(s.id)}>{historyStudent===s.id?"Close Change History":"Change History"}</button>
       </div>
      </div>
+     {editingContactId===s.id&&<form onSubmit={saveContactDetails} style={{...card,background:"#f4f8f5",margin:"14px 0"}}>
+      <h3 style={{margin:"0 0 7px"}}>School & Emergency Contact</h3>
+      <p style={{fontSize:12,color:"#64748b"}}>Administrator-only contact information. Optional fields; only collect details needed for clinic communication.</p>
+      {contactLoading?<p>Loading details...</p>:<><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12}}>
+       <label style={{display:"grid",gap:5,fontSize:13}}>School name
+        <input style={field} maxLength={150} value={contact.school_name} onChange={e=>setContact(x=>({...x,school_name:e.target.value}))}/>
+       </label>
+       <label style={{display:"grid",gap:5,fontSize:13}}>Emergency contact name
+        <input style={field} maxLength={150} value={contact.emergency_contact_name} onChange={e=>setContact(x=>({...x,emergency_contact_name:e.target.value}))}/>
+       </label>
+       <label style={{display:"grid",gap:5,fontSize:13}}>Emergency contact phone
+        <input style={field} type="tel" maxLength={20} value={contact.emergency_contact_phone} onChange={e=>setContact(x=>({...x,emergency_contact_phone:e.target.value}))}/>
+       </label>
+      </div>
+      <div style={{display:"flex",gap:9,marginTop:13,flexWrap:"wrap"}}>
+       <button style={button} type="submit" disabled={!!busy}>{busy===s.id?"Saving...":"Save Contact Details"}</button>
+       <button type="button" style={{...button,background:"#e2e8f0",color:"#334155"}} onClick={()=>setEditingContactId(null)} disabled={!!busy}>Cancel</button>
+      </div></>}
+     </form>}
      {historyStudent===s.id&&<section style={{...card,background:"#f8faf7",margin:"14px 0"}}>
       <h3 style={{margin:"0 0 8px"}}>Student Profile Change History</h3>
       <p style={{fontSize:12,color:"#64748b"}}>Records edits made since change-history tracking was activated. Student ID remains unchanged.</p>
       {historyBusy?<p>Loading change history...</p>:historyError?<p role="alert" style={{color:"#b42318"}}>{historyError}</p>:history.length===0?<p>No recorded changes yet.</p>:history.map(h=>{
-       const fields=["full_name","date_of_birth","current_class","preferred_language","status"];
+       const fields=[...new Set([...Object.keys(h.previous_values||{}),...Object.keys(h.updated_values||{})])];
        const changed=fields.filter(k=>h.previous_values?.[k]!==h.updated_values?.[k]);
        return <div key={h.id} style={{borderTop:"1px solid #dce8e1",padding:"10px 0",fontSize:13}}>
         <strong>{new Date(h.changed_at).toLocaleString("en-IN")}</strong>
