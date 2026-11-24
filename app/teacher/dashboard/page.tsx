@@ -1018,33 +1018,10 @@ export default function TeacherDashboard() {
               STAFF PORTAL
             </div>
 
-            <div
-              style={{
-                fontSize: 13,
-                marginTop: 5,
-              }}
-            >
-              Welcome, {teacherName}
-            </div>
+
           </div>
 
           <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-          <button type="button" onClick={()=>router.push("/teacher/custom-assessments")}
-            style={{...primaryButton,background:"#176b58",color:"white"}}>
-            + Custom Assessment Builder
-          </button>
-          <button type="button" onClick={()=>router.push("/teacher/coordination")}
-            style={{...primaryButton,background:"#0f4c5c",color:"#fff"}}>
-            Teacher Coordination
-          </button>
-          <button type="button" onClick={()=>router.push("/teacher/appointments")}
-            style={{...primaryButton,background:"#fff1f2",color:"#b42318",border:"1px solid #fecdd3"}}>
-            Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
-          </button>
-          <button type="button" onClick={()=>router.push("/teacher/idp")}
-            style={{...primaryButton,background:"#0f4c5c",color:"white"}}>
-            Individual Development Plan (IDP)
-          </button>
           <button type="button" onClick={()=>router.push("/my-profile")}
             style={{...primaryButton,background:"#eaf4ef",color:"#176b58",border:"1px solid #b9d9cc"}}>My Profile</button>
           <button
@@ -1070,19 +1047,11 @@ export default function TeacherDashboard() {
           padding: "30px 20px 70px",
         }}
       >
-        <h1 style={{ marginBottom: 6 }}>
-          Teacher Dashboard
-        </h1>
-
-        <p
-          style={{
-            color: "#667a74",
-            marginTop: 0,
-          }}
-        >
-          Student development, assessments and
-          learning activities
-        </p>
+        <section style={{ ...panel, background: "#0f4c5c", color: "#ffffff", marginBottom: 20, padding: "22px 20px" }}>
+          <small style={{letterSpacing:1,fontWeight:700}}>LEARN • GROW • THRIVE</small>
+          <h1 style={{margin:"10px 0 8px",fontSize:29,overflowWrap:"anywhere"}}>Welcome, {teacherName}!</h1>
+          <p style={{margin:0}}>Manage your assigned students, assessments and learning activities.</p>
+        </section>
 
         {message && (
           <div
@@ -1113,6 +1082,56 @@ export default function TeacherDashboard() {
             {errorMessage}
           </div>
         )}
+
+        <nav
+          aria-label="Teacher dashboard sections"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            marginBottom: 25,
+            padding: 7,
+            border: "1px solid #dce8e1",
+            borderRadius: 13,
+            background: "#ffffff",
+          }}
+        >
+          {(
+            [
+              ["overview", "Overview"],
+              ["assessments", "Assessments"],
+              ["activities", "Learning Activities"],
+              ["students", "My Students"],
+            ] as [Tab, string][]
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              aria-current={
+                activeTab === id ? "page" : undefined
+              }
+              style={{
+                ...primaryButton,
+                background:
+                  activeTab === id
+                    ? "#176b58"
+                    : "#f8faf7",
+                color:
+                  activeTab === id
+                    ? "#ffffff"
+                    : "#183a35",
+                flex: "1 1 130px",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+          <button type="button" onClick={() => router.push("/my-profile")}
+            style={{...primaryButton, background:"#f8faf7", color:"#183a35",flex:"1 1 130px"}}>
+            My Profile
+          </button>
+        </nav>
 
         <section
           style={{
@@ -1160,51 +1179,27 @@ export default function TeacherDashboard() {
           />
         </section>
 
-        <nav
-          aria-label="Teacher dashboard sections"
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 8,
-            marginBottom: 25,
-            padding: 7,
-            border: "1px solid #dce8e1",
-            borderRadius: 13,
-            background: "#ffffff",
-          }}
-        >
-          {(
-            [
-              ["overview", "Analytics"],
-              ["assessments", "Assessments"],
-              ["activities", "Activities"],
-              ["students", "Students"],
-            ] as [Tab, string][]
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveTab(id)}
-              aria-current={
-                activeTab === id ? "page" : undefined
-              }
-              style={{
-                ...primaryButton,
-                background:
-                  activeTab === id
-                    ? "#176b58"
-                    : "#f8faf7",
-                color:
-                  activeTab === id
-                    ? "#ffffff"
-                    : "#183a35",
-                flex: "1 1 130px",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
+        <section aria-label="Staff tools" style={{...panel, marginBottom:24}}>
+          <h2 style={{fontSize:18,margin:"0 0 12px"}}>Staff Tools</h2>
+          <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+          <button type="button" onClick={()=>router.push("/teacher/custom-assessments")}
+            style={{...primaryButton,background:"#176b58",color:"white"}}>
+            + Custom Assessment Builder
+          </button>
+          <button type="button" onClick={()=>router.push("/teacher/coordination")}
+            style={{...primaryButton,background:"#0f4c5c",color:"#fff"}}>
+            Teacher Coordination
+          </button>
+          <button type="button" onClick={()=>router.push("/teacher/appointments")}
+            style={{...primaryButton,background:"#fff1f2",color:"#b42318",border:"1px solid #fecdd3"}}>
+            Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
+          </button>
+          <button type="button" onClick={()=>router.push("/teacher/idp")}
+            style={{...primaryButton,background:"#0f4c5c",color:"white"}}>
+            Individual Development Plan (IDP)
+          </button>
+          </div>
+        </section>
 
         {activeTab === "overview" && (
           <section>
