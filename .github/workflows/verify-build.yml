@@ -61,6 +61,8 @@ jobs:
         run: node --test tests/portal-notification-history.test.mjs
       - name: Verify staff top-bar popup mirrors parent notification controls
         run: node --test tests/staff-notification-popup.test.mjs
+      - name: Verify appointment follow-up alert guards (read-only)
+        run: node --test tests/appointment-followup-alerts.test.mjs
       - name: Require production anonymous security test configuration
         run: |
           if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
