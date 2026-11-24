@@ -53,6 +53,8 @@ jobs:
         run: node --test tests/parent-portal-regression.test.mjs
       - name: Verify assessment workflow source guards (no user data writes)
         run: node --test tests/assessment-workflow-regression.test.mjs
+      - name: Verify email authentication and recovery UI safeguards
+        run: node --test tests/email-auth-regression.test.mjs
       - name: Require production anonymous security test configuration
         run: |
           if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
