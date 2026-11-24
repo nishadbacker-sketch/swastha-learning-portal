@@ -42,6 +42,15 @@ jobs:
           SWASTHA_SMOKE_BASE_URL: http://127.0.0.1:3100
       - name: Run parent portal source-regression checks (no user data writes)
         run: node --test tests/parent-portal-regression.test.mjs
+      - name: Require production anonymous security test configuration
+        run: |
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Production anonymous database security tests cannot run: configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY as GitHub Actions secrets."
+            exit 1
+          fi
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       - name: Verify Supabase anonymous access (read-only)
         run: node --test tests/phase1-database-security.test.mjs
         env:
