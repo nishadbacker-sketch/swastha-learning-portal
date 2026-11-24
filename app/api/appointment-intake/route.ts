@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
   } catch {
     return fail("Invalid appointment request.", 400, origin);
   }
-  // Honeypot, never recorded.
-  if (raw.website) return NextResponse.json({ ok: true }, { headers: cors(origin) });
+  // Reject filled honeypot submissions; never report a database save unless one occurred.
+  if (raw.website) return fail("Invalid appointment submission. Please try again.", 422, origin);
   const guardian_name = text(raw.parent ?? raw.guardian_name, 160);
   const whatsapp_number = text(raw.phone ?? raw.whatsapp_number, 20);
   const child_name = text(raw.child ?? raw.child_name, 160);
