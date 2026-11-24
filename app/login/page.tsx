@@ -138,6 +138,16 @@ export default function LoginPage() {
         } else if (roleData.role === "clinic_admin") {
           router.push("/clinic-admin/dashboard");
         } else if (roleData.role === "teacher") {
+          const { data: activeTeacher, error: teacherError } = await supabase
+            .from("teachers")
+            .select("id")
+            .eq("user_id", data.user.id)
+            .eq("status", "active")
+            .maybeSingle();
+          if (teacherError || !activeTeacher) {
+            await supabase.auth.signOut();
+            throw new Error("Your teacher account is inactive. Please contact the clinic Admin or Super Admin.");
+          }
           router.push("/teacher/dashboard");
         } else if (
           roleData.role === "parent" ||
