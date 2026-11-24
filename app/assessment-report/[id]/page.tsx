@@ -9,7 +9,7 @@ import DevelopmentPlan from "../../components/development-plan";
 import ShareReportWhatsApp from "../../components/share-report-whatsapp";
 
 type Assignment={id:string;student_id:string;assessment_level:AssessmentLevel;status:string;assigned_at:string;due_date:string|null};
-type Student={id:string;full_name:string;current_class:string|null};
+type Student={id:string;student_code:string;full_name:string;current_class:string|null};
 type Review={overall_score:number|null;teacher_feedback:string|null;recommendations:string|null;strengths:unknown;support_needs:unknown;reviewed_at:string|null};
 type Answer={question_id:string;score:string|null;observation:string|null};
 const card:React.CSSProperties={background:"#fff",padding:16,marginBottom:14,border:"1px solid #e2e8f0",borderRadius:16,boxShadow:"0 1px 3px rgba(15,23,42,.04)"};
@@ -39,7 +39,7 @@ export default function AssessmentReportPage(){
    if(!["LP","UP","HS","HSS"].includes(a.assessment_level))throw new Error("Unsupported assessment level.");
    // The database's RLS policies restrict assignments, responses and results to permitted users.
    const [s,r,answersResult]=await Promise.all([
-    supabase.from("students").select("id,full_name,current_class").eq("id",a.student_id).single(),
+    supabase.from("students").select("id,student_code,full_name,current_class").eq("id",a.student_id).single(),
     supabase.from("assessment_results").select("overall_score,teacher_feedback,recommendations,strengths,support_needs,reviewed_at").eq("assignment_id",a.id).maybeSingle(),
     supabase.from("assessment_responses").select("question_id,score,observation").eq("assignment_id",a.id)
    ]);
@@ -71,11 +71,11 @@ export default function AssessmentReportPage(){
   <div style={{maxWidth:1180,margin:"auto",padding:"24px 15px 70px"}}>
    <section style={card}>
     <h1 style={{margin:"0 0 7px",fontSize:25,color:"#0f4c5c"}}>Complete Student Assessment Report</h1>
-    <p><strong>Student:</strong> {student.full_name} · <strong>Class:</strong> {student.current_class||"Not available"} · <strong>Level:</strong> {assignment.assessment_level}</p>
+    <p><strong>Student:</strong> {student.full_name} · {student.student_code} · <strong>Class:</strong> {student.current_class||"Not available"} · <strong>Level:</strong> {assignment.assessment_level}</p>
     <p><strong>Reviewed:</strong> {review.reviewed_at?new Date(review.reviewed_at).toLocaleDateString("en-IN"):"Not recorded"} · <strong>Status:</strong> Teacher Approved</p>
    </section>
    <DevelopmentPlan assignmentId={assignment.id} canEdit={role==="teacher"||role==="admin"}/>
-   <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:student.id,full_name:student.full_name}]}/>
+   <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:student.id,full_name:student.full_name,student_code:student.student_code}]}/>
    <section style={card}>
     <h2>Approved Teacher Observations & Recommendations</h2>
     <h3>Overall teacher-approved rating</h3>
