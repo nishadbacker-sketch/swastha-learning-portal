@@ -7,7 +7,7 @@ import {useRouter} from "next/navigation";
 import {supabase} from "../../../lib/supabase";
 import StudentAppointmentHistory from "../../components/student-appointment-history";
 
-type Student={id:string;student_code:string|null;full_name:string;current_class:string|null;status:string;created_at:string};
+type Student={id:string;student_code:string|null;full_name:string;date_of_birth:string|null;current_class:string|null;preferred_language:"en"|"ml";status:string;created_at:string};
 type Teacher={id:string;user_id:string;status:string;name:string};
 type Link={id:string;student_id:string;teacher_id:string};
 type Progress={student_id:string;standard_total:number;standard_reviewed:number;custom_total:number;custom_reviewed:number;activity_total:number;activity_completed:number;goal_total:number;goal_completed:number};
@@ -31,13 +31,14 @@ export default function StudentManagementPage(){
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
  const [confirmRemove,setConfirmRemove]=useState<Link|null>(null);
+ const [editingChild,setEditingChild]=useState<Student|null>(null);
 
  const load=useCallback(async()=>{
   if(!supabase){setError("Database unavailable.");setLoading(false);return;}
   setError("");
   try{
    const [s,t,l,p]=await Promise.all([
-    supabase.from("students").select("id,student_code,full_name,current_class,status,created_at").order("full_name"),
+    supabase.from("students").select("id,student_code,full_name,date_of_birth,current_class,preferred_language,status,created_at").order("full_name"),
     supabase.from("teachers").select("id,user_id,status").order("created_at"),
     supabase.from("teacher_assignments").select("id,student_id,teacher_id"),
     supabase.rpc("admin_student_progress_summary")
@@ -89,6 +90,28 @@ export default function StudentManagementPage(){
   finally{setBusy("");setConfirmRemove(null);}
  }
 
+ async function saveChildDetails(e:React.FormEvent<HTMLFormElement>){
+  e.preventDefault();
+  if(!supabase||!editingChild||busy)return;
+  const student=editingChild;
+  setBusy(student.id);setError("");setNotice("");
+  try {
+   const {data,error:rpcError}=await supabase.rpc("admin_update_child_details",{
+    p_student_id:student.id,
+    p_full_name:student.full_name.trim(),
+    p_date_of_birth:student.date_of_birth||null,
+    p_current_class:student.current_class||"",
+    p_preferred_language:student.preferred_language,
+    p_status:student.status
+   });
+   if(rpcError)throw rpcError;
+   await load();
+   setEditingChild(null);
+   setNotice(typeof data==="string"?data:"Child details saved.");
+  }catch(err){setError(err instanceof Error?err.message:"Unable to update child details.");}
+  finally{setBusy("");}
+ }
+
  const visible=useMemo(()=>students.filter(s=>{
   const assigned=links.filter(a=>a.student_id===s.id);
   const active=assigned.filter(a=>teachers.some(t=>t.id===a.teacher_id&&t.status==="active"));
@@ -135,8 +158,35 @@ export default function StudentManagementPage(){
       <div><h2 style={{fontSize:19,margin:"0 0 5px"}}>{s.full_name} · {s.student_code}</h2>
        <p style={{fontSize:12,color:"#64748b",margin:0}}>ID: {s.student_code||"Not assigned"} · Class: {s.current_class||"Not recorded"} · Status: {s.status}</p>
       </div>
-      <span style={{fontSize:12,color:"#176b58",fontWeight:700}}>Progress overview</span>
+      <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58",border:"1px solid #cce3d5"}} onClick={()=>{setError("");setEditingChild({...s});}}>
+        Edit Child Details
+      </button>
      </div>
+     {editingChild?.id===s.id&&<form onSubmit={saveChildDetails} style={{padding:15,margin:"14px 0",border:"1px solid #cce3d5",borderRadius:10,background:"#f4f8f5"}}>
+       <h3 style={{margin:"0 0 7px"}}>Edit Child Details</h3>
+       <p style={{fontSize:12,color:"#64748b",margin:"0 0 13px"}}>Student ID: <strong>{s.student_code}</strong> (permanent). Editing does not remove the child or change their assessment, appointment, or teacher-assignment history.</p>
+       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12}}>
+        <label style={{display:"grid",gap:5,fontSize:13}}>Child's full name *
+         <input required minLength={2} maxLength={150} style={field} value={editingChild.full_name} onChange={e=>setEditingChild(v=>v?{...v,full_name:e.target.value}:v)}/>
+        </label>
+        <label style={{display:"grid",gap:5,fontSize:13}}>Date of birth
+         <input type="date" max={new Date().toLocaleDateString("en-CA")} style={field} value={editingChild.date_of_birth||""} onChange={e=>setEditingChild(v=>v?{...v,date_of_birth:e.target.value||null}:v)}/>
+        </label>
+        <label style={{display:"grid",gap:5,fontSize:13}}>Current class
+         <input maxLength={80} style={field} value={editingChild.current_class||""} onChange={e=>setEditingChild(v=>v?{...v,current_class:e.target.value}:v)}/>
+        </label>
+        <label style={{display:"grid",gap:5,fontSize:13}}>Preferred language
+         <select style={field} value={editingChild.preferred_language} onChange={e=>setEditingChild(v=>v?{...v,preferred_language:e.target.value as "en"|"ml"}:v)}><option value="en">English</option><option value="ml">Malayalam</option></select>
+        </label>
+        <label style={{display:"grid",gap:5,fontSize:13}}>Student status
+         <select style={field} value={editingChild.status} onChange={e=>setEditingChild(v=>v?{...v,status:e.target.value}:v)}><option value="pending">Pending</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+        </label>
+       </div>
+       <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
+        <button type="submit" style={button} disabled={!!busy}>{busy===s.id?"Saving...":"Save Changes"}</button>
+        <button type="button" style={{...button,background:"#e2e8f0",color:"#334155"}} disabled={!!busy} onClick={()=>setEditingChild(null)}>Cancel</button>
+       </div>
+      </form>}
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:9,margin:"14px 0"}}>
       {[["Assessments reviewed",reviewed,standardTotal],["Activities completed",done,activities],["IDP goals completed",achieved,goals]].map(([title,value,total])=><div key={title} style={{padding:11,borderRadius:9,background:"#f4f8f5",fontSize:12}}>
        <div style={{color:"#64748b",marginBottom:6}}>{title}</div><strong style={{fontSize:18}}>{value} / {total}</strong>
