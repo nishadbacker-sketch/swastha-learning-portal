@@ -2,7 +2,6 @@
 
 import BrandLogo from "../components/brand-logo";
 import {useState} from "react";
-import {supabase} from "../../lib/supabase";
 
 type FormState={
  guardian_name:string;whatsapp_number:string;contact_differs:boolean;contact_number:string;child_name:string;date_of_birth:string;current_class:string;preferred_date:string;preferred_time:string;reason:string;consent:boolean;
@@ -22,29 +21,41 @@ export default function PublicAppointmentPage(){
  async function submit(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();setMessage("");
   if(bot){setCompleted(true);return;}
-  if(!supabase){setMessage("Appointment service is temporarily unavailable.");return;}
   if(!form.consent){setMessage("Please give consent to be contacted.");return;}
   const phone=/^[+\d\s()-]{8,20}$/;
   if(!phone.test(form.whatsapp_number)||form.contact_differs&&!phone.test(form.contact_number)){setMessage("Enter a valid contact number.");return;}
   if(form.date_of_birth>new Date().toLocaleDateString("en-CA")){setMessage("Date of birth cannot be in the future.");return;}
   setBusy(true);
-  const {error}=await supabase.from("appointment_enquiries").insert({
-   guardian_name:clean(form.guardian_name),
-   whatsapp_number:clean(form.whatsapp_number),
-   contact_differs:form.contact_differs,
-   contact_number:form.contact_differs?clean(form.contact_number):null,
-   child_name:clean(form.child_name),
-   date_of_birth:form.date_of_birth,
-   current_class:clean(form.current_class),
-   preferred_date:form.preferred_date||null,
-   preferred_time:form.preferred_time||null,
-   reason:clean(form.reason),
-   consent:true,
-   source:"portal_appointment",
-  });
-  if(error)setMessage("Could not submit your appointment request. Please try again.");
-  else{setCompleted(true);setForm(initial);}
-  setBusy(false);
+  try {
+   const response=await fetch("/api/appointment-intake",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+     guardian_name:clean(form.guardian_name),
+     whatsapp_number:clean(form.whatsapp_number),
+     contact_differs:form.contact_differs,
+     contact_number:form.contact_differs?clean(form.contact_number):null,
+     child_name:clean(form.child_name),
+     date_of_birth:form.date_of_birth,
+     current_class:clean(form.current_class),
+     preferred_date:form.preferred_date||null,
+     preferred_time:form.preferred_time||null,
+     reason:clean(form.reason),
+     consent:true,
+     website:bot,
+    }),
+   });
+   if(!response.ok) {
+    setMessage("Could not submit your appointment request. Please try again.");
+   } else {
+    setCompleted(true);
+    setForm(initial);
+   }
+  } catch {
+   setMessage("Appointment service is unavailable. Please try again.");
+  } finally {
+   setBusy(false);
+  }
  }
  return <main style={{background:"#f8faf7",minHeight:"100vh",color:"#183a35",padding:"24px 14px 55px"}}>
   <div style={{maxWidth:760,margin:"auto"}}>
