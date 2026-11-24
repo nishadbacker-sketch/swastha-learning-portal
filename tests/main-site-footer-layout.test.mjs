@@ -23,6 +23,15 @@ test("Footer retains existing official website URLs, logo, contact information a
  assert.match(footer,/https:\/\/swasthalearning\.com\/#faq/);
  assert.match(footer,/https:\/\/wa\.me\/919249056889/);
  assert.match(footer,/logoUrl/);
+ assert.match(footer,/5e22f354-b41c-4d94-b43f-221d0f2d3db8\.jpg/);
+ assert.match(footer,/href="mailto:support@swasthalearning\.com"/);
+ assert.match(footer,/MXVQ\+Q66, Perumbadappu,/);
+ assert.match(footer,/Keralam 679580/);
+ assert.match(footer,/Book an Assessment/);
+ assert.match(footer,/Appointment Details/);
+ assert.match(footer,/FAQs/);
+ assert.doesNotMatch(footer,/Ask for clinic location/);
+ assert.match(css,/\.swastha-site-footer__address span \{/);
  assert.match(css,/body footer\.swastha-site-footer \{/);
  assert.match(css,/background: #176b58/);
 });
