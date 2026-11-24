@@ -17,7 +17,7 @@ const palette:[string,string,string][]=[
  ["3","Independent","#10b981"],
  ["NA","Not assessed","#64748b"]
 ];
-const panel:React.CSSProperties={background:"white",border:"1px solid #dce8e1",padding:21,borderRadius:15,marginBottom:18};
+const panel:React.CSSProperties={background:"white",border:"1px solid #dce8e1",padding:16,borderRadius:13,marginBottom:14};
 const btn:React.CSSProperties={background:"#176b58",color:"white",border:0,borderRadius:8,padding:"11px 17px",fontWeight:700,cursor:"pointer"};
 const control:React.CSSProperties={padding:10,width:"100%",boxSizing:"border-box",font:"inherit",borderRadius:8,border:"1px solid #cbd5e1"};
 export default function CustomAssessmentPage(){
