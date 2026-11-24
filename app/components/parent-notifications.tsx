@@ -18,7 +18,7 @@ const eventDetails:Record<string,{title:string;description:string;route:(id:stri
  activity_assigned:{title:"Learning activity assigned",description:"A learning activity has been assigned.",route:()=>"/parent/dashboard?tab=Learning%20Activities"},
 };
 
-const panel:React.CSSProperties={background:"#fff",borderRadius:16,padding:22,width:"min(540px,calc(100vw - 28px))",maxHeight:"min(80vh,720px)",overflowY:"auto",boxShadow:"0 24px 70px rgba(15,23,42,.25)"};
+const panel:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:13,padding:18,width:"100%"};
 const button:React.CSSProperties={border:0,borderRadius:9,padding:"10px 14px",background:"#176b58",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:13};
 function recent(value:string,days=45){const time=Date.parse(value);return Number.isFinite(time)&&time>=Date.now()-days*86400000;}
 function dueSoon(value:string|null){if(!value)return false;const d=new Date(value+"T23:59:59");return d.getTime()>=Date.now()-86400000&&d.getTime()<=Date.now()+3*86400000;}
@@ -34,8 +34,6 @@ export default function ParentNotifications({students,assessments,customAssessme
  const [historyAvailable,setHistoryAvailable]=useState(false);
  const [view,setView]=useState<"updates"|"history">("updates");
  const [ready,setReady]=useState(false);
- const [open,setOpen]=useState(false);
- const [firstLoad,setFirstLoad]=useState(false);
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState("");
  const notices=useMemo(()=>{
@@ -99,12 +97,6 @@ export default function ParentNotifications({students,assessments,customAssessme
   }
   void load();return()=>{live=false;};
  },[]);
- useEffect(()=>{
-  if(ready&&!firstLoad){
-   setFirstLoad(true);
-   if(unread.length)setOpen(true);
-  }
- },[ready,firstLoad,unread.length]);
  async function acknowledgeAndClose(destination?:string){
   if(!supabase||!userId||busy)return;
   setBusy(true);setError("");
@@ -115,22 +107,17 @@ export default function ParentNotifications({students,assessments,customAssessme
    if(e){setError("Could not save notification acknowledgement. Please retry.");setBusy(false);return;}
    setAcknowledged(old=>[...new Set([...old,...keys])]);
   }
-  setOpen(false);setBusy(false);
+  setBusy(false);
   if(destination){
    if(destination.includes("?tab="))onShowActivities();
    else router.push(destination);
   }
  }
- return <>
-  <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58",border:"1px solid #cce3d5"}} onClick={()=>{setError("");setOpen(true);}} aria-label={"Notifications"+(unread.length?" ("+unread.length+" unread)":"")}>
-   Notifications {unread.length>0?"("+unread.length+")":""}
-  </button>
-  {open&&<div role="presentation" style={{position:"fixed",inset:0,background:"rgba(15,23,42,.63)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:12}}>
-   <section role="dialog" aria-modal="true" aria-labelledby="parent-notification-title" style={panel}>
+ return <section aria-labelledby="parent-notification-title" style={panel}>
     <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"flex-start"}}>
      <div><h2 id="parent-notification-title" style={{margin:"0 0 5px",fontSize:21,color:"#0f4c5c"}}>Parent Notifications</h2>
       <p style={{margin:"0 0 14px",fontSize:13,color:"#64748b"}}>Updates from your child's learning portal. No WhatsApp or email messages are sent.</p></div>
-     <button type="button" aria-label="Close notifications" disabled={busy} onClick={()=>void acknowledgeAndClose()} style={{...button,background:"#f1f5f9",color:"#334155"}}>Close</button>
+     <span style={{background:"#eaf4ef",color:"#176b58",borderRadius:8,padding:"8px 12px",fontSize:13,fontWeight:700}}>{unread.length} unread</span>
     </div>
     <div style={{display:"flex",gap:8,margin:"0 0 14px"}}>
      <button type="button" style={{...button,background:view==="updates"?"#176b58":"#eaf4ef",color:view==="updates"?"#fff":"#176b58"}} onClick={()=>setView("updates")}>Current updates</button>
@@ -170,9 +157,7 @@ export default function ParentNotifications({students,assessments,customAssessme
      </div>}
     </>}
     <div style={{display:"flex",justifyContent:"flex-end",marginTop:16}}>
-     <button type="button" disabled={busy} style={button} onClick={()=>void acknowledgeAndClose()}>{busy?"Saving...":"Got it"}</button>
+     <button type="button" disabled={busy||!unread.length||!ready} style={button} onClick={()=>void acknowledgeAndClose()}>{busy?"Saving...":"Mark all as read"}</button>
     </div>
-   </section>
-  </div>}
- </>;
+   </section>;
 }
