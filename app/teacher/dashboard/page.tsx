@@ -126,8 +126,8 @@ function phoneDigits(value: string) {
 const panel: React.CSSProperties = {
   background: "#ffffff",
   border: "1px solid #dce8e1",
-  borderRadius: 16,
-  padding: 22,
+  borderRadius: 13,
+  padding: 16,
   boxShadow: "0 3px 14px rgba(24,58,53,0.04)",
 };
 
@@ -157,8 +157,8 @@ const primaryButton: React.CSSProperties = {
 
 const grid: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-  gap: 18,
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
+  gap: 12,
 };
 
 function StatusBadge({ value }: { value: string }) {
@@ -218,7 +218,7 @@ function Metric({
       <div
         style={{
           color,
-          fontSize: 34,
+          fontSize: 27,
           fontWeight: 800,
           marginTop: 8,
         }}
