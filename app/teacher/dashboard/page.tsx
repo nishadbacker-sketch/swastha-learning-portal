@@ -1525,6 +1525,15 @@ export default function TeacherDashboard() {
                     {selectedAssessment.status === "submitted" ? "Open Teacher Review" : "View Reviewed Assessment"}
                   </button>
                 )}
+                {selectedAssessment.status === "reviewed" && (
+                  <button
+                    type="button"
+                    style={{...primaryButton, background:"#0f4c5c", marginLeft:8, marginTop:8}}
+                    onClick={() => router.push("/teacher/assessment-review/" + selectedAssessment.id + "#development-plan")}
+                  >
+                    Manage Student Development Plan (IDP)
+                  </button>
+                )}
               </div>
             )}
           </section>
