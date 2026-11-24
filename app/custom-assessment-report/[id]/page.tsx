@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import ShareReportWhatsApp from "../../components/share-report-whatsapp";
 
 type Choice={id:string;text:string;text_ml?:string};
 type Question={id:string;text:string;text_ml?:string;response_type?:"rating"|"multiple_choice"|"written";options?:Choice[]};
@@ -90,6 +91,7 @@ export default function CustomAssessmentReport(){
     <label htmlFor="report-lang">Language</label>
     <select id="report-lang" value={language} onChange={e=>setLanguage(e.target.value as "en"|"ml")} style={{padding:9,borderRadius:7}}><option value="en">English</option><option value="ml">മലയാളം</option></select>
     <button style={{...button,background:"white",color:"#0f4c5c"}} onClick={()=>window.print()}>{tr("Print / Save PDF","പ്രിന്റ് / PDF ആയി സേവ്")}</button>
+    {assessment.status==="reviewed"&&<ShareReportWhatsApp reportPath={"/custom-assessment-report/"+assessment.id} label={tr("Share via WhatsApp","വാട്സ്ആപ്പിൽ പങ്കിടുക")}/> }
     <button style={{...button,background:"#e3f2ee",color:"#183a35"}} onClick={back}>{tr("Back","തിരികെ")}</button>
    </div>
   </header>
