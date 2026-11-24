@@ -5,15 +5,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
-export default function LoginPage() {
+export default function LoginPage({ initialRegister = false }: { initialRegister?: boolean }) {
   const router = useRouter();
 
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(initialRegister);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("mode") === "register") setIsRegister(true);
-  }, []);
+    if (params.get("mode") === "register") router.replace("/register");
+  }, [router]);
 
   // Parent details
   const [fullName, setFullName] = useState("");
@@ -114,8 +114,7 @@ export default function LoginPage() {
           }
         }
 
-        // Show registration success popup.
-        setIsRegister(false);
+        // Show registration success popup on the dedicated /register page.
         setPassword("");
         setConfirmPassword("");
         setShowSuccessPopup(true);
@@ -394,9 +393,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => {
-                setIsRegister(!isRegister);
-                setConfirmPassword("");
-                setMessage("");
+                router.push(isRegister ? "/login" : "/register");
               }}
             >
               {isRegister ? "Sign in" : "Create account"}
@@ -482,8 +479,8 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setShowSuccessPopup(false);
-                setIsRegister(false);
                 setMessage("");
+                router.replace("/login");
               }}
               style={{
                 background: "#176b58",
