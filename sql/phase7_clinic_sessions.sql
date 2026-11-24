@@ -110,14 +110,14 @@ CREATE POLICY "Session staff read scoped" ON public.clinic_sessions FOR SELECT T
  public.has_role('admin') OR public.has_role('clinic_admin')
  OR (public.has_role('teacher') AND teacher_user_id=(SELECT auth.uid())
  AND EXISTS(SELECT 1 FROM public.teachers t JOIN public.teacher_assignments ta ON ta.teacher_id=t.id
-  WHERE t.user_id=(SELECT auth.uid()) AND t.status='active' AND ta.student_id=student_id))
+  WHERE t.user_id=(SELECT auth.uid()) AND t.status='active' AND ta.student_id=public.clinic_sessions.student_id))
 );
 CREATE POLICY "Session staff create scoped" ON public.clinic_sessions FOR INSERT TO authenticated WITH CHECK(
  created_by=(SELECT auth.uid()) AND
  (public.has_role('admin') OR public.has_role('clinic_admin')
  OR (public.has_role('teacher') AND teacher_user_id=(SELECT auth.uid())
  AND EXISTS(SELECT 1 FROM public.teachers t JOIN public.teacher_assignments ta ON ta.teacher_id=t.id
- WHERE t.user_id=(SELECT auth.uid()) AND t.status='active' AND ta.student_id=student_id)))
+ WHERE t.user_id=(SELECT auth.uid()) AND t.status='active' AND ta.student_id=public.clinic_sessions.student_id)))
 );
 CREATE POLICY "Session staff update scoped" ON public.clinic_sessions FOR UPDATE TO authenticated
  USING(public.has_role('admin') OR public.has_role('clinic_admin')
@@ -125,7 +125,7 @@ CREATE POLICY "Session staff update scoped" ON public.clinic_sessions FOR UPDATE
  WITH CHECK(public.has_role('admin') OR public.has_role('clinic_admin')
  OR (public.has_role('teacher') AND teacher_user_id=(SELECT auth.uid())
  AND EXISTS(SELECT 1 FROM public.teachers t JOIN public.teacher_assignments ta ON ta.teacher_id=t.id
- WHERE t.user_id=(SELECT auth.uid()) AND t.status='active' AND ta.student_id=student_id)));
+ WHERE t.user_id=(SELECT auth.uid()) AND t.status='active' AND ta.student_id=public.clinic_sessions.student_id)));
 CREATE POLICY "Session goal staff read" ON public.clinic_session_goal_links FOR SELECT TO authenticated USING(
  EXISTS(SELECT 1 FROM public.clinic_sessions s WHERE s.id=session_id)
 );
