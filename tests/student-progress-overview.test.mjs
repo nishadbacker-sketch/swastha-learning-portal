@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const page=read("app/teacher/student-progress/page.tsx");
 test("teacher-specific assigned-student progress is read-only and scoped",()=>{
- assert.match(page,/role\.role!=="teacher"/);
+ assert.match(page,/role\?\.role!=="teacher"/);
  assert.match(page,/teacher\.status!=="active"/);
  assert.match(page,/from\("teacher_assignments"\)/);
  assert.match(page,/\.eq\("teacher_id",teacher\.id\)/);
