@@ -115,7 +115,7 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
    {!hideSelector && <>
    <label style={{display:"block",fontWeight:700,marginBottom:6}} htmlFor="analytics-assessment">Select student and assessment</label>
    <select id="analytics-assessment" value={selected} onChange={e=>setSelected(e.target.value)} style={{padding:12,borderRadius:9,border:"1px solid #a9bfb5",maxWidth:"100%",width:650}}>
-    {available.map(a=><option key={a.id} value={a.id}>{((s)=>s?s.full_name+(s.student_code?" · "+s.student_code:""):"Student")(students.find(s=>s.id===a.student_id))} — {a.assessment_level} — {a.status} — {new Date(a.assigned_at).toLocaleDateString("en-IN")}</option>)}
+    {available.map(a=><option key={a.id} value={a.id}>{((s:InputStudent|undefined)=>s?s.full_name+(s.student_code?" · "+s.student_code:""):"Student")(students.find(s=>s.id===a.student_id))} — {a.assessment_level} — {a.status} — {new Date(a.assigned_at).toLocaleDateString("en-IN")}</option>)}
    </select>
    </>}
   </div>
