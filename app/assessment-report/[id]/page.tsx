@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLogo from "../../components/brand-logo";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
@@ -64,7 +65,7 @@ export default function AssessmentReportPage(){
  })));
  return <main style={{minHeight:"100vh",background:"#f8fafc",color:"#1e293b",fontFamily:"Arial,sans-serif"}}>
   <header className="no-print" style={{padding:"15px 4%",background:"#0f4c5c",color:"white",display:"flex",gap:12,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
-   <strong>Swastha Learning Clinic · Approved Assessment Report</strong>
+   <span style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><BrandLogo /> <strong>Approved Assessment Report</strong></span>
    <div style={{display:"flex",gap:9}}>
     <button style={{...button,background:"white",color:"#0f4c5c"}} onClick={back}>Back to Dashboard</button>
     <button style={{...button,background:"#2a9d8f"}} onClick={()=>window.print()}>Print / Save PDF</button>
