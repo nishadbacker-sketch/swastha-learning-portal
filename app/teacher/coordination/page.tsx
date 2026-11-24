@@ -1,3 +1,4 @@
+import BrandLogo from "../../components/brand-logo";
 "use client";
 
 import {useCallback,useEffect,useMemo,useState} from "react";
@@ -142,7 +143,7 @@ export default function TeacherCoordination(){
  return <main style={{minHeight:"100vh",background:"#f8faf7",fontFamily:"Arial, sans-serif",color:"#183a35"}}>
   <header style={{background:"#fff",padding:"15px 5%",borderBottom:"1px solid #dce8e1"}}>
    <div style={{maxWidth:1220,margin:"auto",display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}>
-    <div><strong style={{color:"#176b58"}}>SWASTHA LEARNING CLINIC</strong><div style={caption}>{isTeacher?"TEACHER COORDINATION":"COORDINATION OVERSIGHT · READ ONLY"}</div></div>
+    <div><strong style={{color:"#176b58"}}><BrandLogo /></strong><div style={caption}>{isTeacher?"TEACHER COORDINATION":"COORDINATION OVERSIGHT · READ ONLY"}</div></div>
     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button type="button" style={{...btn,background:"#eaf4ef",color:"#176b58"}} disabled={!!busy} onClick={()=>void reload()}>Refresh</button><button type="button" style={btn} onClick={()=>router.push(goBack)}>Back to Dashboard</button></div>
    </div>
   </header>
