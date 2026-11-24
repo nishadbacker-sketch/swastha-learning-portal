@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-type Account = { user_id:string; role:string; name:string };
+type Account = { user_id:string; role:string; name:string; staff_code:string|null };
 const panel:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:13,padding:16,marginBottom:14};
 const button:React.CSSProperties={padding:"9px 12px",border:0,borderRadius:8,background:"#176b58",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"};
 
@@ -25,10 +25,10 @@ export default function SuperAdminManagement(){
   if(err){setError(err.message);setLoading(false);return;}
   const ids=(roles||[]).map(r=>r.user_id);
   if(!ids.length){setAccounts([]);setLoading(false);return;}
-  const {data:profiles,error:pError}=await supabase.from("profiles").select("id,full_name").in("id",ids);
+  const {data:profiles,error:pError}=await supabase.from("profiles").select("id,full_name,staff_code").in("id",ids);
   if(pError){setError(pError.message);setLoading(false);return;}
-  const names=new Map((profiles||[]).map(p=>[p.id,p.full_name||"Unnamed account"]));
-  setAccounts((roles||[]).map(r=>({...r,name:names.get(r.user_id)||"Unnamed account"})));
+  const names=new Map((profiles||[]).map(p=>[p.id,p]));
+  setAccounts((roles||[]).map(r=>({...r,name:names.get(r.user_id)?.full_name||"Unnamed account",staff_code:names.get(r.user_id)?.staff_code||null})));
   setLoading(false);
  },[]);
  useEffect(()=>{void load();},[load]);
@@ -48,7 +48,7 @@ export default function SuperAdminManagement(){
   {message&&<p role="status" style={{fontSize:13,color:"#176b58"}}>{message}</p>}
   {loading?<p style={{fontSize:13}}>Loading accounts...</p>:<div style={{display:"grid",gap:9}}>
    {accounts.map(a=><div key={a.user_id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10,padding:10,borderRadius:9,background:"#f8faf7",border:"1px solid #e2e8e0"}}>
-    <div><strong style={{fontSize:13}}>{a.name}</strong><div style={{fontSize:12,color:"#64748b"}}>{a.role==="admin"?"Super Admin":a.role==="clinic_admin"?"Admin":a.role==="teacher"?"Teacher":"Parent / Student"}</div></div>
+    <div><strong style={{fontSize:13}}>{a.name}{a.staff_code?" · "+a.staff_code:""}</strong><div style={{fontSize:12,color:"#64748b"}}>{a.role==="admin"?"Super Admin":a.role==="clinic_admin"?"Admin":a.role==="teacher"?"Teacher":"Parent / Student"}</div></div>
     <button type="button" style={{...button,background:a.role==="admin"?"#fff1f2":"#eaf4ef",color:a.role==="admin"?"#9f1239":"#176b58",border:"1px solid #dce8e1"}} onClick={()=>setConfirmation({account:a,enable:a.role!=="admin"})}>{a.role==="admin"?"Remove Super Admin":"Make Super Admin"}</button>
    </div>)}
   </div>}
