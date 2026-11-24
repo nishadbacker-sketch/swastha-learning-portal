@@ -1,3 +1,4 @@
+import BrandLogo from "../../components/brand-logo";
 
 "use client";
 
@@ -1004,7 +1005,7 @@ export default function TeacherDashboard() {
                 letterSpacing: 1,
               }}
             >
-              SWASTHA LEARNING CLINIC
+              <BrandLogo />
             </strong>
 
             <div
