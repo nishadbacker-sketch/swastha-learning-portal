@@ -41,3 +41,13 @@ test("portal appointment form uses validated API instead of direct browser DB in
  assert.doesNotMatch(appointment,/from\("appointment_enquiries"\)\.insert/);
  assert.match(appointment,/contact_number:form\.contact_differs/);
 });
+
+test("replayed appointment requests cannot create a second appointment",()=>{
+ const keySql=file("supabase/migrations/20261124194000_appointment_submission_key.sql");
+ assert.match(keySql,/add column if not exists submission_key uuid/);
+ assert.match(keySql,/create unique index if not exists appointment_enquiries_submission_key_uq/);
+ assert.match(intake,/submission_key: submissionKey/);
+ assert.match(intake,/error\.code === "23505"/);
+ assert.match(appointment,/crypto\.randomUUID\(\)/);
+ assert.match(appointment,/submission_key:submissionKey\.current/);
+});
