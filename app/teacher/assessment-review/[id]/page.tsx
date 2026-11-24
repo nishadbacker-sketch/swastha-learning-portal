@@ -16,6 +16,32 @@ const field:React.CSSProperties={width:"100%",boxSizing:"border-box",minHeight:9
 const date=(value:string|null)=>value?new Date(value).toLocaleDateString("en-IN"):"—";
 function lines(raw:string){return raw.split("\n").map(x=>x.trim()).filter(Boolean);}
 function readList(value:unknown){return Array.isArray(value)?value.filter((x):x is string=>typeof x==="string").join("\n"):"";}
+
+const scoreLabels:Record<string,string>={
+ "0":"Not demonstrated",
+ "1":"Substantial support",
+ "2":"Developing",
+ "3":"Independent",
+ "NA":"Not assessed"
+};
+const scoreColors:Record<string,{bg:string;fg:string}>={
+ "0":{bg:"#fee2e2",fg:"#991b1b"},
+ "1":{bg:"#ffedd5",fg:"#9a3412"},
+ "2":{bg:"#dbeafe",fg:"#1d4ed8"},
+ "3":{bg:"#dcfce7",fg:"#166534"},
+ "NA":{bg:"#f1f5f9",fg:"#475569"}
+};
+function ScoringBadge({score}:{score:string|null}){
+ const value=score===null?"":score;
+ const label=scoreLabels[value]||"No answer recorded";
+ const colors=scoreColors[value]||{bg:"#fff1f2",fg:"#b42318"};
+ const numeric=["0","1","2","3"].includes(value);
+ return <div style={{display:"inline-flex",alignItems:"center",gap:9,flexWrap:"wrap",padding:"8px 12px",borderRadius:10,background:colors.bg,color:colors.fg}}>
+  <strong style={{fontSize:19}}>{numeric?value+" / 3":value==="NA"?"NA":"—"}</strong>
+  <span style={{fontSize:13,fontWeight:600}}>{label}</span>
+ </div>;
+}
+
 export default function TeacherAssessmentReview(){
  const router=useRouter();const params=useParams<{id:string}>();
  const [assignment,setAssignment]=useState<Assignment|null>(null);
@@ -113,21 +139,24 @@ export default function TeacherAssessmentReview(){
    <section style={card}><h1 style={{marginTop:0}}>Review Submitted Assessment</h1>
     <p><strong>Student:</strong> {student.full_name} · <strong>Class:</strong> {student.current_class||"—"} · <strong>Level:</strong> {assignment.assessment_level}</p>
     <p><strong>Status:</strong> {assignment.status} · <strong>Assigned:</strong> {date(assignment.assigned_at)} · <strong>Due:</strong> {date(assignment.due_date)}</p>
-    <p><strong>Numeric answers:</strong> {answered.length}/{questions.length} · <strong>NA:</strong> {na} · <strong>Average:</strong> {average===null?"Not scored":average.toFixed(2)+"/3"}</p>
+    <p><strong>Automatically calculated rating total:</strong> {total} / {answered.length*3} across {answered.length} numerically scored questions · <strong>NA:</strong> {na} · <strong>Average:</strong> {average===null?"Not scored":average.toFixed(2)+"/3"} · <strong>Unanswered:</strong> {questions.length-answered.length-na}</p>
+    <div style={{display:"flex",gap:9,flexWrap:"wrap",margin:"12px 0"}}>
+     {["0","1","2","3","NA"].map(value=><span key={value} style={{padding:"7px 10px",borderRadius:8,background:scoreColors[value].bg,color:scoreColors[value].fg,fontSize:13}}><strong>{value==="NA"?"NA":value+"/3"}</strong> · {scoreLabels[value]}: {questions.filter(q=>q.score===value).length}</span>)}
+    </div>
     <p style={{color:"#64748b",fontSize:13}}>Read-only student answers. Scores are calculated from submitted ratings; NA is excluded. No response can be changed from this review page.</p>
    </section>
    {error&&<section role="alert" style={{...card,color:"#b42318",background:"#fff4f3"}}>{error}</section>}
    {message&&<section role="status" style={{...card,background:"#eaf6ed",color:"#176b58"}}>{message}</section>}
    <section style={card}><h2>Domain-wise Rating Summary</h2>
     {domains.map(d=><div key={d.name} style={{padding:"10px 0",borderBottom:"1px solid #e2e8f0"}}>
-     <strong>{d.name}</strong><p style={{margin:"5px 0",fontSize:13}}>Answered {d.count} · NA {d.na} · Average {d.count?(d.sum/d.count).toFixed(2)+"/3":"Not scored"}</p>
+     <strong>{d.name}</strong><p style={{margin:"5px 0",fontSize:13}}>Auto-calculated total: <strong>{d.sum} / {d.count*3}</strong> · Rated {d.count} · NA {d.na} · Average <strong>{d.count?(d.sum/d.count).toFixed(2)+"/3":"Not scored"}</strong></p>
     </div>)}
    </section>
    <section style={card}><h2>Student Responses</h2>
     {questions.map(q=><div key={q.id} style={{padding:"12px 0",borderBottom:"1px solid #e2e8f0"}}>
      <small style={{color:"#64748b"}}>{q.area} / {q.domain} · {q.id}</small>
      <p style={{fontWeight:700,margin:"6px 0"}}>{q.title}</p>
-     <p style={{margin:"4px 0"}}>Rating: <strong>{q.score||"Not answered"}</strong></p>
+     <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap",margin:"8px 0"}}><span style={{fontSize:13,color:"#475569"}}>Recorded question score</span><ScoringBadge score={q.score}/></div>
      {q.observation&&<p style={{whiteSpace:"pre-wrap",margin:"6px 0"}}>Parent observation: {q.observation}</p>}
     </div>)}
    </section>
