@@ -63,3 +63,11 @@ No production SQL mutation in Phase 5 audit. Staging migration updates only the 
 - [ ] CI + source regression pass.
 - [ ] Manual leaked-password protection project-setting change; recheck advisor.
 - [ ] Explicitly review any broader SECURITY DEFINER refactoring before production.
+
+## Staging test parity setup (non-production only)
+
+The opt-in test `tests/staging-phase5-role-positive.test.mjs` signs in using **dedicated staging-only** Parent, Teacher, Admin and Clinic Admin accounts, checks the expected role stored in `user_roles`, and verifies `is_creator_account` returns false for Parent/Teacher and true for Admin/Clinic Admin when given a staged Owner's UUID.
+
+The staging project currently has **no Owner, Admin or Clinic Admin fixtures**, so **positive role testing is not yet done**. Do not promote or repurpose any existing real account for this test. Provision dedicated synthetic accounts via an authorised staging-only process and store credentials only in GitHub Actions Secrets (never in Git). Required secrets are `SWASTHA_STAGING_SUPABASE_URL`, `SWASTHA_STAGING_SUPABASE_ANON_KEY`, `SWASTHA_STAGING_OWNER_USER_ID`, and `SWASTHA_STAGING_{PARENT_A,TEACHER,ADMIN,CLINIC_ADMIN}_{EMAIL,PASSWORD}`. Once provisioned, enable repository Actions Variable `SWASTHA_RUN_PHASE5_ROLE_TESTS=true` to run the test. The test fails if secrets are missing and restricts its connection to the known staging project hostname.
+
+This is **not** an instruction to copy production user or child data to staging. Staging fixtures must be synthetic. This suite does not modify user roles, appointments, students, or assessment records.
