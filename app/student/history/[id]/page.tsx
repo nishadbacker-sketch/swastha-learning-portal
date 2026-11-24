@@ -1,4 +1,5 @@
 "use client";
+import BrandLogo from "../../../components/brand-logo";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
@@ -103,7 +104,7 @@ export default function StudentHistoryPage(){
  if(error||!student)return <main style={{padding:30,maxWidth:800,margin:"auto"}}><h2>History unavailable</h2><p>{error}</p><button style={button} onClick={goBack}>Back to Dashboard</button></main>;
  return <main style={{background:"#f8faf7",minHeight:"100vh",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
   <header style={{background:"#0f4c5c",color:"white",padding:"17px 5%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:14,flexWrap:"wrap"}}>
-   <div><strong>Swastha Learning Clinic</strong><div style={{fontSize:12,marginTop:3}}>STUDENT DEVELOPMENT HISTORY</div></div>
+   <div><BrandLogo /><div style={{fontSize:12,marginTop:3}}>STUDENT DEVELOPMENT HISTORY</div></div>
    <button style={{...button,background:"#fff",color:"#0f4c5c"}} onClick={goBack}>Back to Dashboard</button>
   </header>
   <div style={{maxWidth:1080,margin:"auto",padding:"25px 17px 60px"}}>
