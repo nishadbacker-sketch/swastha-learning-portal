@@ -165,7 +165,7 @@ export default function CustomAssessmentBuilder(){
  return <main style={{fontFamily:"Arial,sans-serif",background:"#f8faf7",minHeight:"100vh",color:"#183a35"}}>
   <header style={{position:"sticky",top:0,zIndex:30,background:"#0f4c5c",color:"white",padding:"14px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
    <div><strong>Swastha Learning Clinic</strong><div style={{fontSize:12,marginTop:4}}>CUSTOM ASSESSMENT BUILDER</div></div>
-   <button style={{...outline,background:"#fff"}} onClick={()=>router.push("/admin/questions")}>Back to Question Bank</button>
+   <button style={{...outline,background:"#fff"}} onClick={()=>router.push("/teacher/dashboard")}>Back to Teacher Dashboard</button>
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"24px 16px 70px"}}>
    <h1>Create & Manage Custom Assessments</h1>
