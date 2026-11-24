@@ -1,7 +1,7 @@
 "use client";
 
 import BrandLogo from "../components/brand-logo";
-import {useState} from "react";
+import {useRef,useState} from "react";
 
 type FormState={
  guardian_name:string;whatsapp_number:string;contact_differs:boolean;contact_number:string;child_name:string;date_of_birth:string;current_class:string;preferred_date:string;preferred_time:string;reason:string;consent:boolean;
@@ -15,9 +15,10 @@ export default function PublicAppointmentPage(){
  const [form,setForm]=useState<FormState>(initial);
  const [bot,setBot]=useState("");
  const [busy,setBusy]=useState(false);
+ const submissionKey=useRef<string|null>(null);
  const [message,setMessage]=useState("");
  const [completed,setCompleted]=useState(false);
- function edit<K extends keyof FormState>(key:K,value:FormState[K]){setForm(p=>({...p,[key]:value}));}
+ function edit<K extends keyof FormState>(key:K,value:FormState[K]){submissionKey.current=null;setForm(p=>({...p,[key]:value}));}
  async function submit(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();setMessage("");
   if(bot){setCompleted(true);return;}
@@ -26,11 +27,13 @@ export default function PublicAppointmentPage(){
   if(!phone.test(form.whatsapp_number)||form.contact_differs&&!phone.test(form.contact_number)){setMessage("Enter a valid contact number.");return;}
   if(form.date_of_birth>new Date().toLocaleDateString("en-CA")){setMessage("Date of birth cannot be in the future.");return;}
   setBusy(true);
+  if(!submissionKey.current) submissionKey.current=crypto.randomUUID();
   try {
    const response=await fetch("/api/appointment-intake",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
+     submission_key:submissionKey.current,
      guardian_name:clean(form.guardian_name),
      whatsapp_number:clean(form.whatsapp_number),
      contact_differs:form.contact_differs,
@@ -49,6 +52,7 @@ export default function PublicAppointmentPage(){
     setMessage("Could not submit your appointment request. Please try again.");
    } else {
     setCompleted(true);
+    submissionKey.current=null;
     setForm(initial);
    }
   } catch {
