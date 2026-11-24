@@ -74,8 +74,8 @@ export default function AssessmentReportPage(){
     <p><strong>Student:</strong> {student.full_name} · <strong>Class:</strong> {student.current_class||"Not available"} · <strong>Level:</strong> {assignment.assessment_level}</p>
     <p><strong>Reviewed:</strong> {review.reviewed_at?new Date(review.reviewed_at).toLocaleDateString("en-IN"):"Not recorded"} · <strong>Status:</strong> Teacher Approved</p>
    </section>
-   <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:student.id,full_name:student.full_name}]}/>
    <DevelopmentPlan assignmentId={assignment.id} canEdit={role==="teacher"||role==="admin"}/>
+   <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:student.id,full_name:student.full_name}]}/>
    <section style={card}>
     <h2>Approved Teacher Observations & Recommendations</h2>
     <h3>Overall teacher-approved rating</h3>
