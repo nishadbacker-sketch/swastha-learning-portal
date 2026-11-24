@@ -9,6 +9,7 @@ import {
   type AssessmentLevel,
   type AssessmentScore,
 } from "../../../../lib/assessment-data";
+import {checklistForAssignment} from "../../../../lib/assessment-question-versions";
 import { LP_MALAYALAM_QUESTIONS, LP_MALAYALAM_INTERVIEW, LP_MALAYALAM_TALENTS, LP_MALAYALAM_AREAS, LP_MALAYALAM_DOMAINS } from "../../../../lib/assessment-ml";
 
 type Answer = {
@@ -20,6 +21,7 @@ type Assignment = {
   id: string;
   student_id: string;
   assessment_level: AssessmentLevel;
+  assigned_at: string;
   status: string;
   due_date: string | null;
 };
@@ -79,6 +81,8 @@ export default function ParentAssessmentPage() {
 
   const [assignment, setAssignment] =
     useState<Assignment | null>(null);
+
+  const [versionedChecklist,setVersionedChecklist]=useState<(typeof CHECKLIST_DATA)[AssessmentLevel]|null>(null);
 
   const [student, setStudent] =
     useState<Student | null>(null);
@@ -188,6 +192,8 @@ export default function ParentAssessmentPage() {
           throw new Error("Student information unavailable.");
         }
 
+        const latestChecklist=await checklistForAssignment(assigned.assessment_level as AssessmentLevel,assigned.assigned_at);
+        setVersionedChecklist(latestChecklist);
         setAssignment(assigned as Assignment);
         setStudent(child as Student);
 
@@ -242,9 +248,7 @@ export default function ParentAssessmentPage() {
     loadAssessment();
   }, [assignmentId, router]);
 
-  const checklist = assignment
-    ? CHECKLIST_DATA[assignment.assessment_level]
-    : null;
+  const checklist = assignment ? versionedChecklist : null;
 
   const questionIds = checklist
     ? checklist.areas.flatMap((area) =>
@@ -690,7 +694,7 @@ export default function ParentAssessmentPage() {
                       onClick={() => jumpToQuestion(item.areaIndex,item.id)}
                       style={{textAlign:"left",background:"#fff",border:"1px solid #fbbf24",borderRadius:8,padding:12,cursor:"pointer",color:"#78350f"}}>
                       <strong>{tr("Area","മേഖല")} {item.areaIndex + 1} · {item.domainTitle} · {tr("Question","ചോദ്യം")} {item.domainTitle.match(/^([A-Z])\./)?.[1] || item.id.split("_")[1]?.slice(-1) || ""}.{item.index + 1}</strong>
-                      <span style={{display:"block",marginTop:5}}>{lpMalayalam ? LP_MALAYALAM_QUESTIONS[item.id] || item.question : item.question}</span>
+                      <span style={{display:"block",marginTop:5}}>{lpMalayalam && item.question === CHECKLIST_DATA.LP.areas.flatMap(a=>a.subDomains).flatMap(d=>d.items.map((q,i)=>({id:d.id+"_"+(i+1),q}))).find(q=>q.id===item.id)?.q ? LP_MALAYALAM_QUESTIONS[item.id] || item.question : item.question}</span>
                     </button>
                   ))}
                 </div>
@@ -849,7 +853,7 @@ export default function ParentAssessmentPage() {
                                 lineHeight: 1.6,
                               }}
                             >
-                              {domain.title.match(/^([A-Z])\./)?.[1] || domain.id.slice(-1)}.{index + 1} — {lpMalayalam ? LP_MALAYALAM_QUESTIONS[id] || question : question}
+                              {domain.title.match(/^([A-Z])\./)?.[1] || domain.id.slice(-1)}.{index + 1} — {lpMalayalam && question === CHECKLIST_DATA.LP.areas.flatMap(a=>a.subDomains).flatMap(d=>d.items.map((q,i)=>({id:d.id+"_"+(i+1),q}))).find(q=>q.id===id)?.q ? LP_MALAYALAM_QUESTIONS[id] || question : question}
                             </p>
 
                             <div
@@ -926,7 +930,7 @@ export default function ParentAssessmentPage() {
                             key={id}
                             style={{ marginBottom: 20 }}
                           >
-                            <p><strong>{lpMalayalam ? LP_MALAYALAM_INTERVIEW[index] || question : question}</strong></p>
+                            <p><strong>{lpMalayalam && question===CHECKLIST_DATA.LP.parentInterview[index] ? LP_MALAYALAM_INTERVIEW[index] || question : question}</strong></p>
 
                             <textarea
                               style={input}
@@ -962,7 +966,7 @@ export default function ParentAssessmentPage() {
                           key={id}
                           style={{ marginBottom: 16 }}
                         >
-                          <p><strong>{lpMalayalam ? LP_MALAYALAM_TALENTS[index] || talent : talent}</strong></p>
+                          <p><strong>{lpMalayalam && talent===CHECKLIST_DATA.LP.talents[index] ? LP_MALAYALAM_TALENTS[index] || talent : talent}</strong></p>
 
                           <textarea
                             rows={2}
