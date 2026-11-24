@@ -24,6 +24,7 @@ export default function LoginPage() {
   // Login details
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,6 +40,11 @@ export default function LoginPage() {
     }
 
     if (isRegister) {
+      if (password !== confirmPassword) {
+        setMessage("Passwords do not match. Please re-enter your confirmation password.");
+        return;
+      }
+
       if (
         !fullName.trim() ||
         !whatsappNumber.trim() ||
@@ -106,6 +112,7 @@ export default function LoginPage() {
         // Show registration success popup.
         setIsRegister(false);
         setPassword("");
+        setConfirmPassword("");
         setShowSuccessPopup(true);
 
       } else {
@@ -307,6 +314,40 @@ export default function LoginPage() {
               />
             </label>
 
+            {isRegister && (
+              <label className="auth-label">
+                Confirm Password *
+                <input
+                  className="auth-input"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  aria-invalid={confirmPassword.length > 0 && password !== confirmPassword}
+                  aria-describedby="password-match-message"
+                  placeholder="Re-enter your password"
+                />
+                <span
+                  id="password-match-message"
+                  role="status"
+                  style={{
+                    display: "block",
+                    marginTop: 6,
+                    fontSize: 12,
+                    color: confirmPassword && password !== confirmPassword ? "#b42318" : "#176b58",
+                  }}
+                >
+                  {confirmPassword
+                    ? password === confirmPassword
+                      ? "Passwords match ✓"
+                      : "Passwords do not match"
+                    : ""}
+                </span>
+              </label>
+            )}
+
             <button
               className="auth-button"
               type="submit"
@@ -335,6 +376,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setIsRegister(!isRegister);
+                setConfirmPassword("");
                 setMessage("");
               }}
             >
