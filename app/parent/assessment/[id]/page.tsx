@@ -1,6 +1,7 @@
 
 "use client";
 
+import BrandLogo from "../../../components/brand-logo";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
@@ -472,7 +473,7 @@ export default function ParentAssessmentPage() {
         }}
       >
         <div>
-          <strong>SWASTHA LEARNING CLINIC</strong>
+          <BrandLogo />
           <div style={{ fontSize: 12, marginTop: 6 }}>
             CHILD ASSESSMENT PORTAL
           </div>
