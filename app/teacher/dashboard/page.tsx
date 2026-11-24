@@ -1838,6 +1838,11 @@ export default function TeacherDashboard() {
                   Student Profile & Guardian Contact Details
                 </h3>
 
+                {profileId&&<button type="button"
+                  onClick={()=>router.push("/student/history/"+profileId)}
+                  style={{...primaryButton,marginBottom:16,background:"#0f4c5c"}}>
+                  View Student Development History
+                </button>}
                 <label htmlFor="profile-student">
                   Select student
                 </label>
