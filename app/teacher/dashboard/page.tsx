@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import AssessmentAnalytics from "../assessment-analytics";
+import LearningInsightsCharts from "../../components/learning-insights-charts";
 
 type Level = "LP" | "UP" | "HS" | "HSS";
 type Tab = "overview" | "assessments" | "activities" | "students";
@@ -1291,6 +1292,7 @@ export default function TeacherDashboard() {
                 )}
               </div>
             </div>
+            <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments}/>
             <AssessmentAnalytics assessments={assessments} students={students} />
           </section>
         )}
