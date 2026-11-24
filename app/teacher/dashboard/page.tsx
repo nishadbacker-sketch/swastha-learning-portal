@@ -1127,10 +1127,6 @@ export default function TeacherDashboard() {
               {label}
             </button>
           ))}
-          <button type="button" onClick={() => router.push("/my-profile")}
-            style={{...primaryButton, background:"#f8faf7", color:"#183a35",flex:"1 1 130px"}}>
-            My Profile
-          </button>
         </nav>
 
         <section
