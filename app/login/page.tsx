@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
@@ -9,6 +9,11 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [isRegister, setIsRegister] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mode") === "register") setIsRegister(true);
+  }, []);
 
   // Parent details
   const [fullName, setFullName] = useState("");
