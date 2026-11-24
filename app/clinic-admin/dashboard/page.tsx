@@ -5,6 +5,7 @@ import {useRouter} from "next/navigation";
 import {supabase} from "../../../lib/supabase";
 import AppointmentEscalations from "../../admin/appointment-escalations";
 import TeacherStudentAssignments from "../../components/teacher-student-assignments";
+import TeacherManagement from "../../components/teacher-management";
 
 const action:React.CSSProperties={border:0,borderRadius:8,padding:"10px 14px",background:"#176b58",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"};
 const card:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",padding:16,borderRadius:13,marginBottom:14};
@@ -59,6 +60,7 @@ export default function ClinicAdminDashboard(){
     <button style={action} onClick={()=>router.push("/teacher/appointments")}>Open Appointment Follow-up Queue</button>
    </section>
    <TeacherStudentAssignments/>
+  <TeacherManagement/>
    <AppointmentEscalations/>
   </div>
  </main>;
