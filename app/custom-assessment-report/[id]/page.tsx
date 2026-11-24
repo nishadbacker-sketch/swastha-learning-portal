@@ -12,7 +12,7 @@ type Answer={score?:string|null;choice?:string|null;written_answer?:string|null;
 type Assessment={id:string;student_id:string;template_id:string;status:string;answers:Record<string,Answer>;assigned_at:string;reviewed_at:string|null;teacher_feedback:string|null};
 type Student={full_name:string;current_class:string|null};
 type Entry={number:string;section:string;category:string;question:Question;answer:Answer};
-const panel:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:14,padding:20,marginBottom:18,breakInside:"avoid"};
+const panel:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:12,padding:16,marginBottom:14,breakInside:"avoid"};
 const button:React.CSSProperties={background:"#176b58",color:"white",padding:"10px 15px",border:0,borderRadius:8,cursor:"pointer",fontWeight:700};
 const date=(s:string|null)=>s?new Date(s).toLocaleDateString("en-IN"):"—";
 export default function CustomAssessmentReport(){
