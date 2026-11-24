@@ -105,7 +105,7 @@ export async function downloadCourseCertificatePDF(c:CourseCertificate,kind:Cert
  const pdf=new jsPDF({orientation:"landscape",unit:"mm",format:approvedTemplate?[297,220]:"a4"});
  if(approvedTemplate){
   await drawApprovedTemplate(pdf,approvedTemplate,c,QRCode,kind);
-  pdf.setProperties({title:"Swastha Learning Clinic Course Completion - "+c.reference_code,subject:"Verified digital course completion"});
+  pdf.setProperties({title:"Swastha Learning Clinic "+(kind==="assessment"?"Assessment":"Course")+" Completion - "+c.reference_code,subject:"Verified digital "+kind+" completion"});
   pdf.save("Swastha-"+(kind==="assessment"?"Assessment":"Course")+"-Certificate-"+c.reference_code+".pdf");
   return;
  }
@@ -178,7 +178,7 @@ export async function downloadCourseCertificatePDF(c:CourseCertificate,kind:Cert
  pdf.text("SCAN TO VERIFY",271,198,{align:"center"});
  pdf.setTextColor(90,99,97);pdf.setFont("helvetica","normal");pdf.setFontSize(6);
  pdf.text("Issued electronically; no handwritten signature required.",w/2,203,{align:"center"});
- pdf.setProperties({title:"Swastha Learning Clinic Course Completion - "+c.reference_code,subject:"Verified course completion"});
+ pdf.setProperties({title:"Swastha Learning Clinic "+(kind==="assessment"?"Assessment":"Course")+" Completion - "+c.reference_code,subject:"Verified digital "+kind+" completion"});
  pdf.save("Swastha-"+(kind==="assessment"?"Assessment":"Course")+"-Certificate-"+c.reference_code+".pdf");
 }
 

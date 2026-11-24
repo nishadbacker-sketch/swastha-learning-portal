@@ -1,0 +1,33 @@
+name: Launch security and build checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit
+      - name: Certificate security regressions
+        run: node --test tests/parent-reviewed-assessment-certificate-download.test.mjs tests/launch-readiness-security.test.mjs
+      - name: Next.js production build
+        run: npm run build
+      - name: Live login and public verification smoke
+        run: |
+          curl --fail --location --silent --show-error --max-time 20 --retry 2 --output /dev/null https://portal.swasthalearning.com/login
+          curl --fail --location --silent --show-error --max-time 20 --retry 2 --output /dev/null https://portal.swasthalearning.com/verify/certificate/SLA-AD41FB0FFEE54BE487060F2AD469FCF6
