@@ -38,9 +38,13 @@ test("Parent/Learner portal lists eligible reviewed assessments with instant PDF
  assert.match(parent,/\.not\("reviewed_at","is",null\)/);
  assert.match(parent,/\.rpc\("claim_reviewed_assessment_certificate"/);
  assert.match(parent,/downloadAssessmentCertificatePDF\(c\)/);
- assert.match(parent,/Reviewed Assessments — Download Certificate/);
+ assert.match(parent,/New Certificates Available/);
+ assert.match(parent,/Download Your Certificates/);
+ assert.match(parent,/const pending=reviewed\.filter\(a=>!items\.some\(c=>c\.assignment_id===a\.id\)\)/);
+ assert.match(parent,/pending\.map\(a=>/);
+ assert.match(parent,/items\.map\(c=>/);
+ assert.doesNotMatch(parent,/Reviewed Assessments — Download Certificate|Download Certificate Again/);
  assert.match(parent,/Download Certificate \(PDF\)/);
- assert.match(parent,/Download Certificate Again \(PDF\)/);
  assert.match(parent,/\["parent","student"\]\.includes\(role\.role\)/);
  assert.match(dashboard,/\/parent\/assessment-certificates/);
  assert.doesNotMatch(parent,/\.insert\(|\.update\(|\.upsert\(|\.delete\(/);
