@@ -65,6 +65,11 @@ export default function ClinicAdminDashboard(){
     <button style={action} onClick={()=>router.push("/admin/students")}>Open Student Management</button>
    </div>
   </section>
+   <section style={card}>
+    <h2 style={{fontSize:19,margin:"0 0 8px"}}>Teacher Coordination Oversight</h2>
+    <p style={{fontSize:13}}>See shared student task ownership, progress notes, assessment follow-ups and IDP workloads. Teachers remain responsible for work updates.</p>
+    <button type="button" style={action} onClick={()=>router.push("/teacher/coordination")}>Open Coordination Overview</button>
+   </section>
    <TeacherStudentAssignments/>
   <TeacherManagement/>
    <AppointmentEscalations/>
