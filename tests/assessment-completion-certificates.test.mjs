@@ -49,3 +49,15 @@ test("SLA verification distinguishes assessment from course without exposing pri
  assert.match(pdf,/drawApprovedTemplate\(pdf,approvedTemplate,c,QRCode,kind\)/);
  assert.match(pdf,/courseCertificateVerificationUrl\(c\.reference_code\)/);
 });
+
+test("Issued certificates label Sareena Banu's designation as Programmer and use Director",()=>{
+ const pdf=read("lib/course-certificate-pdf.ts");
+ const staff=read("app/staff/assessment-certificates/page.tsx");
+ const courseStaff=read("app/staff/certificates/page.tsx");
+ assert.match(pdf,/drawCentered\("Programmer",356,850/);
+ assert.match(pdf,/pdf\.text\("Programmer",75,173/);
+ assert.match(pdf,/drawCentered\("Director",820,850/);
+ assert.doesNotMatch(pdf,/Programme Coordinator|Clinical Director/);
+ assert.match(staff,/Programmer full name|Programmer name/);
+ assert.match(courseStaff,/Programmer/);
+});

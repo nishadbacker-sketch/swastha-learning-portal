@@ -60,7 +60,7 @@ export default function AssessmentCertificateStaffPage(){
    p_programme_coordinator:officialCoordinator.trim(),p_director:officialDirector.trim()
   });
   if(err)setError(err.message);
-  else setMessage("Official Coordinator and Director saved. Parents can now download certificates directly after Teacher review.");
+  else setMessage("Official Programmer and Director saved. Parents can now download certificates directly after Teacher review.");
   setConfiguring(false);
  }
  async function issue(e:React.FormEvent<HTMLFormElement>){
@@ -85,9 +85,9 @@ export default function AssessmentCertificateStaffPage(){
    {message&&<section role="status" style={{...panel,color:"#176b58"}}>{message}</section>}
    {role!=="teacher"&&<section style={panel}>
     <h2>Official Names for Parent Certificate Downloads</h2>
-    <p style={{fontSize:13,color:"#64748b"}}>Set the real authorised Programme Coordinator and Director once. For reviewed assessments, linked Parents can then create and download a verified certificate directly. These names are recorded on the certificate when it is first issued.</p>
+    <p style={{fontSize:13,color:"#64748b"}}>Set the real authorised Programmer and Director once. For reviewed assessments, linked Parents can then create and download a verified certificate directly. These names are recorded on the certificate when it is first issued.</p>
     <form onSubmit={configureNames} style={{display:"grid",gap:11,maxWidth:620}}>
-     <label>Programme Coordinator full name
+     <label>Programmer full name
       <input required minLength={2} maxLength={120} value={officialCoordinator} onChange={e=>setOfficialCoordinator(e.target.value)} style={{display:"block",padding:10,marginTop:5,width:"100%"}}/>
      </label>
      <label>Director full name
@@ -108,7 +108,7 @@ export default function AssessmentCertificateStaffPage(){
        </option>)}
       </select>
      </label>
-     <label>Programme Coordinator name
+     <label>Programmer name
       <input required minLength={2} maxLength={120} value={coordinator} onChange={e=>setCoordinator(e.target.value)} style={{display:"block",padding:10,marginTop:5,width:"100%"}}/>
      </label>
      <label>Director name
