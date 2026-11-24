@@ -8,7 +8,7 @@ type InputStudent={id:string;full_name:string};
 type Response={question_id:string;score:string|null;observation:string|null};
 type Item={id:string;question:string;area:string;domain:string;score:string|null;observation:string};
 type Domain={id:string;name:string;area:string;count:number;numeric:number;sum:number;na:number;mastery:number|null};
-const card:React.CSSProperties={background:"#fff",border:"1px solid #e2e8f0",borderRadius:16,padding:22,marginBottom:18,boxShadow:"0 1px 3px rgba(15,23,42,.045)"};
+const card:React.CSSProperties={background:"#fff",border:"1px solid #e2e8f0",borderRadius:13,padding:16,marginBottom:14,boxShadow:"0 1px 3px rgba(15,23,42,.045)"};
 const palette={green:"#10b981",gold:"#0284c7",orange:"#f97316",red:"#ef4444",blue:"#0f4c5c",muted:"#64748b"};
 const band=(pct:number|null)=>pct===null?"Not scored":pct>=80?"Independent":pct>=50?"Developing":"Needs Support";
 const bandColor=(pct:number|null)=>pct===null?"#94a3b8":pct>=80?palette.green:pct>=50?palette.gold:palette.orange;
@@ -133,14 +133,14 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
       <span style={{display:"grid",placeItems:"center",background:color+"17",color:color,borderRadius:9,fontWeight:800,width:34,height:34,fontSize:19}}>{symbol}</span>
      </div>
      <div style={{display:"flex",alignItems:"baseline",gap:9,marginTop:13,flexWrap:"wrap"}}>
-      <strong style={{fontSize:34,lineHeight:1.1,color:name==="Overall Readiness"?"#1e293b":color}}>{value}</strong>
+      <strong style={{fontSize:28,lineHeight:1.1,color:name==="Overall Readiness"?"#1e293b":color}}>{value}</strong>
       <span style={{fontSize:12,color:color,fontWeight:700}}>{detail}</span>
      </div>
      <p style={{fontSize:12,color:"#94a3b8",margin:"11px 0 0"}}>{subtitle}</p>
     </div>)}
    </div>
    <p style={{fontSize:13,color:palette.muted}}>Readiness = total numeric ratings ÷ (3 × numeric responses), excluding NA and unanswered questions. {assessed} of {items.length} indicators have recorded scores or NA ({counts[4].count} NA).</p>
-   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:22,alignItems:"stretch"}}>
+   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,320px),1fr))",gap:14,alignItems:"stretch"}}>
     <div style={{...card,gridColumn:"span 1"}}><h3 style={{margin:"0 0 4px",fontSize:18}}>Holistic Sub-Domain Competency Radar</h3><p style={{fontSize:12,color:palette.muted,margin:"0 0 14px"}}>Percentage mastery across all checklist sub-domains for active student</p><Radar domains={domains}/></div>
     <div style={card}><h3 style={{margin:"0 0 4px",fontSize:18}}>Rating Distribution</h3><p style={{fontSize:12,color:palette.muted,margin:"0 0 14px"}}>Breakdown of 0–3 scores & NA items</p><RatingDoughnut counts={counts} total={assessed}/><p style={{fontSize:12,color:"#64748b",background:"#f8fafc",borderRadius:10,padding:12,marginTop:14}}>Assessed {assessed} of {items.length} indicators ({counts[4].count} marked NA).</p></div>
    </div>
