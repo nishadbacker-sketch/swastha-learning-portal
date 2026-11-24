@@ -1036,6 +1036,10 @@ export default function TeacherDashboard() {
             style={{...primaryButton,background:"#176b58",color:"white"}}>
             + Custom Assessment Builder
           </button>
+          <button type="button" onClick={()=>router.push("/teacher/coordination")}
+            style={{...primaryButton,background:"#0f4c5c",color:"#fff"}}>
+            Teacher Coordination
+          </button>
           <button type="button" onClick={()=>router.push("/teacher/appointments")}
             style={{...primaryButton,background:"#fff1f2",color:"#b42318",border:"1px solid #fecdd3"}}>
             Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
