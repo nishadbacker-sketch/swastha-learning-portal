@@ -22,3 +22,24 @@ jobs:
           NEXT_TELEMETRY_DISABLED: '1'
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Start built portal (smoke test only)
+        run: |
+          npm run start -- -p 3100 > /tmp/swastha-smoke.log 2>&1 &
+          echo $! > /tmp/swastha-smoke.pid
+          for i in $(seq 1 40); do
+            if curl --silent --output /dev/null http://127.0.0.1:3100/login; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/swastha-smoke.log
+          exit 1
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Run non-destructive smoke tests
+        run: node --test tests/phase1-smoke.test.mjs
+        env:
+          SWASTHA_SMOKE_BASE_URL: http://127.0.0.1:3100
+      - name: Show logs on failure
+        if: failure()
+        run: cat /tmp/swastha-smoke.log 2>/dev/null || true
