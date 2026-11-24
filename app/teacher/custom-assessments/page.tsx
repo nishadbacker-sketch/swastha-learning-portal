@@ -65,7 +65,7 @@ export default function CustomAssessmentBuilder(){
    const {data:auth,error:authError}=await supabase.auth.getUser();
    if(authError||!auth.user){router.replace("/login");return;}
    const {data:role,error:roleError}=await supabase.from("user_roles").select("role").eq("user_id",auth.user.id).single();
-   if(roleError||!role||!["teacher","admin","clinic_admin"].includes(role.role)){router.replace("/login");return;}
+   if(roleError||!role||!["teacher","admin","clinic_admin","owner"].includes(role.role)){router.replace("/login");return;}
    setRoleName(role.role);
    setUserId(auth.user.id);await refresh();
   }catch(e){setError(e instanceof Error?e.message:"Unable to load custom assessments");}
