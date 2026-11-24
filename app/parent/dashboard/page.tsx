@@ -1,410 +1,64 @@
-
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import { CHECKLIST_DATA } from "../../../lib/assessment-data";
 
-type Student = {
-  id: string;
-  full_name: string;
-  date_of_birth: string | null;
-  current_class: string | null;
-  status: string;
-};
-
-type ParentProfile = {
-  full_name: string | null;
-  phone: string | null;
-  contact_number_differs: boolean;
-  additional_contact_number: string | null;
-};
-
-type Activity = {
-  id: string;
-  assigned_at: string;
-  due_date: string | null;
-  status: string;
-  learning_activities: {
-    title: string;
-    description: string | null;
-  }[] | null;
-};
-
-export default function ParentDashboard() {
-  const router = useRouter();
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [profile, setProfile] = useState<ParentProfile | null>(null);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-
-  useEffect(() => {
-    async function checkUser() {
-      if (!supabase) {
-        router.replace("/login");
-        return;
-      }
-
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error || !data.session) {
-        router.replace("/login");
-        return;
-      }
-
-      const user = data.session.user;
-
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-
-      if (roleError || !roleData) {
-        router.replace("/login");
-        return;
-      }
-
-      if (
-        roleData.role !== "parent" &&
-        roleData.role !== "student"
-      ) {
-        if (roleData.role === "admin") {
-          router.replace("/admin/dashboard");
-        } else if (roleData.role === "teacher") {
-          router.replace("/teacher/dashboard");
-        } else {
-          router.replace("/login");
-        }
-        return;
-      }
-
-      setName(
-        user.user_metadata?.full_name || user.email || "Learner"
-      );
-      setEmail(user.email || "");
-
-      // Load parent profile
-      const { data: profileData, error: profileError } =
-        await supabase
-          .from("profiles")
-          .select(
-            "full_name, phone, contact_number_differs, additional_contact_number"
-          )
-          .eq("id", user.id)
-          .single();
-
-      if (profileError) {
-        setLoadError("Unable to load your profile information.");
-      } else {
-        setProfile(profileData);
-      }
-
-      // Load linked children
-      const { data: links, error: linksError } = await supabase
-        .from("parent_student_links")
-        .select("student_id")
-        .eq("parent_user_id", user.id);
-
-      if (linksError) {
-        setLoadError("Unable to load your child information.");
-        setLoading(false);
-        return;
-      }
-
-      const studentIds = (links || []).map(
-        (link) => link.student_id
-      );
-
-      if (studentIds.length > 0) {
-        // Fetch child details
-        const { data: studentData, error: studentError } =
-          await supabase
-            .from("students")
-            .select(
-              "id, full_name, date_of_birth, current_class, status"
-            )
-            .in("id", studentIds);
-
-        if (studentError) {
-          setLoadError("Unable to load your child information.");
-        } else {
-          setStudents(studentData || []);
-        }
-
-        // Fetch activities assigned to these children
-        const { data: activityData, error: activityError } =
-          await supabase
-            .from("student_activity_assignments")
-            .select(`
-              id,
-              assigned_at,
-              due_date,
-              status,
-              learning_activities (
-                title,
-                description
-              )
-            `)
-            .in("student_id", studentIds)
-            .order("assigned_at", { ascending: false });
-
-        if (activityError) {
-          setLoadError("Unable to load learning activities.");
-        } else {
-          setActivities((activityData || []) as Activity[]);
-        }
-      }
-
-      setLoading(false);
-    }
-
-    checkUser();
-  }, [router]);
-
-  async function handleLogout() {
-    if (!supabase) return;
-
-    await supabase.auth.signOut();
-    router.replace("/login");
-  }
-
-  function formatDate(date: string | null) {
-    if (!date) return "Not available";
-
-    const parts = date.split("-");
-
-    if (parts.length !== 3) return date;
-
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  }
-
-  function formatDateTime(date: string) {
-    return new Date(date).toLocaleDateString("en-IN");
-  }
-
-  if (loading) {
-    return (
-      <main style={{ padding: 40 }}>
-        Loading your dashboard...
-      </main>
-    );
-  }
-
-  return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#f8faf7",
-        color: "#183a35",
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          padding: "20px 6%",
-          background: "#ffffff",
-          borderBottom: "1px solid #dce8e1",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 16,
-        }}
-      >
-        <strong>SWASTHA LEARNING CLINIC</strong>
-
-        <button onClick={handleLogout}>
-          Sign out
-        </button>
-      </header>
-
-      <section style={{ padding: "48px 6%" }}>
-        <p>LEARN • GROW • THRIVE</p>
-
-        <h1>Welcome, {name}!</h1>
-
-        <p>
-          Welcome to your Swastha Learning Clinic learning portal.
-        </p>
-
-        {/* My Profile */}
-        <div
-          style={{
-            marginTop: 32,
-            padding: 28,
-            background: "#ffffff",
-            border: "1px solid #dce8e1",
-            borderRadius: 16,
-            maxWidth: 750,
-          }}
-        >
-          <h2>My Profile</h2>
-
-          {profile ? (
-            <>
-              <p>
-                <strong>Parent / Guardian name:</strong>{" "}
-                {profile.full_name || "Not available"}
-              </p>
-
-              <p>
-                <strong>WhatsApp number:</strong>{" "}
-                {profile.phone || "Not available"}
-              </p>
-
-              <p>
-                <strong>Contact number differs:</strong>{" "}
-                {profile.contact_number_differs ? "Yes" : "No"}
-              </p>
-
-              {profile.contact_number_differs && (
-                <p>
-                  <strong>Additional contact number:</strong>{" "}
-                  {profile.additional_contact_number || "Not available"}
-                </p>
-              )}
-
-              <p>
-                <strong>Login email:</strong>{" "}
-                {email || "Not available"}
-              </p>
-            </>
-          ) : (
-            <p>Profile information is not available.</p>
-          )}
-
-          <p style={{ color: "#667a74", fontSize: 13 }}>
-            Your profile information is currently read-only.
-          </p>
-        </div>
-
-        {/* My Child */}
-        <div
-          style={{
-            marginTop: 24,
-            padding: 28,
-            background: "#ffffff",
-            border: "1px solid #dce8e1",
-            borderRadius: 16,
-            maxWidth: 750,
-          }}
-        >
-          <h2>My Child</h2>
-
-          {students.length === 0 ? (
-            <p>
-              No child information was found for your account.
-            </p>
-          ) : (
-            students.map((student) => (
-              <div
-                key={student.id}
-                style={{
-                  marginTop: 20,
-                  padding: 20,
-                  background: "#f8faf7",
-                  border: "1px solid #dce8e1",
-                  borderRadius: 12,
-                }}
-              >
-                <h3 style={{ marginTop: 0 }}>
-                  {student.full_name}
-                </h3>
-
-                <p>
-                  <strong>Date of birth:</strong>{" "}
-                  {formatDate(student.date_of_birth)}
-                </p>
-
-                <p>
-                  <strong>Current class:</strong>{" "}
-                  {student.current_class || "Not available"}
-                </p>
-
-                <p>
-                  <strong>Registration status:</strong>{" "}
-                  {student.status}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Learning Activities */}
-        <div
-          style={{
-            marginTop: 24,
-            padding: 28,
-            background: "#ffffff",
-            border: "1px solid #dce8e1",
-            borderRadius: 16,
-            maxWidth: 750,
-          }}
-        >
-          <h2>Learning Activities</h2>
-
-          {activities.length === 0 ? (
-            <p>
-              No learning activities have been assigned yet.
-              Your teacher's assigned activities will appear here.
-            </p>
-          ) : (
-            activities.map((activity) => (
-              <div
-                key={activity.id}
-                style={{
-                  marginTop: 20,
-                  padding: 20,
-                  background: "#f8faf7",
-                  border: "1px solid #dce8e1",
-                  borderRadius: 12,
-                }}
-              >
-                <h3 style={{ marginTop: 0 }}>
-                  {activity.learning_activities?.[0]?.title ||
-                    "Untitled activity"}
-                </h3>
-
-                <p>
-                  {activity.learning_activities?.[0]?.description ||
-                    "No description provided."}
-                </p>
-
-                <p>
-                  <strong>Assigned date:</strong>{" "}
-                  {formatDateTime(activity.assigned_at)}
-                </p>
-
-                <p>
-                  <strong>Due date:</strong>{" "}
-                  {formatDate(activity.due_date)}
-                </p>
-
-                <p>
-                  <strong>Status:</strong>{" "}
-                  {activity.status === "completed"
-                    ? "Completed"
-                    : "Pending"}
-                </p>
-              </div>
-            ))
-          )}
-
-          <p style={{ color: "#667a74", fontSize: 13 }}>
-            Learning activities are displayed for viewing only.
-          </p>
-        </div>
-
-        {loadError && (
-          <p style={{ color: "#b42318", marginTop: 16 }}>
-            {loadError}
-          </p>
-        )}
-      </section>
-    </main>
-  );
+type Student={id:string;full_name:string;date_of_birth:string|null;current_class:string|null;status:string};
+type Profile={full_name:string|null;phone:string|null;contact_number_differs:boolean;additional_contact_number:string|null};
+type Details={title:string;description:string|null};
+type Activity={id:string;student_id:string;assigned_at:string;due_date:string|null;status:string;learning_activities:Details[]|Details|null};
+type Assessment={id:string;student_id:string;assessment_level:keyof typeof CHECKLIST_DATA;assigned_at:string;due_date:string|null;status:string};
+type Response={assignment_id:string;question_id:string;score:string|null};
+type Result={assignment_id:string;overall_score:number|null;domain_scores:Record<string,unknown>;strengths:unknown[];support_needs:unknown[];teacher_feedback:string|null;recommendations:string|null;reviewed_at:string|null};
+const green="#176b58",blue="#0284c7",orange="#f97316",gray="#64748b",teal="#2a9d8f";
+const card:React.CSSProperties={background:"white",border:"1px solid #dce8e1",borderRadius:16,padding:22,marginBottom:18};
+const grid:React.CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:16};
+const btn:React.CSSProperties={background:green,color:"white",border:0,borderRadius:9,padding:"11px 17px",cursor:"pointer",fontWeight:600};
+const levels={LP:"Lower Primary",UP:"Upper Primary",HS:"High School",HSS:"Higher Secondary"};
+const statuses:Record<string,string>={assigned:"Assigned",in_progress:"In Progress",submitted:"Awaiting Review",reviewed:"Reviewed",completed:"Completed",pending:"Pending",active:"Active"};
+const date=(v:string|null)=>v?new Date(v).toLocaleDateString("en-IN"):"Not specified";
+const label=(v:string)=>statuses[v]||v;
+function Progress({value,color=teal}:{value:number;color?:string}){return <div style={{height:10,background:"#e2e8f0",borderRadius:20,overflow:"hidden"}}><div style={{height:"100%",width:Math.max(0,Math.min(100,value))+"%",background:color}}/></div>}
+type Item={label:string;value:number;color?:string};
+function Bars({title,items}:{title:string;items:Item[]}){return <section style={card}><h3>{title}</h3>{items.length?items.map((x,i)=><div key={i} style={{marginBottom:16}}><p>{x.label} — <strong>{Math.round(x.value)}%</strong></p><Progress value={x.value} color={x.color}/></div>):<p>No data available yet.</p>}</section>}
+function Donut({title,items}:{title:string;items:Item[]}){const total=items.reduce((s,x)=>s+x.value,0);let pos=0;const stops=items.map(x=>{const start=pos;pos+=total?100*x.value/total:0;return (x.color||teal)+" "+start+"% "+pos+"%"});return <section style={card}><h3>{title}</h3><div style={{width:150,height:150,borderRadius:"50%",margin:"20px auto",background:total?"conic-gradient("+stops.join(",")+")":"#e2e8f0",display:"grid",placeItems:"center"}}><div style={{width:106,height:106,borderRadius:"50%",background:"white",display:"grid",placeItems:"center",fontSize:28,fontWeight:700}}>{total}</div></div>{items.map(x=><p key={x.label}><span style={{color:x.color||teal}}>●</span> {x.label}: <strong>{x.value}</strong></p>)}</section>}
+function List({items}:{items:unknown[]}){return items?.length?<ul>{items.map((x,i)=><li key={i}>{typeof x==="string"?x:JSON.stringify(x)}</li>)}</ul>:<p>No observations published yet.</p>}
+export default function ParentDashboard(){
+ const router=useRouter();
+ const [name,setName]=useState(""),[email,setEmail]=useState(""),[profile,setProfile]=useState<Profile|null>(null);
+ const [students,setStudents]=useState<Student[]>([]),[activities,setActivities]=useState<Activity[]>([]),[assessments,setAssessments]=useState<Assessment[]>([]),[responses,setResponses]=useState<Response[]>([]),[results,setResults]=useState<Result[]>([]);
+ const [tab,setTab]=useState("Overview"),[child,setChild]=useState("all"),[opened,setOpened]=useState(""),[loading,setLoading]=useState(true),[error,setError]=useState("");
+ useEffect(()=>{async function load(){const db=supabase;if(!db){setError("Supabase is not configured.");setLoading(false);return;}const errors:string[]=[];try{
+ const {data:auth,error:authError}=await db.auth.getUser();if(authError||!auth.user){router.replace("/login");return;}const user=auth.user;
+ const role=await db.from("user_roles").select("role").eq("user_id",user.id).single();if(role.error||!role.data){router.replace("/login");return;}if(!["parent","student"].includes(role.data.role)){router.replace(role.data.role==="admin"?"/admin/dashboard":role.data.role==="teacher"?"/teacher/dashboard":"/login");return;}
+ setName(user.user_metadata?.full_name||user.email||"Learner");setEmail(user.email||"");
+ const pr=await db.from("profiles").select("full_name,phone,contact_number_differs,additional_contact_number").eq("id",user.id).single();if(pr.error)errors.push("Unable to load profile.");else{setProfile(pr.data);if(pr.data.full_name)setName(pr.data.full_name);}
+ const links=await db.from("parent_student_links").select("student_id").eq("parent_user_id",user.id);if(links.error)throw new Error(links.error.message);const ids=(links.data||[]).map(x=>x.student_id);if(!ids.length)return;
+ const [s,a,q]=await Promise.all([db.from("students").select("id,full_name,date_of_birth,current_class,status").in("id",ids),db.from("student_activity_assignments").select("id,student_id,assigned_at,due_date,status,learning_activities(title,description)").in("student_id",ids).order("assigned_at",{ascending:false}),db.from("assessment_assignments").select("id,student_id,assessment_level,assigned_at,due_date,status").in("student_id",ids).order("assigned_at",{ascending:false})]);
+ if(s.error)errors.push("Unable to load children.");else setStudents(s.data||[]);
+ if(a.error)errors.push("Unable to load activities.");else setActivities((a.data||[]) as Activity[]);
+ if(q.error){errors.push("Unable to load assessments.");return;}const assigned=(q.data||[]) as Assessment[];setAssessments(assigned);
+ const editable=assigned.filter(x=>["assigned","in_progress"].includes(x.status)).map(x=>x.id);if(editable.length){const rr=await db.from("assessment_responses").select("assignment_id,question_id,score").in("assignment_id",editable);if(rr.error)errors.push("Unable to load saved progress.");else setResponses(rr.data||[]);}
+ const approved=assigned.filter(x=>x.status==="reviewed").map(x=>x.id);if(approved.length){const rr=await db.from("assessment_results").select("assignment_id,overall_score,domain_scores,strengths,support_needs,teacher_feedback,recommendations,reviewed_at").in("assignment_id",approved);if(rr.error)errors.push("Unable to load approved results.");else setResults((rr.data||[]) as Result[]);}
+ }catch(e){errors.push(e instanceof Error?e.message:"Unable to load dashboard.");}finally{setError(errors.join(" "));setLoading(false);}}load();},[router]);
+ const visibleStudents=students.filter(x=>child==="all"||x.id===child),aa=assessments.filter(x=>child==="all"||x.student_id===child),act=activities.filter(x=>child==="all"||x.student_id===child),rr=results.filter(x=>aa.some(a=>a.id===x.assignment_id&&a.status==="reviewed"));
+ const childName=(id:string)=>students.find(x=>x.id===id)?.full_name||"Student";
+ function progress(a:Assessment){if(["submitted","reviewed"].includes(a.status))return 100;const c=CHECKLIST_DATA[a.assessment_level];if(!c)return 0;const ids=c.areas.flatMap(area=>area.subDomains.flatMap(d=>d.items.map((_,i)=>d.id+"_"+(i+1))));const done=new Set(responses.filter(x=>x.assignment_id===a.id&&x.score!==null&&ids.includes(x.question_id)).map(x=>x.question_id));return ids.length?Math.round(100*done.size/ids.length):0;}
+ const count=(status:string)=>aa.filter(x=>x.status===status).length,completed=act.filter(x=>x.status==="completed").length,activityRate=act.length?100*completed/act.length:0;
+ const metrics:[string,number,string,string][]=[["My Children",visibleStudents.length,green,"My Child"],["Assessments",aa.length,blue,"Assessments"],["Awaiting Teacher Review",count("submitted"),orange,"Assessments"],["Approved Assessments",count("reviewed"),teal,"Assessments"],["Learning Activities",act.length,green,"Learning Activities"],["Completed Activities",completed,blue,"Learning Activities"]];
+ if(loading)return <main style={{padding:40}}>Loading your dashboard...</main>;
+ return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
+ <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><strong>SWASTHA LEARNING CLINIC</strong><p style={{fontSize:12}}>PARENT & LEARNER PORTAL</p></div><button style={btn} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></header>
+ <div style={{maxWidth:1250,margin:"auto",padding:"24px 16px"}}>
+ <section style={{...card,background:"#0f4c5c",color:"white"}}><small>LEARN • GROW • THRIVE</small><h1>Welcome, {name}!</h1><p>Track your child's learning journey, assessments and development.</p></section>
+ {error&&<p role="alert" style={{...card,color:"#b42318"}}>{error}</p>}
+ <nav style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:20}}>{["Overview","My Child","Assessments","Learning Activities","My Profile"].map(t=><button key={t} style={{...btn,background:tab===t?green:"#e8f2ed",color:tab===t?"white":"#183a35"}} onClick={()=>setTab(t)}>{t}</button>)}</nav>
+ {tab!=="My Profile"&&<section style={card}><label>Select Child {" "}<select value={child} onChange={e=>{setChild(e.target.value);setOpened("");}} style={{padding:10,maxWidth:"100%"}}><option value="all">All Children</option>{students.map(s=><option key={s.id} value={s.id}>{s.full_name}</option>)}</select></label></section>}
+ {tab==="Overview"&&<><div style={{...grid,marginBottom:20}}>{metrics.map(([l,v,c,t])=><button key={l} onClick={()=>setTab(t)} style={{...card,marginBottom:0,textAlign:"left",cursor:"pointer",borderTop:"4px solid "+c}}><span>{l}</span><h1 style={{color:c}}>{v}</h1><small>View details →</small></button>)}</div><div style={grid}><Donut title="Assessment Status" items={[{label:"Assigned",value:count("assigned"),color:gray},{label:"In Progress",value:count("in_progress"),color:blue},{label:"Awaiting Review",value:count("submitted"),color:orange},{label:"Reviewed",value:count("reviewed"),color:green}]}/><Donut title="Learning Activity Status" items={[{label:"Completed",value:completed,color:green},{label:"Pending / Other",value:act.length-completed,color:orange}]}/><Bars title="Overall Completion" items={[{label:"Assessments",value:aa.length?aa.reduce((s,x)=>s+progress(x),0)/aa.length:0},{label:"Activities",value:activityRate,color:blue}]}/><Bars title="Individual Assessment Progress" items={aa.map(x=>({label:childName(x.student_id)+" — "+x.assessment_level,value:progress(x)}))}/></div><Bars title="Approved Assessment Performance" items={rr.filter(x=>x.overall_score!==null).map(x=>({label:childName(aa.find(a=>a.id===x.assignment_id)?.student_id||"")+" — "+(aa.find(a=>a.id===x.assignment_id)?.assessment_level||""),value:100*Number(x.overall_score)/3}))}/></>}
+ {tab==="My Child"&&<section style={card}><h2>My Child</h2>{!visibleStudents.length&&<p>No child information was found.</p>}{visibleStudents.map(s=><section key={s.id} style={{...card,background:"#f8faf7"}}><h3>{s.full_name}</h3><p>Date of birth: {date(s.date_of_birth)}</p><p>Current class: {s.current_class||"Not available"}</p><p>Status: {label(s.status)}</p><button style={btn} onClick={()=>{setChild(s.id);setTab("Assessments");}}>View Assessments</button></section>)}<small>Child information is managed by authorised administrators.</small></section>}
+ {tab==="Assessments"&&<section style={card}><h2>My Assessments</h2>{!aa.length&&<p>No assessments have been assigned yet.</p>}{aa.map(a=>{const result=rr.find(x=>x.assignment_id===a.id);return <section key={a.id} style={{...card,background:"#f8faf7"}}><h3>{levels[a.assessment_level]||a.assessment_level} Assessment</h3><p>Student: {childName(a.student_id)}</p><p>Status: <strong>{label(a.status)}</strong></p><p>Assigned: {date(a.assigned_at)} · Due: {date(a.due_date)}</p><p>Completion: {progress(a)}%</p><Progress value={progress(a)}/><div style={{marginTop:16}}>{a.status==="reviewed"?result?<button style={btn} onClick={()=>setOpened(opened===a.id?"":a.id)}>{opened===a.id?"Hide Results":"View Approved Results"}</button>:<p>Results not available yet.</p>:<button style={btn} onClick={()=>router.push("/parent/assessment/"+a.id)}>{a.status==="assigned"?"Start Assessment":a.status==="in_progress"?"Continue Assessment":"View Submission Summary"}</button>}</div>{a.status==="submitted"&&<p>Successfully submitted. Awaiting teacher review.</p>}{a.status==="reviewed"&&result&&opened===a.id&&<section style={{...card,marginTop:20}}><h2>Approved Assessment Result</h2><h3>Overall readiness: {result.overall_score===null?"Not scored":Math.round(100*Number(result.overall_score)/3)+"%"}</h3><p>Reviewed: {date(result.reviewed_at)}</p><h3>Domain-wise Scores</h3>{Object.entries(result.domain_scores||{}).map(([k,v])=><p key={k}>{k}: {typeof v==="number"?v:JSON.stringify(v)}</p>)}<h3>Observed Strengths</h3><List items={result.strengths}/><h3>Priority Support Needs</h3><List items={result.support_needs}/><h3>Teacher Feedback</h3><p style={{whiteSpace:"pre-wrap"}}>{result.teacher_feedback||"No feedback published yet."}</p><h3>Recommendations</h3><p style={{whiteSpace:"pre-wrap"}}>{result.recommendations||"No recommendations published yet."}</p><small>Educational screening and development planning aid. Not a medical or psychological diagnosis.</small></section>}</section>})}</section>}
+ {tab==="Learning Activities"&&<section style={card}><h2>Learning Activities</h2><p>Completed: {completed}/{act.length}</p><Progress value={activityRate}/>{!act.length&&<p>No learning activities have been assigned yet.</p>}{act.map(a=>{const d=Array.isArray(a.learning_activities)?a.learning_activities[0]:a.learning_activities;return <section key={a.id} style={{...card,marginTop:16,background:"#f8faf7"}}><h3>{d?.title||"Untitled activity"}</h3><p>Student: {childName(a.student_id)}</p><p style={{whiteSpace:"pre-wrap"}}>{d?.description||"No description provided."}</p><p>Assigned: {date(a.assigned_at)} · Due: {date(a.due_date)}</p><p>Status: {label(a.status)}</p></section>})}<small>Learning activities are displayed for viewing only.</small></section>}
+ {tab==="My Profile"&&<section style={card}><h2>My Profile</h2>{profile?<><p>Parent / Guardian name: {profile.full_name||"Not available"}</p><p>WhatsApp number: {profile.phone||"Not available"}</p><p>Contact number differs: {profile.contact_number_differs?"Yes":"No"}</p>{profile.contact_number_differs&&<p>Additional contact number: {profile.additional_contact_number||"Not available"}</p>}<p>Login email: {email||"Not available"}</p></>:<p>Profile information is not available.</p>}<small>Your profile information is currently read-only.</small></section>}
+ <footer style={{textAlign:"center",padding:24,color:gray}}><strong>SWASTHA LEARNING CLINIC</strong><p>Nurturing Every Ability, Empowering Every Child.</p></footer></div></main>;
 }
