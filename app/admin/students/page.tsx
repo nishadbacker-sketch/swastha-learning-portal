@@ -104,7 +104,7 @@ export default function StudentManagementPage(){
   </header>
   <div style={{maxWidth:1180,margin:"auto",padding:"22px 16px 80px",display:"grid",gap:15}}>
    <div><h1 style={{fontSize:27,margin:"0 0 8px"}}>Student Management</h1>
-    <p style={{color:"#64748b",fontSize:13,margin:0}}>Teachers coordinate assessments, activities, and development plans. Administrators monitor progress and manage teacher coverage when needed.</p></div>
+    <p style={{color:"#64748b",fontSize:13,margin:0}}>Teachers coordinate assessments, activities, and development plans. Every new student is automatically linked to all active teachers; newly activated teachers receive all existing students. Administrators monitor progress and adjust assignments only when needed.</p></div>
    {error&&<div role="alert" style={{...card,color:"#b42318"}}>{error}</div>}
    {notice&&<div role="status" style={{...card,color:"#176b58"}}>{notice}</div>}
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12}}>
@@ -132,7 +132,7 @@ export default function StudentManagementPage(){
       <div><h2 style={{fontSize:19,margin:"0 0 5px"}}>{s.full_name}</h2>
        <p style={{fontSize:12,color:"#64748b",margin:0}}>ID: {s.student_code||"Not assigned"} · Class: {s.current_class||"Not recorded"} · Status: {s.status}</p>
       </div>
-      <button type="button" onClick={()=>router.push("/student/history/"+s.id)} style={{...button,background:"#eaf4ef",color:"#176b58"}}>Development History</button>
+      <span style={{fontSize:12,color:"#176b58",fontWeight:700}}>Progress overview</span>
      </div>
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:9,margin:"14px 0"}}>
       {[["Assessments reviewed",reviewed,standardTotal],["Activities completed",done,activities],["IDP goals completed",achieved,goals]].map(([title,value,total])=><div key={title} style={{padding:11,borderRadius:9,background:"#f4f8f5",fontSize:12}}>
