@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useMemo,useState} from "react";
 import {useRouter} from "next/navigation";
 import {supabase} from "../../../lib/supabase";
+import StudentAppointmentHistory from "../../components/student-appointment-history";
 
 type Student={id:string;student_code:string;full_name:string;current_class:string|null;status:string};
 type Task={id:string;student_id:string;title:string;description:string;category:string;status:"open"|"in_progress"|"blocked"|"done";priority:string;due_date:string|null;assigned_to:string|null;created_by:string;created_at:string};
@@ -226,6 +227,7 @@ export default function TeacherCoordination(){
         <button style={btn} type="submit" disabled={!!busy||!title.trim()}>Add to Shared Task Queue</button>
        </form>}
       </section>
+      <StudentAppointmentHistory studentId={selectedStudent}/>
       <section style={sheet}>
        <h3 style={{fontSize:17,margin:"0 0 9px"}}>Shared Progress & Handover Notes</h3>
        <p style={caption}>Internal professional notes are visible to the assigned teachers and authorised administrators, not parents.</p>
