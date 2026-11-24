@@ -111,6 +111,7 @@ export default function CustomAssessmentPage(){
       const written=items.filter(item=>item.response_type==="written"&&Boolean(answers[item.id]?.written_answer?.trim())).length;
       return <p>{tr("Rated questions","സ്കോർ ചെയ്ത ചോദ്യങ്ങൾ")}: {vals.length}/{ratingItems.length} · NA: {na} · {tr("Choices answered","തിരഞ്ഞെടുത്ത ഉത്തരങ്ങൾ")}: {choices} · {tr("Written answers","എഴുതിയ ഉത്തരങ്ങൾ")}: {written} · {tr("Average","ശരാശരി")}: <strong>{vals.length?(vals.reduce((sum,v)=>sum+Number(v),0)/vals.length).toFixed(2)+" / 3":tr("Not rated","സ്കോർ ലഭ്യമല്ല")}</strong></p>;
      })()}<p style={{fontSize:12,color:"#64748b"}}>{tr("NA is excluded from the average. This is a descriptive score, not a diagnosis.","ശരാശരി കണക്കാക്കുമ്പോൾ NA ഉൾപ്പെടുത്തുന്നില്ല. ഇത് ഒരു വിവരണാത്മക സ്കോറാണ്, രോഗനിർണയമല്ല.")}</p></section><h3>{tr("Teacher Feedback","അധ്യാപകന്റെ അഭിപ്രായം")}</h3><p style={{whiteSpace:"pre-wrap"}}>{assessment.teacher_feedback||tr("No written feedback provided.","രേഖാമൂലമുള്ള അഭിപ്രായം നൽകിയിട്ടില്ല.")}</p></>}
+     {status==="reviewed"&&<button style={{...btn,marginRight:10}} onClick={()=>router.push("/custom-assessment-report/"+assessment.id)}>{tr("View Report / Print PDF","റിപ്പോർട്ട് / PDF കാണുക")}</button>}
      <button style={btn} onClick={()=>router.push("/parent/dashboard")}>{tr("Return to Dashboard","ഡാഷ്‌ബോർഡിലേക്ക് മടങ്ങുക")}</button>
     </section>
    :<>
