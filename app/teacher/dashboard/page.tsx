@@ -1,6 +1,7 @@
 "use client";
 
 import BrandLogo from "../../components/brand-logo";
+import StaffNotificationsPopup from "../../components/staff-notifications-popup";
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -1022,6 +1023,7 @@ export default function TeacherDashboard() {
           </div>
 
           <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+          <StaffNotificationsPopup/>
           <button type="button" onClick={()=>router.push("/my-profile")}
             style={{...primaryButton,background:"#eaf4ef",color:"#176b58",border:"1px solid #b9d9cc"}}>My Profile</button>
           <button
@@ -1040,9 +1042,6 @@ export default function TeacherDashboard() {
         </div>
       </header>
 
-      <div style={{maxWidth:1160,margin:"12px auto 0",padding:"0 20px"}}>
-        <button type="button" style={{border:0,borderRadius:8,background:"#176b58",color:"white",padding:"10px 14px",fontWeight:700,cursor:"pointer"}} onClick={()=>router.push("/staff/notifications")}>Assessment submission notifications</button>
-      </div>
       <main
         style={{
           maxWidth: 1160,
