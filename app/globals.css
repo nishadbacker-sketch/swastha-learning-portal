@@ -447,8 +447,15 @@ body .swastha-site-footer a:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 4px;
 }
-body .swastha-site-footer__contact p {
-  margin-top: 20px;
+body .swastha-site-footer__address {
+  color: #f3faf5;
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+body .swastha-site-footer__address span {
+  display: block;
 }
 body .swastha-site-footer__bottom {
   max-width: 1180px;
