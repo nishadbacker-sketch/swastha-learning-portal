@@ -8,7 +8,7 @@ const origins = new Set([
 ]);
 const MAX_BYTES = 12_000;
 
-function cors(origin: string | null) {
+function cors(origin: string | null): Record<string, string> {
   return origin && origins.has(origin)
     ? { "Access-Control-Allow-Origin": origin, "Vary": "Origin", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }
     : { "Vary": "Origin" };
