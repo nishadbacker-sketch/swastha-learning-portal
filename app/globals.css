@@ -256,3 +256,23 @@ footer {
     font-size: 11px;
   }
 }
+
+
+/* Swastha Learning Clinic shared typography.
+   Matches the Inter interface type used across the main-site design.
+   Applies to all portal routes, including components with legacy inline Arial/Georgia. */
+:root { --swastha-font: "Inter", Arial, Helvetica, sans-serif; }
+
+html,
+body,
+body *:not(svg):not(path):not(circle):not(line):not(polyline):not(polygon):not(rect):not(ellipse) {
+  font-family: var(--swastha-font) !important;
+}
+
+button,
+input,
+select,
+textarea,
+option {
+  font-family: var(--swastha-font) !important;
+}
