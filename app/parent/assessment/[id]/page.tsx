@@ -46,9 +46,9 @@ const OPTIONS: {
 const card: React.CSSProperties = {
   background: "#ffffff",
   border: "1px solid #dce8e1",
-  borderRadius: 16,
-  padding: 22,
-  marginBottom: 20,
+  borderRadius: 13,
+  padding: 16,
+  marginBottom: 14,
 };
 
 const button: React.CSSProperties = {
