@@ -16,7 +16,7 @@ test("staff popup provides parent-style history and current updates",()=>{
   assert.ok(popup.includes(phrase));
  assert.match(popup,/aria-modal="true"/);
  assert.match(popup,/\.eq\("recipient_user_id",user\)/);
- assert.match(popup,/\.in\("event_type",\["assessment_submitted","custom_assessment_submitted"\]\)/);
+ assert.match(popup,/\.in\("event_type",\["assessment_submitted","custom_assessment_submitted","teacher_assigned"\]\)/);
  assert.doesNotMatch(popup,/\.from\("parent_notification_acknowledgements"\)/);
 });
 test("acknowledgement RLS requires recipient ownership and no delete permission",()=>{
