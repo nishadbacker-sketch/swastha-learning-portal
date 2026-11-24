@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { CHECKLIST_DATA, type AssessmentLevel } from "../../../../lib/assessment-data";
+import AssessmentAnalytics from "../../assessment-analytics";
 
 type Assignment={id:string;student_id:string;assessment_level:AssessmentLevel;status:string;assigned_at:string;due_date:string|null};
 type Student={full_name:string;current_class:string|null};
@@ -147,6 +148,7 @@ export default function TeacherAssessmentReview(){
    </section>
    {error&&<section role="alert" style={{...card,color:"#b42318",background:"#fff4f3"}}>{error}</section>}
    {message&&<section role="status" style={{...card,background:"#eaf6ed",color:"#176b58"}}>{message}</section>}
+   <AssessmentAnalytics hideSelector assessments={[assignment]} students={[{id:assignment.student_id,full_name:student.full_name}]} />
    <section style={card}><h2>Domain-wise Rating Summary</h2>
     {domains.map(d=><div key={d.name} style={{padding:"10px 0",borderBottom:"1px solid #e2e8f0"}}>
      <strong>{d.name}</strong><p style={{margin:"5px 0",fontSize:13}}>Auto-calculated total: <strong>{d.sum} / {d.count*3}</strong> · Rated {d.count} · NA {d.na} · Average <strong>{d.count?(d.sum/d.count).toFixed(2)+"/3":"Not scored"}</strong></p>
