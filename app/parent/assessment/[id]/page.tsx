@@ -668,6 +668,7 @@ export default function ParentAssessmentPage() {
                 : "Your teacher will review the submitted assessment. Detailed results and recommendations will be available after approval."}
             </p>
 
+            {assignment.status === "reviewed" && <button style={{...button,marginRight:10,background:"#176b58"}} onClick={()=>router.push("/assessment-report/"+assignment.id)}>View Full Analytics & Approved Report</button>}
             <button
               style={button}
               onClick={() => router.push("/parent/dashboard")}
