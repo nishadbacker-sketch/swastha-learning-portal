@@ -1004,6 +1004,11 @@ export default function TeacherDashboard() {
             </div>
           </div>
 
+          <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+          <button type="button" onClick={()=>router.push("/teacher/custom-assessments")}
+            style={{...primaryButton,background:"#176b58",color:"white"}}>
+            + Custom Assessment Builder
+          </button>
           <button
             type="button"
             onClick={signOut}
@@ -1016,6 +1021,7 @@ export default function TeacherDashboard() {
           >
             Sign out
           </button>
+          </div>
         </div>
       </header>
 
