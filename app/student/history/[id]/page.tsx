@@ -16,7 +16,7 @@ const card:React.CSSProperties={border:"1px solid #dbe7e1",borderRadius:15,paddi
 const button:React.CSSProperties={background:"#176b58",color:"white",padding:"11px 17px",border:0,borderRadius:9,fontWeight:700,cursor:"pointer"};
 const date=(s:string)=>new Date(s).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
 function signature(structure:CustomTemplate["structure"]):string{
- const normalized=structure.flatMap(s=>s.categories.flatMap(c=>c.questions.map(q=>[q.id,q.response_type||"rating",q.options?.map(x=>x.id)||[]])));
+ const normalized=structure.flatMap(s=>s.categories.flatMap(c=>c.questions.map(q=>[q.id,q.response_type||"rating",q.options?.map(x=>[x.id,x.text])||[]])));
  return JSON.stringify(normalized);
 }
 function calculateCustom(a:Custom):{average:number|null;ratings:number;na:number;choices:number;written:number}{
