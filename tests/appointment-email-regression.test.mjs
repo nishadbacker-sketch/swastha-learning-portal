@@ -51,3 +51,9 @@ test("replayed appointment requests cannot create a second appointment",()=>{
  assert.match(appointment,/crypto\.randomUUID\(\)/);
  assert.match(appointment,/submission_key:submissionKey\.current/);
 });
+
+test("public appointment intake never uses the browser anon key to bypass RLS",()=>{
+ assert.match(intake,/process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
+ assert.doesNotMatch(intake,/process\.env\.NEXT_PUBLIC_SUPABASE_ANON_KEY/);
+ assert.match(intake,/if \(!url \|\| !key\) return fail/);
+});
