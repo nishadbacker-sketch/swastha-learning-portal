@@ -66,7 +66,7 @@ function RatingDoughnut({counts,total}:{counts:{score:string;count:number}[];tot
  </div>;
 }
 
-export default function AssessmentAnalytics({assessments,students,hideSelector=false}:{assessments:InputAssessment[];students:InputStudent[];hideSelector?:boolean}){
+export default function AssessmentAnalytics({assessments,students,hideSelector=false,hideDetailedInsights=false}:{assessments:InputAssessment[];students:InputStudent[];hideSelector?:boolean;hideDetailedInsights?:boolean}){
  const available=assessments.filter(a=>["submitted","reviewed"].includes(a.status));
  const [selected,setSelected]=useState("");
  const [responses,setResponses]=useState<Response[]>([]);
@@ -160,7 +160,7 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
      </div>)}
     </div>
    </section>
-   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:15}}>
+   {!hideDetailedInsights&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:15}}>
     <section style={{...card,borderColor:"#bbf7d0"}}><h3 style={{margin:"0 0 6px",fontSize:17}}>Observed Strengths (Score 3 & Talents)</h3><p style={{fontSize:13,color:palette.muted}}>Skills rated independently in this assessment; observations appear only if recorded.</p>
      {!strengths.length?<p>No score-3 indicators recorded.</p>:strengths.map(q=><div key={q.id} style={{padding:"11px 0",borderBottom:"1px solid #e2e8e5"}}>
       <small style={{color:palette.green}}>{q.domain} · Score 3</small><div style={{fontWeight:600,margin:"5px 0"}}>{q.question}</div>
@@ -173,7 +173,7 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
       {q.observation&&<p style={{fontSize:13,whiteSpace:"pre-wrap",color:palette.muted}}>Context: {q.observation}</p>}
      </div>)}
     </section>
-   </div>
+   </div>}
    <p style={{fontSize:12,color:palette.muted}}>Educational assessment profile based on reported/observed ratings. The number or percentage of indicators is not a clinical diagnosis or a standardised measure of intelligence or developmental age.</p>
   </>}
  </section>;
