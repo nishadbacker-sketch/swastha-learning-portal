@@ -86,6 +86,7 @@ export default function AdminDashboard(){
    <p style={{fontSize:13}}>Monitor shared student responsibilities, outstanding work, progress notes, assessments, and IDP goal counts without taking over teachers' work.</p>
    <button style={action} onClick={()=>router.push("/teacher/coordination")}>Open Coordination Overview</button>
   </section>
+ <section style={box}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Question Bank</h2><p style={{fontSize:13}}>Review every LP, UP, HS and HSS question, amend standard wording and review custom questionnaires with revision protection.</p><button style={action} onClick={()=>router.push("/admin/questions")}>Manage All Questions</button></section>
  <AppointmentEscalations/>
  {creatorMode&&<SuperAdminManagement/>}
  <ClinicAdminManagement/>
