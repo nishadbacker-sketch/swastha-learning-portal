@@ -78,3 +78,21 @@ test("appointment intake rejects an oversized streamed request before database a
   });
   assert.equal(response.status, 413);
 });
+
+test("appointment intake checks streamed bytes even without Content-Length", async () => {
+  const largePayload = new TextEncoder().encode(JSON.stringify({ message: "x".repeat(13_000) }));
+  const body = new ReadableStream({
+    start(controller) {
+      controller.enqueue(largePayload.subarray(0, 300));
+      controller.enqueue(largePayload.subarray(300));
+      controller.close();
+    }
+  });
+  const response = await request("/api/appointment-intake", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "https://swasthalearning.com" },
+    body,
+    duplex: "half",
+  });
+  assert.equal(response.status, 413);
+});
