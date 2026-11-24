@@ -20,6 +20,9 @@ export default function AssessmentCertificateStaffPage(){
  const [assignment,setAssignment]=useState("");
  const [coordinator,setCoordinator]=useState("");
  const [director,setDirector]=useState("");
+ const [officialCoordinator,setOfficialCoordinator]=useState("");
+ const [officialDirector,setOfficialDirector]=useState("");
+ const [configuring,setConfiguring]=useState(false);
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState("");
  const [message,setMessage]=useState("");
@@ -49,6 +52,17 @@ export default function AssessmentCertificateStaffPage(){
  },[router]);
  const existing=new Set(certificates.map(c=>c.assignment_id));
  const available=assignments.filter(a=>!existing.has(a.id)&&students.some(s=>s.id===a.student_id&&s.student_code));
+ async function configureNames(e:React.FormEvent<HTMLFormElement>){
+  e.preventDefault();
+  if(!supabase||configuring)return;
+  setConfiguring(true);setError("");setMessage("");
+  const {error:err}=await supabase.rpc("configure_assessment_certificate_signatories",{
+   p_programme_coordinator:officialCoordinator.trim(),p_director:officialDirector.trim()
+  });
+  if(err)setError(err.message);
+  else setMessage("Official Coordinator and Director saved. Parents can now download certificates directly after Teacher review.");
+  setConfiguring(false);
+ }
  async function issue(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();if(!supabase||busy)return;
   setBusy(true);setError("");setMessage("");
@@ -69,6 +83,19 @@ export default function AssessmentCertificateStaffPage(){
    <p style={{fontSize:13,color:"#64748b"}}>Certificates document completion of a reviewed standard learning assessment. They do not certify a particular score, diagnosis or qualification.</p>
    {error&&<section role="alert" style={{...panel,color:"#b42318"}}>{error}</section>}
    {message&&<section role="status" style={{...panel,color:"#176b58"}}>{message}</section>}
+   {role!=="teacher"&&<section style={panel}>
+    <h2>Official Names for Parent Certificate Downloads</h2>
+    <p style={{fontSize:13,color:"#64748b"}}>Set the real authorised Programme Coordinator and Director once. For reviewed assessments, linked Parents can then create and download a verified certificate directly. These names are recorded on the certificate when it is first issued.</p>
+    <form onSubmit={configureNames} style={{display:"grid",gap:11,maxWidth:620}}>
+     <label>Programme Coordinator full name
+      <input required minLength={2} maxLength={120} value={officialCoordinator} onChange={e=>setOfficialCoordinator(e.target.value)} style={{display:"block",padding:10,marginTop:5,width:"100%"}}/>
+     </label>
+     <label>Director full name
+      <input required minLength={2} maxLength={120} value={officialDirector} onChange={e=>setOfficialDirector(e.target.value)} style={{display:"block",padding:10,marginTop:5,width:"100%"}}/>
+     </label>
+     <button type="submit" disabled={configuring} style={button}>{configuring?"Saving...":"Save Official Certificate Names"}</button>
+    </form>
+   </section>}
    {role!=="teacher"&&<section style={panel}>
     <h2>Issue Reviewed Assessment Certificate</h2>
     {!available.length&&<p>No eligible reviewed assessments without a certificate are available.</p>}
