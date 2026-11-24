@@ -45,9 +45,9 @@ export default function StudentManagementPage(){
    const ids=staff.map(x=>x.user_id);
    let names:Record<string,string>={};
    if(ids.length){
-    const r=await supabase.from("profiles").select("id,full_name").in("id",ids);
+    const r=await supabase.from("profiles").select("id,full_name,staff_code").in("id",ids);
     if(r.error)throw r.error;
-    names=Object.fromEntries((r.data||[]).map(x=>[x.id,x.full_name||""]));
+    names=Object.fromEntries((r.data||[]).map(x=>[x.id,(x.full_name||"Teacher")+(x.staff_code?" · "+x.staff_code:"")]));
    }
    setStudents((s.data||[]) as Student[]);
    setLinks((l.data||[]) as Link[]);
@@ -130,7 +130,7 @@ export default function StudentManagementPage(){
     const goals=zero(p?.goal_total),achieved=zero(p?.goal_completed);
     return <section key={s.id} style={card}>
      <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap",alignItems:"flex-start"}}>
-      <div><h2 style={{fontSize:19,margin:"0 0 5px"}}>{s.full_name}</h2>
+      <div><h2 style={{fontSize:19,margin:"0 0 5px"}}>{s.full_name} · {s.student_code}</h2>
        <p style={{fontSize:12,color:"#64748b",margin:0}}>ID: {s.student_code||"Not assigned"} · Class: {s.current_class||"Not recorded"} · Status: {s.status}</p>
       </div>
       <span style={{fontSize:12,color:"#176b58",fontWeight:700}}>Progress overview</span>
