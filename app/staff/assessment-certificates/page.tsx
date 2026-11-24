@@ -87,7 +87,7 @@ export default function AssessmentCertificateStaffPage(){
      <label>Director name
       <input required minLength={2} maxLength={120} value={director} onChange={e=>setDirector(e.target.value)} style={{display:"block",padding:10,marginTop:5,width:"100%"}}/>
      </label>
-     <button disabled={busy||!assignment} type="submit" style={{...button,opacity:busy||!assignment?.6:1}}>
+     <button disabled={busy||!assignment} type="submit" style={{...button,opacity:(busy||!assignment)?0.6:1}}>
       {busy?"Issuing...":"Confirm Reviewed Assessment & Issue Certificate"}
      </button>
     </form>
