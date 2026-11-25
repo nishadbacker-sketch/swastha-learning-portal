@@ -142,7 +142,7 @@ function RatingDoughnut({counts,total}:{counts:{score:string;count:number}[];tot
  </div>;
 }
 
-export default function AssessmentAnalytics({assessments,students,hideSelector=false,hideDetailedInsights=false,hideDashboardTitle=false}:{assessments:InputAssessment[];students:InputStudent[];hideSelector?:boolean;hideDetailedInsights?:boolean;hideDashboardTitle?:boolean}){
+export default function AssessmentAnalytics({assessments,students,hideSelector=false,hideDetailedInsights=false,hideDashboardTitle=false,children}:{assessments:InputAssessment[];students:InputStudent[];hideSelector?:boolean;hideDetailedInsights?:boolean;hideDashboardTitle?:boolean;children?:React.ReactNode}){
  const available=assessments.filter(a=>["submitted","reviewed"].includes(a.status));
  const [selected,setSelected]=useState("");
  const [responses,setResponses]=useState<Response[]>([]);
@@ -192,7 +192,7 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
  const strengths=items.filter(q=>q.score==="3");
  const needs=items.filter(q=>q.score==="0"||q.score==="1");
  const developing=items.filter(q=>q.score==="2");
- if(!available.length)return <section style={card}><h3>Holistic Student Assessment Analytics</h3><p style={{color:palette.muted}}>Submitted or approved assessments will appear here. Assigned or incomplete assessments are not included.</p></section>;
+ if(!available.length)return <section style={card}><h3>Holistic Student Assessment Analytics</h3><p style={{color:palette.muted}}>Submitted or approved assessments will appear here. Assigned or incomplete assessments are not included.</p>{children}</section>;
  return <section style={{marginTop:24}}>
   <div style={{...card,background:"#f8fafc"}}>
    {!hideDashboardTitle&&<h2 style={{marginTop:0,fontSize:22,color:"#0f4c5c"}}>Analytics Dashboard</h2>}
@@ -204,6 +204,7 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
    </select>
    </>}
   </div>
+  {children}
   {error&&<p role="alert" style={{color:palette.red}}>{error}</p>}
   {loading||loadedAssessmentId!==selected?<p>Loading submitted answers for the selected assessment...</p>:error?<p role="alert">Analytics are unavailable because the saved responses could not be loaded.</p>:!responses.length?<p>No recorded responses found for the selected assessment.</p>:<>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:16,marginBottom:19}}>
