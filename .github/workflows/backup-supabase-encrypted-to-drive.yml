@@ -73,8 +73,13 @@ jobs:
           cd "$RUNNER_TEMP/swastha"
           rclone copyto "$filename.gpg" "swastha-drive:Production Database — Encrypted/$filename.gpg" --retries 3
           rclone copyto "$filename.gpg.sha256" "swastha-drive:Production Database — Encrypted/$filename.gpg.sha256" --retries 3
-          # Check the destination exists and has the expected size.
-          rclone size "swastha-drive:Production Database — Encrypted/$filename.gpg"
+          # Read the uploaded ciphertext back and verify its SHA-256, not just the remote size.
+          # This also detects truncated, corrupt or mismatched cloud uploads.
+          remote_path="swastha-drive:Production Database — Encrypted/$filename.gpg"
+          local_sha="$(sha256sum "$filename.gpg" | cut -d ' ' -f 1)"
+          remote_sha="$(rclone cat "$remote_path" | sha256sum | cut -d ' ' -f 1)"
+          test "$local_sha" = "$remote_sha" || { echo "::error::Encrypted Drive upload checksum mismatch"; exit 1; }
+          rclone size "$remote_path"
       - name: Clear local secrets and temporary dump
         if: always()
         shell: bash
