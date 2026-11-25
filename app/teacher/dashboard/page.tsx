@@ -1199,16 +1199,16 @@ export default function TeacherDashboard() {
             + Custom Assessment Builder
           </button>
           <button type="button" onClick={()=>router.push("/teacher/coordination")}
-            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#0f4c5c",color:"#fff"}}>
+            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>
             Teacher Coordination
           </button>
           
-          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#14532d"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
-          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#0f4c5c"}} onClick={()=>router.push("/teacher/sessions")}>Sessions & Attendance</button>
-          <button type="button" onClick={()=>router.push("/staff/assessment-certificates")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58"}}>Assessment Certificates</button>
-          <button type="button" onClick={()=>router.push("/teacher/student-progress")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,marginRight:0}}>Student Progress Tracking</button>
+          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
+          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}} onClick={()=>router.push("/teacher/sessions")}>Sessions & Attendance</button>
+          <button type="button" onClick={()=>router.push("/staff/assessment-certificates")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>Assessment Certificates</button>
+          <button type="button" onClick={()=>router.push("/teacher/student-progress")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>Student Progress Tracking</button>
           <button type="button" onClick={()=>router.push("/teacher/idp")}
-            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#0f4c5c",color:"white"}}>
+            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>
             Individual Development Plan (IDP)
           </button>
           </div>
