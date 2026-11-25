@@ -1089,98 +1089,6 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-        <nav
-          aria-label="Teacher dashboard sections"
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 8,
-            marginBottom: 25,
-            padding: 7,
-            border: "1px solid #dce8e1",
-            borderRadius: 13,
-            background: "#ffffff",
-          }}
-        >
-          {(
-            [
-              ["overview", "Overview"],
-              ["assessments", "Assessments"],
-              ["activities", "Learning Activities"],
-              ["students", "My Students"],
-            ] as [Tab, string][]
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveTab(id)}
-              aria-current={
-                activeTab === id ? "page" : undefined
-              }
-              style={{
-                ...primaryButton,
-                background:
-                  activeTab === id
-                    ? "#176b58"
-                    : "#f8faf7",
-                color:
-                  activeTab === id
-                    ? "#ffffff"
-                    : "#183a35",
-                flex: "1 1 130px",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: 14,
-            marginBottom: 25,
-          }}
-        >
-          <Metric
-            label="Assigned Students"
-            value={students.length}
-            color="#176b58"
-            onClick={() => setActiveTab("students")}
-          />
-
-          <Metric
-            label="Learning Activities"
-            value={activities.length}
-            color="#2563eb"
-            onClick={() => setActiveTab("activities")}
-          />
-
-          <Metric
-            label="Assessments"
-            value={assessments.length}
-            color="#7c3aed"
-            onClick={() => setActiveTab("assessments")}
-          />
-
-          <Metric
-            label="Pending Reviews"
-            value={
-              assessments.filter(
-                (a) => a.status === "submitted"
-              ).length
-            }
-            color="#d97706"
-            onClick={() => {
-              const pending = assessments.find((a) => a.status === "submitted");
-              if (pending) router.push("/teacher/assessment-review/" + pending.id);
-              else setActiveTab("assessments");
-            }}
-          />
-        </section>
-
         <div style={{marginBottom:24}}>
           <section aria-label="Teacher Command Centre" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:24,borderRadius:16,marginBottom:0,minWidth:0,boxSizing:"border-box",overflowWrap:"anywhere"}}>
               <div style={{fontSize:12,letterSpacing:2,color:"#e6c875"}}>SWASTHA 2030 · TEACHER WORKSPACE</div>
@@ -1192,6 +1100,15 @@ export default function TeacherDashboard() {
               </div>}
                     <div aria-label="Staff tools" style={{marginTop:20,paddingTop:18,borderTop:"1px solid #ffffff35",minWidth:0}}>
           <h2 style={{fontSize:18,margin:"0 0 12px"}}>Staff Tools</h2>
+          <nav aria-label="Teacher dashboard sections" style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",marginBottom:12}}>
+            {([
+              ["overview","Overview",null],
+              ["students","My Students",students.length],
+              ["assessments","Assessments",assessments.length],
+              ["activities","Learning Activities",activities.length]
+            ] as [Tab,string,number|null][]).map(([id,label,count])=><button key={id} type="button" aria-current={activeTab===id?"page":undefined} onClick={()=>setActiveTab(id)} style={{...primaryButton,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal",border:activeTab===id?"2px solid #e6c875":"2px solid transparent"}}>{label}{count!==null?" ("+count+")":""}</button>)}
+            <button type="button" style={{...primaryButton,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>{const pending=assessments.find(a=>a.status==="submitted");if(pending)router.push("/teacher/assessment-review/"+pending.id);else setActiveTab("assessments");}}>Pending Reviews ({assessments.filter(a=>a.status==="submitted").length})</button>
+          </nav>
           <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",alignItems:"stretch"}}>
           <button type="button" onClick={()=>router.push("/teacher/custom-assessments")}
             style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>
