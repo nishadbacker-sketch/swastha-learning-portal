@@ -4,72 +4,145 @@ import {useEffect,useMemo,useState} from "react";
 import {useParams,useRouter} from "next/navigation";
 import {supabase} from "../../../../../lib/supabase";
 import {CHECKLIST_DATA,type AssessmentLevel} from "../../../../../lib/assessment-data";
+import {LP_MALAYALAM_QUESTIONS,LP_MALAYALAM_INTERVIEW,LP_MALAYALAM_TALENTS,LP_MALAYALAM_AREAS,LP_MALAYALAM_DOMAINS} from "../../../../../lib/assessment-ml";
 
-type Question={id?:string;text?:string;text_ml?:string;response_type?:string;options?:{id:string;text:string;text_ml?:string}[]};
+type Choice={id:string;text:string;text_ml?:string};
+type Question={id?:string;text?:string;text_ml?:string;response_type?:"rating"|"multiple_choice"|"written";options?:Choice[]};
 type Category={id?:string;title:string;questions:Question[]};
 type Section={id?:string;title:string;categories:Category[]};
 type Template={id:string;title:string;description:string;level:string;status:string;structure:Section[]};
+type Language="en"|"ml";
+
 const levels=["LP","UP","HS","HSS"] as const;
-const panel:React.CSSProperties={background:"#fff",border:"1px solid #d9e7df",borderRadius:14,padding:20,marginBottom:16};
-const button:React.CSSProperties={padding:"10px 16px",border:0,borderRadius:9,background:"#176b58",color:"white",fontWeight:600,cursor:"pointer"};
-function validSections(input:unknown):Section[]{
+const panel:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:13,padding:16,marginBottom:14};
+const action:React.CSSProperties={padding:"11px 17px",border:0,borderRadius:9,background:"#176b58",color:"white",fontWeight:700,cursor:"pointer"};
+const mutedControl:React.CSSProperties={border:"1px solid #cbd5e1",borderRadius:9,padding:"10px 14px",background:"#f8fafc",color:"#64748b",opacity:.8,cursor:"not-allowed",fontWeight:600};
+const standardOptions:[string,string,string][]=[
+ ["0","Not demonstrated","#ef4444"],
+ ["1","Substantial support","#f97316"],
+ ["2","Developing","#0284c7"],
+ ["3","Independent","#10b981"],
+ ["NA","Not assessed","#64748b"]
+];
+const customOptions:[string,string,string][]=[
+ ["1","Needs support","#f97316"],
+ ["2","Developing","#0284c7"],
+ ["3","Independent","#10b981"],
+ ["NA","Not assessed","#64748b"]
+];
+function safeSections(input:unknown):Section[]{
  if(!Array.isArray(input))return [];
  return input.filter((s):s is Section=>s!==null&&typeof s==="object"&&typeof s.title==="string"&&Array.isArray(s.categories));
 }
-export default function CourseView(){
- const params=useParams<{slug:string}>();const router=useRouter();
+function PreviewRating({options}:{options:[string,string,string][]}){
+ return <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:12}} aria-label="Read-only rating options">
+  {options.map(([score,label,color])=><button key={score} disabled type="button" title={label} style={{...mutedControl,borderColor:color}}>{score} <span style={{fontSize:12,fontWeight:400}}>{label}</span></button>)}
+ </div>;
+}
+function PreviewObservation({label}:{label:string}){
+ return <label style={{display:"block",fontSize:13,color:"#64748b",marginTop:10}}>{label}
+  <textarea disabled aria-label={label} rows={2} value="" readOnly placeholder="Read-only preview — no answers are recorded" style={{width:"100%",boxSizing:"border-box",border:"1px solid #dce8e1",background:"#f8fafc",borderRadius:9,padding:11,marginTop:5,font:"inherit",resize:"vertical"}}/>
+ </label>;
+}
+export default function StaffCoursePreview(){
+ const router=useRouter();
+ const params=useParams<{slug:string}>();
  const slug=String(params.slug||"");
- const [status,setStatus]=useState("Checking access…");
+ const isStandard=levels.includes(slug as AssessmentLevel);
+ const bank=isStandard?CHECKLIST_DATA[slug as AssessmentLevel]:null;
  const [role,setRole]=useState("");
  const [template,setTemplate]=useState<Template|null>(null);
  const [error,setError]=useState("");
- const standard=levels.includes(slug as AssessmentLevel);
- const level=standard?slug as AssessmentLevel:null;
- const bank=level?CHECKLIST_DATA[level]:null;
- useEffect(()=>{
-  let live=true;
-  (async()=>{
-   try{
-    if(!supabase)throw Error("Database unavailable");
-    const {data:auth,error:authError}=await supabase.auth.getUser();
-    if(authError||!auth.user){router.replace("/login");return;}
-    const {data:r,error:roleError}=await supabase.from("user_roles").select("role").eq("user_id",auth.user.id).single();
-    if(roleError||!r||!["owner","admin","clinic_admin","teacher"].includes(r.role)){router.replace("/login");return;}
-    if(!live)return;
-    setRole(r.role);
-    if(!standard){
-     if(!/^custom-[0-9a-f-]{36}$/i.test(slug))throw Error("Unrecognized course link");
-     const id=slug.slice(7);
-     const {data,error:e}=await supabase.from("custom_assessment_templates").select("id,title,description,level,status,structure").eq("id",id).single();
-     if(e)throw e;
-     if(!data)throw Error("This course is unavailable or you do not have permission to view it.");
-     if(live)setTemplate({...data,structure:validSections(data.structure)} as Template);
-    }
-    if(live)setStatus("");
-   }catch(e){if(live){setError(e instanceof Error?e.message:"Unable to open course");setStatus("");}}
-  })();
-  return()=>{live=false};
- },[slug,standard,router]);
- const questionCount=useMemo(()=>template?.structure.reduce((n,s)=>n+(s.categories||[]).reduce((m,c)=>m+(c.questions?.length||0),0),0)||0,[template]);
- if(status)return <main style={{padding:30}}>{status}</main>;
- if(!role)return <main style={{padding:30}} role="alert">{error||"Access unavailable"}</main>;
- return <main style={{maxWidth:1080,margin:"auto",padding:"24px 18px 80px",color:"#183a35"}}>
- <button type="button" style={button} onClick={()=>router.push("/staff/courses")}>← Back to Courses & Assessments</button>
- {error?<section style={{...panel,marginTop:20,color:"#a11c24"}} role="alert">{error}</section>:bank?<>
- <h1>{bank.shortTitle}</h1><p>{bank.badge} · {bank.ageRange}</p>
- <section style={panel}><h2>About this assessment</h2><p>{bank.purpose}</p><p><strong>Read-only question preview.</strong> To assign a standard assessment to a student, use the Teacher Dashboard → Assessments. Student responses remain in the existing assessment workflow.</p>
- {role==="teacher"&&<button type="button" style={button} onClick={()=>router.push("/teacher/dashboard")}>Go to Teacher Dashboard</button>}
+ const [loading,setLoading]=useState(true);
+ const [language,setLanguage]=useState<Language>("en");
+ const [active,setActive]=useState(0);
+ const tr=(en:string,ml:string)=>language==="ml"?ml:en;
+
+ useEffect(()=>{let mounted=true;(async()=>{try{
+  if(!supabase)throw Error("Database unavailable");
+  const {data:auth,error:authError}=await supabase.auth.getUser();
+  if(authError||!auth.user){router.replace("/login");return;}
+  const {data:userRole,error:roleError}=await supabase.from("user_roles").select("role").eq("user_id",auth.user.id).single();
+  if(roleError||!userRole||!["owner","admin","clinic_admin","teacher"].includes(userRole.role)){router.replace("/login");return;}
+  if(mounted)setRole(userRole.role);
+  if(!isStandard){
+   if(!/^custom-[0-9a-f-]{36}$/i.test(slug))throw Error("Unknown assessment link.");
+   const {data,error:fetchError}=await supabase.from("custom_assessment_templates")
+    .select("id,title,description,level,status,structure").eq("id",slug.slice(7)).single();
+   if(fetchError||!data)throw Error("Assessment unavailable or you do not have permission to view it.");
+   if(mounted)setTemplate({...data,structure:safeSections(data.structure)} as Template);
+  }
+ }catch(e){if(mounted)setError(e instanceof Error?e.message:"Unable to load assessment");
+ }finally{if(mounted)setLoading(false)}})();return()=>{mounted=false};},[slug,isStandard,router]);
+ useEffect(()=>{try{if(localStorage.getItem("swastha-assessment-language")==="ml")setLanguage("ml")}catch{/* optional */}},[]);
+ function setLang(value:Language){setLanguage(value);try{localStorage.setItem("swastha-assessment-language",value)}catch{/* optional */}}
+ const totalCustom=useMemo(()=>template?.structure.reduce((sum,s)=>sum+s.categories.reduce((n,c)=>n+c.questions.length,0),0)||0,[template]);
+ const standardAreas=bank?.areas||[];
+ const customSections=template?.structure||[];
+ const sectionsCount=bank?standardAreas.length:customSections.length;
+ const current=Math.min(active,Math.max(0,sectionsCount-1));
+ const isLP=slug==="LP";
+ const lpTranslated=language==="ml"&&isLP;
+ const lpBase=isLP?CHECKLIST_DATA.LP:null;
+ function lpQuestion(domainId:string,index:number,original:string){
+  if(!lpTranslated)return original;
+  const key=domainId+"_"+(index+1);
+  return LP_MALAYALAM_QUESTIONS[key]||original;
+ }
+ if(loading)return <main style={{padding:32}}>Loading assessment preview…</main>;
+ if(!role)return <main style={{padding:32}} role="alert">{error||"Access denied"}</main>;
+ return <main style={{fontFamily:"Arial,sans-serif",background:"#f8faf7",minHeight:"100vh",color:"#183a35"}}>
+ <header style={{position:"sticky",top:0,zIndex:20,background:"#0f4c5c",color:"#fff",padding:"14px max(18px, calc((100vw - 1120px) / 2))",display:"flex",flexWrap:"wrap",gap:12,alignItems:"center",justifyContent:"space-between"}}>
+  <div><strong>Swastha Learning Clinic</strong><div style={{fontSize:12,marginTop:5}}>{tr("ASSESSMENT PREVIEW — READ ONLY","വിലയിരുത്തൽ പ്രിവ്യൂ — വായിക്കാൻ മാത്രം")}</div></div>
+  <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+  <label htmlFor="staff-course-language">{tr("Language","ഭാഷ")}</label>
+  <select id="staff-course-language" value={language} onChange={e=>setLang(e.target.value as Language)} style={{padding:9,borderRadius:8}}><option value="en">English</option><option value="ml">മലയാളം</option></select>
+  <button type="button" onClick={()=>router.push("/staff/courses")} style={{...action,background:"#fff",color:"#175d4e"}}>{tr("Back to Courses","കോഴ്സുകളിലേക്ക് മടങ്ങുക")}</button></div>
+ </header>
+ <div style={{maxWidth:1120,margin:"auto",padding:"24px 16px 80px"}}>
+ {error?<p role="alert" style={panel}>{error}</p>:<>
+ <h1 style={{fontSize:"clamp(24px,4vw,36px)"}}>{bank?bank.shortTitle:template?.title}</h1>
+ {bank?<p>{bank.badge} · {bank.ageRange}</p>:<p>{template?.description}</p>}
+ <section style={{...panel,background:"#edf7f2",borderColor:"#b6dac8"}} role="status">
+  <strong>{tr("View-only staff access","സ്റ്റാഫിന് കാണാൻ മാത്രം അനുമതി")}</strong>
+  <p style={{marginBottom:0}}>{tr("This is the same question and response layout used for parents, shown with empty, disabled answer controls. No student is selected, no submitted answers or scores are displayed, and there are no Save or Submit actions.","രക്ഷിതാക്കൾക്ക് കാണുന്ന അതേ ചോദ്യങ്ങളും ഉത്തര ഓപ്ഷനുകളും ഇവിടെ കാണാം. ഉത്തരങ്ങൾ നൽകാനോ സേവ് ചെയ്യാനോ സമർപ്പിക്കാനോ സാധിക്കില്ല. വിദ്യാർത്ഥിയുടെ ഉത്തരങ്ങളോ സ്കോറുകളോ ഇവിടെ കാണിക്കുന്നില്ല.")}</p>
  </section>
- {bank.areas.map((area,i)=><section key={area.id} style={panel}><h2>{i+1}. {area.title}</h2>{area.subDomains.map(domain=><div key={domain.id} style={{borderTop:"1px solid #e5ede8",paddingTop:10,marginTop:12}}><h3>{domain.title}</h3><ol>{domain.items.map((q,j)=><li key={domain.id+"-"+j} style={{marginBottom:9}}>{q}</li>)}</ol></div>)}</section>)}
- <section style={panel}><h2>Parent / guardian interview</h2><ol>{bank.parentInterview.map((q,i)=><li key={i} style={{marginBottom:8}}>{q}</li>)}</ol></section>
- <section style={panel}><h2>Practical activities</h2>{bank.practicalActivities.map((a,i)=><article key={i} style={{marginBottom:14}}><strong>{a.name}</strong><p>{a.task}</p><small>Observe: {a.observe}</small></article>)}</section>
- <section style={panel}><h2>Strengths and talents</h2><ol>{bank.talents.map((s,i)=><li key={i}>{s}</li>)}</ol></section>
- </>:template?<>
- <h1>{template.title}</h1><p>{template.description}</p><section style={panel}><strong>Level:</strong> {template.level} · <strong>Status:</strong> {template.status} · <strong>Questions:</strong> {questionCount}
- <p><strong>Read-only preview.</strong> Only authorized users can view this template. Editing, assigning and reviewing remain in the existing Custom Assessment Builder.</p>
- {role==="teacher"&&<button style={button} type="button" onClick={()=>router.push("/teacher/custom-assessments")}>Open Assessment Builder</button>}
- </section>
- {template.structure.map((section,si)=><section style={panel} key={section.id||si}><h2>{si+1}. {section.title}</h2>{section.categories?.map((category,ci)=><div key={category.id||ci} style={{borderTop:"1px solid #e5ede8",paddingTop:12}}><h3>{category.title}</h3><ol>{category.questions?.map((q,qi)=><li key={q.id||qi} style={{marginBottom:12}}><strong>{q.text||"Untitled question"}</strong>{q.text_ml&&<p style={{margin:"4px 0"}} lang="ml">{q.text_ml}</p>}<div style={{fontSize:13,color:"#566a63"}}>{q.response_type||"rating"}{q.options?.length?" · "+q.options.map(o=>o.text).join(" / "):""}</div></li>)}</ol></div>)}</section>)}
- </>:<section style={panel} role="alert">Course not found.</section>}
- </main>;
+ {bank&&<section style={panel}><h2>{tr("Assessment instructions","വിലയിരുത്തൽ നിർദേശങ്ങൾ")}</h2><p>{bank.purpose}</p><h3>{tr("Student profile fields","വിദ്യാർത്ഥിയുടെ വിവരങ്ങൾ")}</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))",gap:12}}>
+ {bank.profileFields.map(field=><label key={field.key} style={{fontSize:13,fontWeight:600}}>{field.label}<input disabled aria-label={field.label} type={field.type==="date"?"date":"text"} style={{display:"block",width:"100%",boxSizing:"border-box",padding:10,border:"1px solid #cbd5e1",borderRadius:8,background:"#f8fafc",marginTop:5}}/></label>)}</div></section>}
+ {sectionsCount>0&&<nav aria-label="Assessment sections" style={{display:"flex",gap:8,flexWrap:"wrap",margin:"20px 0"}}>
+ {Array.from({length:sectionsCount},(_,i)=>{const label=bank?
+  (lpTranslated?LP_MALAYALAM_AREAS[i]||standardAreas[i].title:standardAreas[i].title):
+  customSections[i].title;
+ return <button type="button" key={i} onClick={()=>setActive(i)} aria-current={current===i?"step":undefined} style={{...action,background:current===i?"#176b58":"#eaf4ef",color:current===i?"white":"#175d4e"}}>{i+1}. {label}</button>})}
+ </nav>}
+ {bank&&standardAreas[current]&&<section style={panel}>
+ <h2>{lpTranslated?LP_MALAYALAM_AREAS[current]||standardAreas[current].title:standardAreas[current].title}</h2>
+ {standardAreas[current].subDomains.map((domain,di)=><section key={domain.id} style={{borderTop:"1px solid #dce8e1",paddingTop:16,marginTop:16}}>
+ <h3>{lpTranslated?LP_MALAYALAM_DOMAINS[current]?.[di]||domain.title:domain.title}</h3>
+ {domain.items.map((q,qi)=><article key={domain.id+"_"+(qi+1)} style={{padding:"15px 11px",borderBottom:"1px solid #e2e8f0",borderLeft:"4px solid #e0ece6",scrollMarginTop:100}}>
+  <strong>{domain.title.match(/^([A-Z])\./)?.[1]||domain.id.slice(-1)}.{qi+1} — {lpQuestion(domain.id,qi,q)}</strong>
+  <PreviewRating options={standardOptions}/><PreviewObservation label={tr("Observation or example (disabled)","നിരീക്ഷണം / ഉദാഹരണം (പ്രവർത്തനരഹിതം)")}/>
+ </article>)}</section>)}</section>}
+ {bank&&<><section style={panel}><h2>{tr("Parent / Guardian Interview","രക്ഷിതാവുമായുള്ള അഭിമുഖം")}</h2>{bank.parentInterview.map((q,i)=><article key={i} style={{padding:"12px 0",borderBottom:"1px solid #e2e8f0"}}><strong>{i+1}. {lpTranslated&&lpBase&&q===lpBase.parentInterview[i]?LP_MALAYALAM_INTERVIEW[i]||q:q}</strong><PreviewObservation label={tr("Answer (disabled)","ഉത്തരം (പ്രവർത്തനരഹിതം)")}/></article>)}</section>
+ <section style={panel}><h2>{tr("Practical activities","പ്രായോഗിക പ്രവർത്തനങ്ങൾ")}</h2>{bank.practicalActivities.map((p,i)=><article key={i} style={{padding:"12px 0",borderBottom:"1px solid #e2e8f0"}}><strong>{p.name}</strong><p>{p.task}</p><small>{tr("Observe","നിരീക്ഷിക്കുക")}: {p.observe}</small><PreviewObservation label={tr("Observation (disabled)","നിരീക്ഷണം (പ്രവർത്തനരഹിതം)")}/></article>)}</section>
+ <section style={panel}><h2>{tr("Strengths and talents","കഴിവുകളും താൽപര്യങ്ങളും")}</h2>{bank.talents.map((t,i)=><div key={i} style={{padding:10,borderBottom:"1px solid #e2e8f0"}}><input type="checkbox" disabled aria-label={t}/> {lpTranslated&&lpBase&&t===lpBase.talents[i]?LP_MALAYALAM_TALENTS[i]||t:t}</div>)}</section></>}
+ {template&&<section style={panel}><strong>{tr("Assessment level","വിലയിരുത്തൽ ലെവൽ")}:</strong> {template.level} · <strong>{tr("Status","നില")}:</strong> {template.status} · <strong>{tr("Questions","ചോദ്യങ്ങൾ")}:</strong> {totalCustom}</section>}
+ {template&&customSections[current]&&<section style={panel}><h2>{customSections[current].title}</h2>
+ {customSections[current].categories.map((cat,ci)=><section key={cat.id||ci} style={{borderTop:"1px solid #dce8e1",paddingTop:16,marginTop:16}}>
+ <h3>{cat.title}</h3>
+ {cat.questions.map((q,qi)=><article key={q.id||qi} style={{padding:"16px 11px",borderBottom:"1px solid #e2e8f0",borderLeft:"4px solid #e0ece6"}}>
+  <strong>{String.fromCharCode(65+ci)}.{qi+1} — {language==="ml"&&q.text_ml?q.text_ml:q.text||"Untitled question"}</strong>
+  {q.response_type==="written"?<PreviewObservation label={tr("Written answer (disabled)","എഴുത്ത് ഉത്തരം (പ്രവർത്തനരഹിതം)")}/>:
+   q.response_type==="multiple_choice"?
+   <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>{(q.options||[]).map(option=><button key={option.id} type="button" disabled role="radio" aria-checked={false} style={mutedControl}>{language==="ml"&&option.text_ml?option.text_ml:option.text}</button>)}</div>:
+   <PreviewRating options={customOptions}/>}
+  <PreviewObservation label={tr("Observation or example (disabled)","നിരീക്ഷണം / ഉദാഹരണം (പ്രവർത്തനരഹിതം)")}/>
+ </article>)}</section>)}</section>}
+ {sectionsCount>1&&<div style={{display:"flex",justifyContent:"space-between",gap:12,marginTop:18}}>
+ <button type="button" disabled={current===0} onClick={()=>{setActive(current-1);window.scrollTo({top:0,behavior:"smooth"})}} style={{...action,opacity:current===0?.45:1}}>{tr("Previous section","മുൻ വിഭാഗം")}</button>
+ <button type="button" disabled={current===sectionsCount-1} onClick={()=>{setActive(current+1);window.scrollTo({top:0,behavior:"smooth"})}} style={{...action,opacity:current===sectionsCount-1?.45:1}}>{tr("Next section","അടുത്ത വിഭാഗം")}</button>
+ </div>}
+ <p style={{fontSize:12,color:"#64748b",marginTop:22}}>{tr("Read-only catalogue preview. No client information, responses, or submissions are created or updated.","വായനയ്ക്ക് മാത്രമുള്ള പ്രിവ്യൂ. ക്ലയന്റിന്റെ വിവരങ്ങളോ ഉത്തരങ്ങളോ സമർപ്പണങ്ങളോ സൃഷ്ടിക്കുകയോ മാറ്റുകയോ ചെയ്യുന്നില്ല.")}</p>
+ </>}
+ </div></main>;
 }
