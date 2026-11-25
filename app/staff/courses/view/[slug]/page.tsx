@@ -58,6 +58,7 @@ export default function StaffCoursePreview(){
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
  const [language,setLanguage]=useState<Language>("en");
+ const [standardTranslations,setStandardTranslations]=useState<Record<string,string>>({});
  const [active,setActive]=useState(0);
  const tr=(en:string,ml:string)=>language==="ml"?ml:en;
 
@@ -83,6 +84,17 @@ export default function StaffCoursePreview(){
  }finally{if(mounted)setLoading(false)}})();return()=>{mounted=false};},[slug,isStandard,router]);
  useEffect(()=>{try{if(localStorage.getItem("swastha-assessment-language")==="ml")setLanguage("ml")}catch{/* optional */}},[]);
  function setLang(value:Language){setLanguage(value);try{localStorage.setItem("swastha-assessment-language",value)}catch{/* optional */}}
+ useEffect(()=>{
+  let active=true;
+  if(!isStandard||slug==="LP"||!supabase)return;
+  supabase.from("standard_assessment_translations").select("question_id,text_ml").eq("level",slug)
+    .then(({data,error})=>{
+      if(!active)return;
+      if(error){setError("Malayalam translations could not be loaded: "+error.message);return;}
+      setStandardTranslations(Object.fromEntries((data||[]).filter(row=>row.text_ml).map(row=>[row.question_id,row.text_ml])));
+    });
+  return()=>{active=false;};
+ },[isStandard,slug]);
  const totalCustom=useMemo(()=>template?.structure.reduce((sum,s)=>sum+s.categories.reduce((n,c)=>n+c.questions.length,0),0)||0,[template]);
  const standardAreas=bank?.areas||[];
  const customSections=template?.structure||[];
@@ -92,9 +104,9 @@ export default function StaffCoursePreview(){
  const lpTranslated=language==="ml"&&isLP;
  const lpBase=isLP?CHECKLIST_DATA.LP:null;
  function lpQuestion(domainId:string,index:number,original:string){
-  if(!lpTranslated)return original;
-  const key=domainId+"_"+(index+1);
-  return LP_MALAYALAM_QUESTIONS[key]||original;
+  if(language!=="ml")return original;
+   const key=domainId+"_"+(index+1);
+   return isLP?(LP_MALAYALAM_QUESTIONS[key]||original):(standardTranslations[key]||original);
  }
  if(loading)return <main style={{padding:32}}>Loading assessment preview…</main>;
  if(!role)return <main style={{padding:32}} role="alert">{error||"Access denied"}</main>;
