@@ -100,6 +100,7 @@ export default function ParentAssessmentPage() {
   const [activeArea, setActiveArea] = useState(0);
   const [showUnanswered, setShowUnanswered] = useState(false);
   const [language, setLanguage] = useState<"en"|"ml">("en");
+  const [standardTranslations, setStandardTranslations] = useState<Record<string,string>>({});
   useEffect(() => {
     try { if(window.localStorage.getItem("swastha-assessment-language")==="ml")setLanguage("ml"); }
     catch { /* optional local preference */ }
@@ -112,6 +113,22 @@ export default function ParentAssessmentPage() {
     catch { /* optional local preference */ }
   }
   const lpMalayalam = malayalam && assignment?.assessment_level==="LP";
+  function translatedQuestion(id:string,original:string) {
+    if(!malayalam)return original;
+    return assignment?.assessment_level==="LP" ? LP_MALAYALAM_QUESTIONS[id]||original : standardTranslations[id]||original;
+  }
+  useEffect(()=>{
+    let active=true;
+    const level=assignment?.assessment_level;
+    if(!level||level==="LP"||!supabase)return;
+    supabase.from("standard_assessment_translations").select("question_id,text_ml").eq("level",level)
+      .then(({data,error})=>{
+        if(!active)return;
+        if(error){setMessage("Malayalam translations could not be loaded: "+error.message);return;}
+        setStandardTranslations(Object.fromEntries((data||[]).filter(row=>row.text_ml).map(row=>[row.question_id,row.text_ml])));
+      });
+    return()=>{active=false;};
+  },[assignment?.assessment_level]);
 
   useEffect(() => {
     async function loadAssessment() {
@@ -643,7 +660,7 @@ export default function ParentAssessmentPage() {
                       onClick={() => jumpToQuestion(item.areaIndex,item.id)}
                       style={{textAlign:"left",background:"#fff",border:"1px solid #fbbf24",borderRadius:8,padding:12,cursor:"pointer",color:"#78350f"}}>
                       <strong>{tr("Area","മേഖല")} {item.areaIndex + 1} · {item.domainTitle} · {tr("Question","ചോദ്യം")} {item.domainTitle.match(/^([A-Z])\./)?.[1] || item.id.split("_")[1]?.slice(-1) || ""}.{item.index + 1}</strong>
-                      <span style={{display:"block",marginTop:5}}>{lpMalayalam && item.question === CHECKLIST_DATA.LP.areas.flatMap(a=>a.subDomains).flatMap(d=>d.items.map((q,i)=>({id:d.id+"_"+(i+1),q}))).find(q=>q.id===item.id)?.q ? LP_MALAYALAM_QUESTIONS[item.id] || item.question : item.question}</span>
+                      <span style={{display:"block",marginTop:5}}>{translatedQuestion(item.id,item.question)}</span>
                     </button>
                   ))}
                 </div>
@@ -802,7 +819,7 @@ export default function ParentAssessmentPage() {
                                 lineHeight: 1.6,
                               }}
                             >
-                              {domain.title.match(/^([A-Z])\./)?.[1] || domain.id.slice(-1)}.{index + 1} — {lpMalayalam && question === CHECKLIST_DATA.LP.areas.flatMap(a=>a.subDomains).flatMap(d=>d.items.map((q,i)=>({id:d.id+"_"+(i+1),q}))).find(q=>q.id===id)?.q ? LP_MALAYALAM_QUESTIONS[id] || question : question}
+                              {domain.title.match(/^([A-Z])\./)?.[1] || domain.id.slice(-1)}.{index + 1} — {translatedQuestion(id,question)}
                             </p>
 
                             <div
