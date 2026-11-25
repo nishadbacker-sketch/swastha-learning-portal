@@ -50,8 +50,6 @@ export default function ClinicAdminDashboard(){
    </div>
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"22px 16px 65px"}}>
-   <h1 style={{fontSize:26,margin:"0 0 8px"}}>Welcome, {name}</h1><p style={{fontSize:12,letterSpacing:2}}>SWASTHA 2030 · COMMAND CENTRE</p>
-   <p style={{fontSize:13,color:"#64748b"}}>Manage appointment enquiries and oversee timely teacher follow-ups. You can assign active teachers to students and supervise customer follow-ups. Super Admin retains exclusive control over user roles.</p>
    {error&&<section style={{...card,color:"#b42318"}} role="alert">{error}</section>}
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,170px),1fr))",gap:12,marginBottom:14}}>
     <section style={{...card,marginBottom:0}}><small>New queries</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.new}</h2></section>
@@ -59,10 +57,9 @@ export default function ClinicAdminDashboard(){
     <section style={{...card,marginBottom:0}}><small>Total enquiries</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.total}</h2></section>
    </div>
 
- <section aria-label="Staff tools" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:24,borderRadius:16,marginBottom:18,minWidth:0}}>
- <div style={{fontSize:12,letterSpacing:2,color:"#e6c875"}}>SWASTHA 2030 · CLINIC ADMIN WORKSPACE</div>
- <h2 style={{margin:"8px 0"}}>Clinical & Educational Command Centre</h2>
- <h3 style={{fontSize:18,margin:"18px 0 12px"}}>Staff Tools</h3>
+ <section aria-label="Staff tools" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:16,borderRadius:12,marginBottom:18,minWidth:0}}>
+ <h1 style={{fontSize:20,margin:"0 0 12px",overflowWrap:"anywhere"}}>Welcome, {name}!</h1>
+ <h3 style={{fontSize:18,margin:"0 0 12px"}}>Staff Tools</h3>
  <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))"}}>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/assessment-certificates")}>Assessment Certificates</button>
