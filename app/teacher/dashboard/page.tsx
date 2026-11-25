@@ -1025,6 +1025,10 @@ export default function TeacherDashboard() {
 
           <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
           <StaffNotificationsPopup/>
+          <button type="button" onClick={()=>router.push("/teacher/appointments")}
+            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#fff1f2",color:"#b42318",border:"1px solid #fecdd3"}}>
+            Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
+          </button>
           <button type="button" onClick={()=>router.push("/my-profile")}
             style={{...primaryButton,background:"#eaf4ef",color:"#176b58",border:"1px solid #b9d9cc"}}>My Profile</button>
           <button
@@ -1198,10 +1202,7 @@ export default function TeacherDashboard() {
             style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#0f4c5c",color:"#fff"}}>
             Teacher Coordination
           </button>
-          <button type="button" onClick={()=>router.push("/teacher/appointments")}
-            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#fff1f2",color:"#b42318",border:"1px solid #fecdd3"}}>
-            Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
-          </button>
+          
           <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#14532d"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
           <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#0f4c5c"}} onClick={()=>router.push("/teacher/sessions")}>Sessions & Attendance</button>
           <button type="button" onClick={()=>router.push("/staff/assessment-certificates")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58"}}>Assessment Certificates</button>
