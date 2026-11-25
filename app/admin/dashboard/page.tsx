@@ -77,11 +77,10 @@ export default function AdminDashboard(){
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
  <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><div style={{color:"#64748b",fontSize:12,marginTop:5}}>{creatorMode?"CREATOR / OWNER PORTAL":"SUPER ADMIN PORTAL"}</div></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><StaffNotificationsPopup/><button type="button" style={{...action,background:"#176b58",color:"white",margin:0}} onClick={()=>router.push("/teacher/appointments")}>Appointment</button><button style={{...action,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={action} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div></header>
  <div style={{maxWidth:1100,margin:"auto",padding:"30px 16px"}}>
- <section style={{...box,background:"#0f4c5c",color:"white"}}><p>LEARN • GROW • THRIVE</p><h1>Welcome, {name}</h1><p style={{fontSize:12,letterSpacing:2}}>SWASTHA 2030 · COMMAND CENTRE</p><p>Manage student-to-teacher assignments.</p></section>
- <section aria-label="Staff tools" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:24,borderRadius:16,marginBottom:18,minWidth:0}}>
- <div style={{fontSize:12,letterSpacing:2,color:"#e6c875"}}>SWASTHA 2030 · SUPER ADMIN WORKSPACE</div>
- <h2 style={{margin:"8px 0"}}>Clinical & Educational Command Centre</h2>
- <h3 style={{fontSize:18,margin:"18px 0 12px"}}>Staff Tools</h3>
+ 
+ <section aria-label="Staff tools" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:16,borderRadius:12,marginBottom:18,minWidth:0}}>
+ <h1 style={{fontSize:20,margin:"0 0 12px",overflowWrap:"anywhere"}}>Welcome, {name}!</h1>
+ <h3 style={{fontSize:18,margin:"0 0 12px"}}>Staff Tools</h3>
  <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))"}}>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/assessment-certificates")}>Assessment Certificates</button>
