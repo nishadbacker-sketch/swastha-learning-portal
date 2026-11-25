@@ -1320,6 +1320,7 @@ export default function TeacherDashboard() {
             </section>
             <section aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
               <h2 style={{marginTop:0,color:"#0f4c5c"}}>Analytics Dashboard</h2>
+              <AssessmentAnalytics assessments={assessments} students={students} hideDashboardTitle>
             <section style={{...panel,marginTop:16}}>
               <h3>Student Development Journey & Progress Overview</h3>
               <p style={{color:"#667a74"}}>Observed milestones for assigned students. Open the linked workflows to verify plan, report and certificate status.</p>
@@ -1354,7 +1355,7 @@ export default function TeacherDashboard() {
                 </details>;
               })}
             </section>
-              <AssessmentAnalytics assessments={assessments} students={students} hideDashboardTitle />
+              </AssessmentAnalytics>
             </section>
           </section>
         )}
