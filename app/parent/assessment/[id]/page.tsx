@@ -88,7 +88,6 @@ export default function ParentAssessmentPage() {
   const [student, setStudent] =
     useState<Student | null>(null);
 
-  const [guardian, setGuardian] = useState("");
   const [userId, setUserId] = useState("");
   const [answers, setAnswers] =
     useState<Record<string, Answer>>({});
@@ -198,17 +197,6 @@ export default function ParentAssessmentPage() {
         setAssignment(assigned as Assignment);
         setStudent(child as Student);
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", uid)
-          .maybeSingle();
-
-        setGuardian(
-          profile?.full_name ||
-          auth.user.user_metadata?.full_name ||
-          ""
-        );
 
         if (
           assigned.status === "assigned" ||
@@ -508,50 +496,10 @@ export default function ParentAssessmentPage() {
           <h2>{lpMalayalam ? "എൽ.പി. തലത്തിലെ കുട്ടികളുടെ വിലയിരുത്തൽ ചോദ്യാവലി" : checklist.shortTitle}</h2>
           <p>{lpMalayalam ? "കുട്ടിയുടെ പഠനശേഷി, ഡിജിറ്റൽ ശീലങ്ങൾ, സാമൂഹിക-വൈകാരിക വളർച്ച, പ്രായോഗിക ചിന്ത, കഴിവുകൾ എന്നിവ മനസ്സിലാക്കുന്നതിനുള്ള ചോദ്യാവലി." : checklist.purpose}</p>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit,minmax(180px,1fr))",
-              gap: 18,
-              background: "#f0f7f5",
-              padding: 18,
-              borderRadius: 12,
-              marginTop: 20,
-            }}
-          >
-            <div>
-              <small>Student</small>
-              <p><strong>{student.full_name} · {student.student_code}</strong></p>
-            </div>
-
-            <div>
-              <small>Current Class</small>
-              <p><strong>{student.current_class}</strong></p>
-            </div>
-
-            <div>
-              <small>Student Code</small>
-              <p><strong>{student.student_code}</strong></p>
-            </div>
-
-            <div>
-              <small>Date of Birth</small>
-              <p><strong>{student.date_of_birth}</strong></p>
-            </div>
-
-            <div>
-              <small>Parent / Guardian</small>
-              <p><strong>{guardian || "Not available"}</strong></p>
-            </div>
-
-            <div>
-              <small>Due Date</small>
-              <p>
-                <strong>
-                  {assignment.due_date || "Not specified"}
-                </strong>
-              </p>
+          <div style={{marginTop:18,padding:"12px 16px",background:"#f0f7f5",borderRadius:10}}>
+            <strong>Assigned student: {student.full_name} ({student.student_code})</strong>
+            <div style={{fontSize:12,color:"#526b63",marginTop:5}}>
+              Registration details are already linked to this assessment.
             </div>
           </div>
         </section>
