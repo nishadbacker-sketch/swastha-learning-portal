@@ -1,9 +1,9 @@
-name: Daily Encrypted Supabase Backup
+name: Legacy S3 backup (manual only, requires separate secrets)
 
 on:
-  schedule:
-    # 02:30 UTC = 08:00 Asia/Kolkata (GitHub may delay scheduled jobs)
-    - cron: '30 2 * * *'
+  # Disabled the old 08:00 IST schedule: this is a separate S3/age setup and
+  # does not use the verified Google Drive backup secrets.
+  # Keep manual dispatch available if this alternate route is configured later.
   workflow_dispatch:
 
 permissions:
