@@ -7,8 +7,8 @@ import { supabase } from "../../../../lib/supabase";
 
 type Choice={id:"1"|"2"|"3";text:string;text_ml:string};
 type Question={id:string;text:string;text_ml:string;response_type?:"rating"|"multiple_choice"|"written";options?:Choice[]};
-type Category={id:string;title:string;questions:Question[]};
-type Section={id:string;title:string;categories:Category[]};
+type Category={id:string;title:string;title_ml?:string;questions:Question[]};
+type Section={id:string;title:string;title_ml?:string;categories:Category[]};
 type Template={id:string;title:string;description:string;level:string;structure:Section[];status:string};
 type Answer={score?:string|null;choice?:string|null;written_answer?:string|null;observation:string};
 type Assignment={id:string;student_id:string;status:string;due_date:string|null;answers:Record<string,Answer>;teacher_feedback:string|null;reviewed_at:string|null;template_id:string};
@@ -135,9 +135,9 @@ export default function CustomAssessmentPage(){
      const count=ids.filter(id=>{const item=items.find(q=>q.id===id);return item?.response_type==="written"?Boolean(answers[id]?.written_answer?.trim()):item?.response_type==="multiple_choice"?answers[id]?.choice!=null:answers[id]?.score!=null;}).length;
      return <button key={s.id} style={activeSection===si?btn:{...btn,background:"#e0f2f1",color:"#0f4c5c"}} onClick={()=>setActiveSection(si)}>{tr("Section","വിഭാഗം")} {si+1} · {count}/{ids.length}</button>;
     })}</div></section>
-    {sections[activeSection]&&<section style={panel}><h2>{sections[activeSection].title}</h2>
+    {sections[activeSection]&&<section style={panel}><h2>{ml&&sections[activeSection].title_ml?sections[activeSection].title_ml:sections[activeSection].title}</h2>
      {sections[activeSection].categories.map((cat,ci)=><div key={cat.id}>
-      <h3 style={{background:"#e0f2f1",padding:13,borderRadius:8}}>{cat.title}</h3>
+      <h3 style={{background:"#e0f2f1",padding:13,borderRadius:8}}>{ml&&cat.title_ml?cat.title_ml:cat.title}</h3>
       {cat.questions.map((q,qi)=>{
        const a=answers[q.id];
        return <div key={q.id} id={"custom-question-"+q.id} style={{padding:"17px 12px",borderBottom:"1px solid #e2e8f0",borderLeft:showUnanswered&&(q.response_type==="multiple_choice"?a?.choice==null:q.response_type==="written"?!a?.written_answer?.trim():a?.score==null)?"4px solid #f59e0b":"4px solid transparent",background:showUnanswered&&(q.response_type==="multiple_choice"?a?.choice==null:q.response_type==="written"?!a?.written_answer?.trim():a?.score==null)?"#fffbeb":"transparent",scrollMarginTop:100}}>
@@ -161,7 +161,7 @@ export default function CustomAssessmentPage(){
            </button>)}
           </div>
         : <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
-           {ratingChoices.map(([score,label,color])=><button key={score} title={label} aria-pressed={a?.score===score} style={{border:"1px solid "+color,background:a?.score===score?color:"white",color:a?.score===score?"white":color,padding:"10px 16px",borderRadius:8,fontWeight:700,cursor:"pointer"}} onClick={()=>answer(q.id,{choice:null,score})}>{score}</button>)}
+           {ratingChoices.map(([score,label,color])=><button key={score} title={ml?({ "Not demonstrated":"പ്രകടമാക്കിയില്ല","Full assistance":"പൂർണ്ണ സഹായം","Partial assistance":"ഭാഗിക സഹായം","Independent":"സ്വതന്ത്രമായി","Not observed / Not applicable":"നിരീക്ഷിച്ചില്ല / ബാധകമല്ല","Needs support":"പിന്തുണ വേണം","Developing":"വികസിക്കുന്നു","Not assessed":"വിലയിരുത്തിയില്ല"}[label]||label):label} aria-pressed={a?.score===score} style={{border:"1px solid "+color,background:a?.score===score?color:"white",color:a?.score===score?"white":color,padding:"10px 16px",borderRadius:8,fontWeight:700,cursor:"pointer"}} onClick={()=>answer(q.id,{choice:null,score})}>{score}</button>)}
           </div>}
         <textarea style={{...control,minHeight:62}} value={a?.observation||""} maxLength={2000} placeholder={tr("Observation or example (optional)","നിരീക്ഷണം അല്ലെങ്കിൽ ഉദാഹരണം (നിർബന്ധമല്ല)")} onChange={e=>answer(q.id,{observation:e.target.value})}/>
        </div>;
