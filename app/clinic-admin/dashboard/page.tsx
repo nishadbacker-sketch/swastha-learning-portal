@@ -50,7 +50,7 @@ export default function ClinicAdminDashboard(){
    </div>
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"22px 16px 65px"}}>
-   <h1 style={{fontSize:26,margin:"0 0 8px"}}>Welcome, {name}</h1>
+   <h1 style={{fontSize:26,margin:"0 0 8px"}}>Welcome, {name}</h1><p style={{fontSize:12,letterSpacing:2}}>SWASTHA 2030 · COMMAND CENTRE</p>
    <p style={{fontSize:13,color:"#64748b"}}>Manage appointment enquiries and oversee timely teacher follow-ups. You can assign active teachers to students and supervise customer follow-ups. Super Admin retains exclusive control over user roles.</p>
    {error&&<section style={{...card,color:"#b42318"}} role="alert">{error}</section>}
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,170px),1fr))",gap:12,marginBottom:14}}>
