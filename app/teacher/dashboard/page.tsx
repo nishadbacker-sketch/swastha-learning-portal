@@ -7,7 +7,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import AssessmentAnalytics from "../assessment-analytics";
-import LearningInsightsCharts from "../../components/learning-insights-charts";
 
 type Level = "LP" | "UP" | "HS" | "HSS";
 type Tab = "overview" | "assessments" | "activities" | "students";
@@ -1307,17 +1306,6 @@ export default function TeacherDashboard() {
                 )}
               </div>
             </div>
-            <LearningInsightsCharts hideStudentOverview audience="teacher" students={students} assessments={assessments} activities={activityAssignments}/>
-            <section style={{...panel,marginTop:16}}>
-              <h3>Assessment Assignment Trends</h3>
-              <p style={{color:"#667a74",fontSize:13}}>Monthly assignment volume and current review status, not historical review dates or ability scores.</p>
-              {Array.from(new Set(assessments.map(a=>a.assigned_at.slice(0,7)))).sort().slice(-12).map(month=>{
-                const rows=assessments.filter(a=>a.assigned_at.startsWith(month));
-                const reviewed=rows.filter(a=>a.status==="reviewed").length;
-                return <div key={month} style={{marginBottom:12}}><div>{month} · {reviewed} reviewed / {rows.length} assigned</div><div style={{height:12,background:"#e9efeb",borderRadius:8}}><div style={{height:12,width:(reviewed/rows.length*100)+"%",background:"#176b58",borderRadius:8}}/></div></div>;
-              })}
-              {!assessments.length&&<p>No assessment history available.</p>}
-            </section>
             <section aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
               <h2 style={{marginTop:0,color:"#0f4c5c"}}>Analytics Dashboard</h2>
               <AssessmentAnalytics assessments={assessments} students={students} hideDashboardTitle>
