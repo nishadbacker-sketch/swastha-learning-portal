@@ -26,8 +26,6 @@ export default function CustomAssessmentPage(){
  const [assessment,setAssessment]=useState<Assignment|null>(null);
  const [template,setTemplate]=useState<Template|null>(null);
  const [childName,setChildName]=useState("");
- const [studentDetails,setStudentDetails]=useState<{date_of_birth:string|null;current_class:string|null}|null>(null);
- const [guardianName,setGuardianName]=useState("");
  const [answers,setAnswers]=useState<Record<string,Answer>>({});
  const [language,setLanguage]=useState<"en"|"ml">("en");
  const [activeSection,setActiveSection]=useState(0);
@@ -52,9 +50,7 @@ export default function CustomAssessmentPage(){
    const {data:s,error:sError}=await supabase.from("students").select("full_name,student_code,date_of_birth,current_class").eq("id",a.student_id).single();
    if(sError||!s)throw new Error("Child information unavailable.");
    setAssessment(a as Assignment);setTemplate(t as Template);setAnswers(a.answers||{});setChildName(s.full_name+" · "+s.student_code);
-   setStudentDetails({date_of_birth:s.date_of_birth,current_class:s.current_class});
-   const {data:parentProfile}=await supabase.from("profiles").select("full_name").eq("id",auth.user.id).maybeSingle();
-   setGuardianName(parentProfile?.full_name||"");
+   
   }catch(e){setError(e instanceof Error?e.message:"Unable to open this test.");}
   finally{setLoading(false);}
  }load();},[params.id,router]);
@@ -105,11 +101,7 @@ export default function CustomAssessmentPage(){
    </div>
   </header>
   <div style={{maxWidth:1000,margin:"auto",padding:"25px 16px 70px"}}>
-   <section style={panel}><div style={{color:"#16697a",fontSize:13}}>CUSTOM ASSESSMENT · {template.level}</div><h1>{template.title}</h1><p>{template.description}</p><p><strong>{tr("Student","വിദ്യാർത്ഥി")}:</strong> {childName} · <strong>{tr("Status","നില")}:</strong> {status==="reviewed"?"Reviewed":status==="submitted"?"Awaiting Teacher Review":status}</p><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:10,padding:13,background:"#f0f7f5",borderRadius:9,margin:"10px 0 16px"}}>
- <div><small>{tr("Date of birth","ജനനത്തീയതി")}</small><div><strong>{studentDetails?.date_of_birth||"Not available"}</strong></div></div>
- <div><small>{tr("Class","ക്ലാസ്")}</small><div><strong>{studentDetails?.current_class||"Not available"}</strong></div></div>
- <div><small>{tr("Parent / Guardian","രക്ഷിതാവ്")}</small><div><strong>{guardianName||"Not available"}</strong></div></div>
- </div><p style={{fontSize:12,color:"#526b63"}}>{tr("Student information is loaded automatically from the assigned student record. You do not need to enter it again.","അസൈൻ ചെയ്ത വിദ്യാർത്ഥിയുടെ രേഖകളിൽ നിന്ന് വിവരങ്ങൾ സ്വയമേവ ലഭിക്കുന്നു. വീണ്ടും നൽകേണ്ടതില്ല.")}</p>
+   <section style={panel}><div style={{color:"#16697a",fontSize:13}}>CUSTOM ASSESSMENT · {template.level}</div><h1>{template.title}</h1><p>{template.description}</p><p><strong>{tr("Student","വിദ്യാർത്ഥി")}:</strong> {childName} · <strong>{tr("Status","നില")}:</strong> {status==="reviewed"?"Reviewed":status==="submitted"?"Awaiting Teacher Review":status}</p><p style={{fontSize:12,color:"#526b63"}}>{tr("Registration details are linked automatically to the assigned student. No need to enter them in this assessment.","രജിസ്ട്രേഷൻ വിവരങ്ങൾ അസൈൻ ചെയ്ത വിദ്യാർത്ഥിയുമായി സ്വയമേവ ബന്ധിപ്പിച്ചിരിക്കുന്നു. അവ വീണ്ടും നൽകേണ്ടതില്ല.")}</p>
  <p>{tr("Progress","പുരോഗതി")}: {done}/{total} ({progress}%)</p><div style={{height:12,borderRadius:12,background:"#e2e8f0",overflow:"hidden"}}><div style={{height:"100%",width:progress+"%",background:"#16a34a"}}/></div></section>
    {message&&<section role="status" style={{...panel,background:"#e8f5eb",color:"#176b58"}}>{message}</section>}
    {error&&<section role="alert" style={{...panel,background:"#fff1f2",color:"#b42318"}}>{error}</section>}
