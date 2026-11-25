@@ -1110,6 +1110,7 @@ export default function TeacherDashboard() {
           </button>
           
           <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
+          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}} onClick={()=>router.push("/staff/courses")}>Courses</button>
           <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}} onClick={()=>router.push("/teacher/sessions")}>Sessions & Attendance</button>
           <button type="button" onClick={()=>router.push("/staff/assessment-certificates")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>Assessment Certificates</button>
           <button type="button" onClick={()=>router.push("/teacher/student-progress")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>Student Progress Tracking</button>
