@@ -1053,11 +1053,7 @@ export default function TeacherDashboard() {
           padding: "30px 20px 70px",
         }}
       >
-        <section style={{ ...panel, background: "#0f4c5c", color: "#ffffff", marginBottom: 20, padding: "22px 20px" }}>
-          <small style={{letterSpacing:1,fontWeight:700}}>LEARN • GROW • THRIVE</small>
-          <h1 style={{margin:"10px 0 8px",fontSize:29,overflowWrap:"anywhere"}}>Welcome, {teacherName}!</h1>
-          <p style={{margin:0}}>Manage your assigned students, assessments and learning activities.</p>
-        </section>
+
 
         {message && (
           <div
@@ -1090,15 +1086,9 @@ export default function TeacherDashboard() {
         )}
 
         <div style={{marginBottom:24}}>
-          <section aria-label="Teacher Command Centre" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:24,borderRadius:16,marginBottom:0,minWidth:0,boxSizing:"border-box",overflowWrap:"anywhere"}}>
-              <div style={{fontSize:12,letterSpacing:2,color:"#e6c875"}}>SWASTHA 2030 · TEACHER WORKSPACE</div>
-              <h2 style={{margin:"8px 0"}}>Clinical & Educational Command Centre</h2>
-              <p style={{color:"#dbeafe"}}>Monitor your assigned students and open existing development workflows.</p>
-              {activeTab === "overview" && <div style={{display:"flex",gap:24,flexWrap:"wrap"}}>
-                <span>Reviewed assessments: <strong>{assessments.filter(a=>a.status==="reviewed").length}</strong></span>
-                <span>Completed activity assignments: <strong>{completedActivities}</strong> / {activityAssignments.length}</span>
-              </div>}
-                    <div aria-label="Staff tools" style={{marginTop:20,paddingTop:18,borderTop:"1px solid #ffffff35",minWidth:0}}>
+          <section aria-label="Teacher Command Centre" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:16,borderRadius:12,marginBottom:0,minWidth:0,boxSizing:"border-box",overflowWrap:"anywhere"}}>
+              <h1 style={{fontSize:20,margin:"0 0 12px",overflowWrap:"anywhere"}}>Welcome, {teacherName}!</h1>
+<div aria-label="Staff tools" style={{marginTop:0,paddingTop:0,minWidth:0}}>
           <h2 style={{fontSize:18,margin:"0 0 12px"}}>Staff Tools</h2>
           <nav aria-label="Teacher dashboard sections" style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",marginBottom:12}}>
             {([
