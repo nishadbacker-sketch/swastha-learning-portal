@@ -12,6 +12,7 @@ type Category={id?:string;title:string;questions:Question[]};
 type Section={id?:string;title:string;categories:Category[]};
 type Template={id:string;title:string;description:string;level:string;status:string;structure:Section[]};
 type Language="en"|"ml";
+type Publisher={template_id:string;creator_name:string;creator_staff_id:string|null;creator_user_id:string};
 
 const levels=["LP","UP","HS","HSS"] as const;
 const panel:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",borderRadius:13,padding:16,marginBottom:14};
@@ -52,6 +53,7 @@ export default function StaffCoursePreview(){
  const bank=isStandard?CHECKLIST_DATA[slug as AssessmentLevel]:null;
  const [role,setRole]=useState("");
  const [template,setTemplate]=useState<Template|null>(null);
+ const [publisher,setPublisher]=useState<Publisher|null>(null);
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
  const [language,setLanguage]=useState<Language>("en");
@@ -71,6 +73,10 @@ export default function StaffCoursePreview(){
     .select("id,title,description,level,status,structure").eq("id",slug.slice(7)).single();
    if(fetchError||!data)throw Error("Assessment unavailable or you do not have permission to view it.");
    if(mounted)setTemplate({...data,structure:safeSections(data.structure)} as Template);
+   const publisherLookup=await supabase.rpc("get_custom_assessment_publishers");
+   if(!publisherLookup.error&&mounted){
+    setPublisher(((publisherLookup.data||[]) as Publisher[]).find(row=>row.template_id===data.id)||null);
+   }
   }
  }catch(e){if(mounted)setError(e instanceof Error?e.message:"Unable to load assessment");
  }finally{if(mounted)setLoading(false)}})();return()=>{mounted=false};},[slug,isStandard,router]);
@@ -126,7 +132,7 @@ export default function StaffCoursePreview(){
  {bank&&<><section style={panel}><h2>{tr("Parent / Guardian Interview","രക്ഷിതാവുമായുള്ള അഭിമുഖം")}</h2>{bank.parentInterview.map((q,i)=><article key={i} style={{padding:"12px 0",borderBottom:"1px solid #e2e8f0"}}><strong>{i+1}. {lpTranslated&&lpBase&&q===lpBase.parentInterview[i]?LP_MALAYALAM_INTERVIEW[i]||q:q}</strong><PreviewObservation label={tr("Answer (disabled)","ഉത്തരം (പ്രവർത്തനരഹിതം)")}/></article>)}</section>
  <section style={panel}><h2>{tr("Practical activities","പ്രായോഗിക പ്രവർത്തനങ്ങൾ")}</h2>{bank.practicalActivities.map((p,i)=><article key={i} style={{padding:"12px 0",borderBottom:"1px solid #e2e8f0"}}><strong>{p.name}</strong><p>{p.task}</p><small>{tr("Observe","നിരീക്ഷിക്കുക")}: {p.observe}</small><PreviewObservation label={tr("Observation (disabled)","നിരീക്ഷണം (പ്രവർത്തനരഹിതം)")}/></article>)}</section>
  <section style={panel}><h2>{tr("Strengths and talents","കഴിവുകളും താൽപര്യങ്ങളും")}</h2>{bank.talents.map((t,i)=><div key={i} style={{padding:10,borderBottom:"1px solid #e2e8f0"}}><input type="checkbox" disabled aria-label={t}/> {lpTranslated&&lpBase&&t===lpBase.talents[i]?LP_MALAYALAM_TALENTS[i]||t:t}</div>)}</section></>}
- {template&&<section style={panel}><strong>{tr("Assessment level","വിലയിരുത്തൽ ലെവൽ")}:</strong> {template.level} · <strong>{tr("Status","നില")}:</strong> {template.status} · <strong>{tr("Questions","ചോദ്യങ്ങൾ")}:</strong> {totalCustom}</section>}
+ {template&&<section style={panel}><strong>{tr("Assessment level","വിലയിരുത്തൽ ലെവൽ")}:</strong> {template.level} · <strong>{tr("Status","നില")}:</strong> {template.status} · <strong>{tr("Questions","ചോദ്യങ്ങൾ")}:</strong> {totalCustom}{template.status==="published"&&<p style={{marginBottom:0,marginTop:10,overflowWrap:"anywhere"}}><strong>{tr("Published by","പ്രസിദ്ധീകരിച്ചത്")}:</strong> {publisher?.creator_name||tr("Creator unavailable","സ്രഷ്ടാവിന്റെ വിവരങ്ങൾ ലഭ്യമല്ല")} ({publisher?.creator_staff_id||publisher?.creator_user_id||tr("ID unavailable","ഐഡി ലഭ്യമല്ല")})</p>}</section>}
  {template&&customSections[current]&&<section style={panel}><h2>{customSections[current].title}</h2>
  {customSections[current].categories.map((cat,ci)=><section key={cat.id||ci} style={{borderTop:"1px solid #dce8e1",paddingTop:16,marginTop:16}}>
  <h3>{cat.title}</h3>
