@@ -27,6 +27,7 @@ export default function StudentManagementPage(){
  const [progress,setProgress]=useState<Record<string,Progress>>({});
  const [query,setQuery]=useState("");
  const [filter,setFilter]=useState("all");
+ const [expandedStudent,setExpandedStudent]=useState<string|null>(null);
  const [selected,setSelected]=useState<Record<string,string>>({});
  const [replacements,setReplacements]=useState<Record<string,string>>({});
  const [busy,setBusy]=useState("");
@@ -166,6 +167,7 @@ export default function StudentManagementPage(){
   return matches&&(filter==="all"||(filter==="unassigned"&&active.length===0)||(filter==="inactive_teacher"&&assigned.some(a=>teachers.some(t=>t.id===a.teacher_id&&t.status!=="active")))||(filter==="active"&&s.status==="active"));
  }),[students,links,teachers,query,filter]);
  const activeTeachers=teachers.filter(t=>t.status==="active");
+ const toggleDetails=(id:string)=>{setExpandedStudent(previous=>previous===id?null:id);setEditingChild(null);setEditingContactId(null);setHistoryStudent(null);setConfirmRemove(null);};
  const unassigned=students.filter(s=>!links.some(a=>a.student_id===s.id&&activeTeachers.some(t=>t.id===a.teacher_id))).length;
  if(!role&&!error)return <main style={{padding:30}}>Verifying administration access...</main>;
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
@@ -177,7 +179,7 @@ export default function StudentManagementPage(){
   </header>
   <div style={{maxWidth:1180,margin:"auto",padding:"22px 16px 80px",display:"grid",gap:15}}>
    <div><h1 style={{fontSize:27,margin:"0 0 8px"}}>Student Management</h1>
-    <p style={{color:"#64748b",fontSize:13,margin:0}}>Teachers coordinate assessments, activities, and development plans. Every new student is automatically linked to all active teachers; newly activated teachers receive all existing students. Administrators monitor progress and adjust assignments only when needed.</p></div>
+    <p style={{color:"#64748b",fontSize:13,margin:0}}>One place for student records, progress, appointment history and teacher assignments. Select View student to open details and actions. Students are automatically linked to active teachers.</p></div>
    {error&&<div role="alert" style={{...card,color:"#b42318"}}>{error}</div>}
    {notice&&<div role="status" style={{...card,color:"#176b58"}}>{notice}</div>}
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12}}>
@@ -205,12 +207,14 @@ export default function StudentManagementPage(){
       <div><h2 style={{fontSize:19,margin:"0 0 5px"}}>{s.full_name} · {s.student_code}</h2>
        <p style={{fontSize:12,color:"#64748b",margin:0}}>ID: {s.student_code||"Not assigned"} · Class: {s.current_class||"Not recorded"} · Status: {s.status}</p>
       </div>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-       <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58",border:"1px solid #cce3d5"}} onClick={()=>{setError("");setEditingChild({...s});}}>Edit Child Details</button>
-       <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>void openContactDetails(s.id)}>{editingContactId===s.id?"Close Contacts":"School & Emergency Contact"}</button>
-       <button type="button" style={{...button,background:"#edf2f5",color:"#183a35"}} onClick={()=>void toggleHistory(s.id)}>{historyStudent===s.id?"Close Change History":"Change History"}</button>
-      </div>
+      <button type="button" aria-expanded={expandedStudent===s.id} aria-controls={"student-details-"+s.id} style={button} onClick={()=>toggleDetails(s.id)}>{expandedStudent===s.id?"Close details":"View student"}</button>
      </div>
+     {expandedStudent===s.id&&<div id={"student-details-"+s.id} style={{marginTop:14,paddingTop:14,borderTop:"1px solid #dce8e1"}}>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+       <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>{setEditingChild(editingChild?.id===s.id?null:{...s});setEditingContactId(null);setHistoryStudent(null);}}>Edit student profile</button>
+       <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>{setEditingChild(null);setHistoryStudent(null);void openContactDetails(s.id);}}>{editingContactId===s.id?"Close contacts":"School & emergency contacts"}</button>
+       <button type="button" style={{...button,background:"#edf2f5",color:"#183a35"}} onClick={()=>{setEditingChild(null);setEditingContactId(null);void toggleHistory(s.id);}}>{historyStudent===s.id?"Close history":"Profile change history"}</button>
+      </div>
      {editingContactId===s.id&&<form onSubmit={saveContactDetails} style={{...card,background:"#f4f8f5",margin:"14px 0"}}>
       <h3 style={{margin:"0 0 7px"}}>School & Emergency Contact</h3>
       <p style={{fontSize:12,color:"#64748b"}}>Administrator-only contact information. Optional fields; only collect details needed for clinic communication.</p>
@@ -298,6 +302,7 @@ export default function StudentManagementPage(){
       </select>
       <button type="button" style={button} disabled={!selected[s.id]||!!busy} onClick={()=>void change(s.id,selected[s.id],"assign")}>{busy===s.id?"Saving...":"Assign Teacher"}</button>
      </div>
+     </div>}
     </section>;
    })}
    {confirmRemove&&<section role="dialog" aria-modal="true" aria-label="Confirm remove teacher" style={{...card,border:"2px solid #b45309"}}>
