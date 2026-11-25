@@ -35,10 +35,12 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
   const [loading, setLoading] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
+  const [showUnverifiedEmailPopup, setShowUnverifiedEmailPopup] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setMessage("");
+    setShowUnverifiedEmailPopup(false);
 
     if (!supabase) {
       setMessage("Supabase is not configured.");
@@ -169,6 +171,18 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
         }
       }
     } catch (error) {
+      // Supabase returns email_not_confirmed for an account that has not
+      // completed confirmation. Display a prominent, accessible dialog.
+      const authError = error as { code?: string; message?: string } | null;
+      const isUnverifiedEmail = !isRegister && (
+        authError?.code === "email_not_confirmed" ||
+        /email\s+(?:address\s+)?not\s+confirm(?:ed|ation)/i.test(authError?.message || "")
+      );
+      if (isUnverifiedEmail) {
+        setShowUnverifiedEmailPopup(true);
+        setMessage("");
+        return;
+      }
       setMessage(
         error instanceof Error
           ? error.message
@@ -416,6 +430,93 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
           </a>
         </div>
       </section>
+
+      {/* Unverified email sign-in popup */}
+      {showUnverifiedEmailPopup && (
+        <div
+          role="presentation"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setShowUnverifiedEmailPopup(false);
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(13, 31, 30, 0.7)",
+            display: "grid",
+            placeItems: "center",
+            padding: 18,
+            zIndex: 10000,
+          }}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="email-verification-title"
+            aria-describedby="email-verification-description"
+            style={{
+              width: "100%",
+              maxWidth: 440,
+              padding: "32px 26px",
+              borderRadius: 18,
+              background: "#ffffff",
+              color: "#183a35",
+              textAlign: "center",
+              boxShadow: "0 20px 70px rgba(0,0,0,0.30)",
+            }}
+          >
+            <div
+              aria-hidden="true"
+              style={{
+                margin: "0 auto 16px",
+                width: 66,
+                height: 66,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: "50%",
+                background: "#fff3da",
+                color: "#925d0b",
+                fontSize: 34,
+                fontWeight: 800,
+              }}
+            >
+              !
+            </div>
+            <h2 id="email-verification-title" style={{fontSize:25,margin:"0 0 12px"}}>
+              Email verification pending
+            </h2>
+            <p id="email-verification-description" style={{fontSize:16,lineHeight:1.65,color:"#526b63",margin:"0 0 14px"}}>
+              Your account email has not been verified. Please open the verification
+              message sent to your registered email address and select the confirmation
+              link before signing in.
+            </p>
+            <p style={{fontSize:14,lineHeight:1.6,color:"#526b63",margin:"0 0 22px"}}>
+              Check your Spam or Junk folder too. If you cannot find the email,
+              contact{" "}
+              <a href="mailto:support@swasthalearning.com" style={{color:"#176b58",fontWeight:700}}>
+                support@swasthalearning.com
+              </a>.
+            </p>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setShowUnverifiedEmailPopup(false)}
+              style={{
+                width: "100%",
+                border: 0,
+                borderRadius: 9,
+                background: "#176b58",
+                color: "white",
+                padding: "14px 20px",
+                fontSize: 16,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              OK, I understand
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Registration Success Popup */}
       {showSuccessPopup && (
