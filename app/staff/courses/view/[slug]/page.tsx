@@ -139,8 +139,8 @@ export default function StaffCoursePreview(){
   <PreviewObservation label={tr("Observation or example (disabled)","നിരീക്ഷണം / ഉദാഹരണം (പ്രവർത്തനരഹിതം)")}/>
  </article>)}</section>)}</section>}
  {sectionsCount>1&&<div style={{display:"flex",justifyContent:"space-between",gap:12,marginTop:18}}>
- <button type="button" disabled={current===0} onClick={()=>{setActive(current-1);window.scrollTo({top:0,behavior:"smooth"})}} style={{...action,opacity:current===0?.45:1}}>{tr("Previous section","മുൻ വിഭാഗം")}</button>
- <button type="button" disabled={current===sectionsCount-1} onClick={()=>{setActive(current+1);window.scrollTo({top:0,behavior:"smooth"})}} style={{...action,opacity:current===sectionsCount-1?.45:1}}>{tr("Next section","അടുത്ത വിഭാഗം")}</button>
+ <button type="button" disabled={current===0} onClick={()=>{setActive(current-1);window.scrollTo({top:0,behavior:"smooth"})}} style={{...action,opacity:current===0 ? 0.45 : 1}}>{tr("Previous section","മുൻ വിഭാഗം")}</button>
+ <button type="button" disabled={current===sectionsCount-1} onClick={()=>{setActive(current+1);window.scrollTo({top:0,behavior:"smooth"})}} style={{...action,opacity:current===sectionsCount-1 ? 0.45 : 1}}>{tr("Next section","അടുത്ത വിഭാഗം")}</button>
  </div>}
  <p style={{fontSize:12,color:"#64748b",marginTop:22}}>{tr("Read-only catalogue preview. No client information, responses, or submissions are created or updated.","വായനയ്ക്ക് മാത്രമുള്ള പ്രിവ്യൂ. ക്ലയന്റിന്റെ വിവരങ്ങളോ ഉത്തരങ്ങളോ സമർപ്പണങ്ങളോ സൃഷ്ടിക്കുകയോ മാറ്റുകയോ ചെയ്യുന്നില്ല.")}</p>
  </>}
