@@ -46,7 +46,7 @@ export default function ClinicAdminDashboard(){
   <header style={{background:"#fff",borderBottom:"1px solid #dce8e1",padding:"16px 5%"}}>
    <div style={{maxWidth:1100,margin:"auto",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
     <div><strong style={{color:"#176b58"}}><BrandLogo /></strong><div style={{fontSize:12,color:"#667a74",marginTop:4}}>ADMIN · OPERATIONS</div></div>
-    <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><StaffNotificationsPopup/><button style={{...action,background:"#edf4f0",color:"#176b58"}} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={{...action,background:"#edf4f0",color:"#176b58"}} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div>
+    <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><StaffNotificationsPopup/><button type="button" style={{...action,background:"#176b58",color:"white",margin:0}} onClick={()=>router.push("/teacher/appointments")}>Appointment ({counts.open})</button><button style={{...action,background:"#edf4f0",color:"#176b58"}} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={{...action,background:"#edf4f0",color:"#176b58"}} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div>
    </div>
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"22px 16px 65px"}}>
@@ -58,30 +58,24 @@ export default function ClinicAdminDashboard(){
     <section style={{...card,marginBottom:0}}><small>Open follow-ups</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.open}</h2></section>
     <section style={{...card,marginBottom:0}}><small>Total enquiries</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.total}</h2></section>
    </div>
-   <section style={card}><h2 style={{fontSize:19,margin:"0 0 9px"}}>Appointment Operations</h2>
-    <p style={{fontSize:13}}>Review enquiries, contact customers through WhatsApp, and record follow-up outcomes.</p>
-    <button style={action} onClick={()=>router.push("/teacher/appointments")}>Open Appointment Follow-up Queue</button>
-   </section>
- <section style={{background:"#eef7f2",padding:16,borderRadius:12,border:"1px solid #c8e3d4",marginBottom:14}}>
-   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-    <div><h2 style={{fontSize:19,margin:"0 0 6px"}}>Student Management & Progress</h2><p style={{margin:0,fontSize:13,color:"#527063"}}>Teachers lead assessments, activities, and development plans. Review student progress and coordinate coverage or teacher reassignment.</p></div>
-    <button style={{...action,marginLeft:8,background:"#14532d"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
-    <button type="button" style={action} onClick={()=>router.push("/staff/assessment-certificates")}>Assessment Certificates</button>
-    <button style={{...action,marginLeft:8,background:"#0f4c5c"}} onClick={()=>router.push("/clinic-admin/sessions")}>Sessions & Attendance</button>
-    <button style={action} onClick={()=>router.push("/admin/students")}>Open Student Management</button>
-   </div>
-  </section>
-   <section style={card}>
-    <h2 style={{fontSize:19,margin:"0 0 8px"}}>Teacher Coordination Oversight</h2>
-    <p style={{fontSize:13}}>See shared student task ownership, progress notes, assessment follow-ups and IDP workloads. Teachers remain responsible for work updates.</p>
-    <button type="button" style={action} onClick={()=>router.push("/teacher/coordination")}>Open Coordination Overview</button>
-   </section>
-   <section style={card}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Staff Assessment Notifications</h2><p style={{fontSize:13}}>View submitted assessments addressed to your account.</p><button style={action} onClick={()=>router.push("/staff/notifications")}>Open Staff Notifications</button></section>
-   <section style={card}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Assessment Question Bank</h2><p style={{fontSize:13}}>Review and revise standard assessment questions and view custom questionnaire questions.</p><button style={action} onClick={()=>router.push("/admin/questions")}>Manage Assessment Questions</button></section>
+
+ <section aria-label="Staff tools" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:24,borderRadius:16,marginBottom:18,minWidth:0}}>
+ <div style={{fontSize:12,letterSpacing:2,color:"#e6c875"}}>SWASTHA 2030 · CLINIC ADMIN WORKSPACE</div>
+ <h2 style={{margin:"8px 0"}}>Clinical & Educational Command Centre</h2>
+ <h3 style={{fontSize:18,margin:"18px 0 12px"}}>Staff Tools</h3>
+ <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))"}}>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/assessment-certificates")}>Assessment Certificates</button>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/clinic-admin/sessions")}>Sessions & Attendance</button>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/students")}>Open Student Management</button>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/teacher/coordination")}>Open Coordination Overview</button>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/notifications")}>Open Staff Notifications</button>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/questions")}>Manage Assessment Questions</button>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/announcements")}>Manage Announcements</button>
+ </div></section>
   <TeacherStudentAssignments/>
   <TeacherManagement/>
-   <section style={card}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Administrator Audit Logs</h2><p style={{fontSize:13}}>View critical changes and follow-up histories in one read-only timeline.</p><button type="button" style={action} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button></section>
-   <section style={card}><h2 style={{fontSize:19,margin:"0 0 8px"}}>Parent Portal Announcements</h2><p style={{fontSize:13}}>Publish popup notifications to all parents or selected families, and archive previous notices.</p><button type="button" style={action} onClick={()=>router.push("/admin/announcements")}>Manage Announcements</button></section>
    <AppointmentEscalations/>
   </div>
  </main>;
