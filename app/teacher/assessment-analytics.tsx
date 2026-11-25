@@ -142,7 +142,7 @@ function RatingDoughnut({counts,total}:{counts:{score:string;count:number}[];tot
  </div>;
 }
 
-export default function AssessmentAnalytics({assessments,students,hideSelector=false,hideDetailedInsights=false}:{assessments:InputAssessment[];students:InputStudent[];hideSelector?:boolean;hideDetailedInsights?:boolean}){
+export default function AssessmentAnalytics({assessments,students,hideSelector=false,hideDetailedInsights=false,hideDashboardTitle=false}:{assessments:InputAssessment[];students:InputStudent[];hideSelector?:boolean;hideDetailedInsights?:boolean;hideDashboardTitle?:boolean}){
  const available=assessments.filter(a=>["submitted","reviewed"].includes(a.status));
  const [selected,setSelected]=useState("");
  const [responses,setResponses]=useState<Response[]>([]);
@@ -195,7 +195,7 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
  if(!available.length)return <section style={card}><h3>Holistic Student Assessment Analytics</h3><p style={{color:palette.muted}}>Submitted or approved assessments will appear here. Assigned or incomplete assessments are not included.</p></section>;
  return <section style={{marginTop:24}}>
   <div style={{...card,background:"#f8fafc"}}>
-   <h2 style={{marginTop:0,fontSize:22,color:"#0f4c5c"}}>Analytics Dashboard</h2>
+   {!hideDashboardTitle&&<h2 style={{marginTop:0,fontSize:22,color:"#0f4c5c"}}>Analytics Dashboard</h2>}
    <p style={{fontSize:13,color:palette.muted}}>Live, question-level analysis of submitted responses. Select an assessment to view its readiness indicators and support priorities. These are educational screening indicators, not a diagnosis.</p>
    {!hideSelector && <>
    <label style={{display:"block",fontWeight:700,marginBottom:6}} htmlFor="analytics-assessment">Select student and assessment</label>
