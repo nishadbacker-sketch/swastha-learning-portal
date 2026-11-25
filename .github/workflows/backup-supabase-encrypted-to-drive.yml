@@ -1,0 +1,76 @@
+name: Encrypted Supabase offsite backup (requires secrets)
+
+on:
+  schedule:
+    # 02:00 IST = 20:30 UTC on the preceding day
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swastha-encrypted-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PG_DSN: ${{ secrets.SWASTHA_BACKUP_DB_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.SWASTHA_BACKUP_PASSPHRASE }}
+      RCLONE_CONFIG_B64: ${{ secrets.SWASTHA_RCLONE_CONFIG_B64 }}
+    steps:
+      - name: Ensure backup credentials are configured
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$PG_DSN" || { echo 'Missing DB URL secret'; exit 1; }
+          test -n "$BACKUP_PASSPHRASE" || { echo 'Missing encryption passphrase secret'; exit 1; }
+          test -n "$RCLONE_CONFIG_B64" || { echo 'Missing Drive rclone configuration secret'; exit 1; }
+      - name: Dump PostgreSQL 17 using matching client
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/swastha"
+          filename="swastha-production-$(date -u +%Y%m%dT%H%M%SZ).dump"
+          echo "filename=$filename" >> "$GITHUB_ENV"
+          docker run --rm -e PG_DSN -v "$RUNNER_TEMP/swastha:/backup" postgres:17-alpine \
+            sh -ec 'pg_dump --dbname="$PG_DSN" --format=custom --no-owner --no-acl --file="/backup/$1"' sh "$filename"
+          test -s "$RUNNER_TEMP/swastha/$filename"
+      - name: Encrypt before transfer and verify archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          cd "$RUNNER_TEMP/swastha"
+          printf '%s' "$BACKUP_PASSPHRASE" > "$RUNNER_TEMP/swastha-passphrase"
+          chmod 600 "$RUNNER_TEMP/swastha-passphrase"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file "$RUNNER_TEMP/swastha-passphrase" \
+            --symmetric --cipher-algo AES256 --s2k-digest-algo SHA512 \
+            --output "$filename.gpg" "$filename"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file "$RUNNER_TEMP/swastha-passphrase" \
+            --decrypt "$filename.gpg" 2>/dev/null | docker run --rm -i postgres:17-alpine pg_restore --list >/dev/null
+          sha256sum "$filename.gpg" > "$filename.gpg.sha256"
+          rm -f "$filename"
+      - name: Upload encrypted dump and checksum to Google Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rclone
+          mkdir -p "$HOME/.config/rclone"
+          umask 077
+          printf '%s' "$RCLONE_CONFIG_B64" | base64 --decode > "$HOME/.config/rclone/rclone.conf"
+          cd "$RUNNER_TEMP/swastha"
+          rclone copyto "$filename.gpg" "swastha-drive:Production Database — Encrypted/$filename.gpg" --retries 3
+          rclone copyto "$filename.gpg.sha256" "swastha-drive:Production Database — Encrypted/$filename.gpg.sha256" --retries 3
+          # Check the destination exists and has the expected size.
+          rclone size "swastha-drive:Production Database — Encrypted/$filename.gpg"
+      - name: Clear local secrets and temporary dump
+        if: always()
+        shell: bash
+        run: |
+          rm -rf "$RUNNER_TEMP/swastha" "$RUNNER_TEMP/swastha-passphrase" "$HOME/.config/rclone/rclone.conf"
