@@ -1206,6 +1206,26 @@ export default function TeacherDashboard() {
 
         {activeTab === "overview" && (
           <section>
+            <section aria-label="Teacher Command Centre" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:24,borderRadius:16,marginBottom:20}}>
+              <div style={{fontSize:12,letterSpacing:2,color:"#e6c875"}}>SWASTHA 2030 · TEACHER WORKSPACE</div>
+              <h2 style={{margin:"8px 0"}}>Clinical & Educational Command Centre</h2>
+              <p style={{color:"#dbeafe"}}>Monitor your assigned students and open existing development workflows.</p>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:10}}>
+                {[
+                  {label:"Assigned students",count:students.length,tab:"students"},
+                  {label:"Assessments",count:assessments.length,tab:"assessments"},
+                  {label:"Awaiting review",count:assessments.filter(a=>a.status==="submitted").length,tab:"assessments"},
+                  {label:"Reviewed",count:assessments.filter(a=>a.status==="reviewed").length,tab:"assessments"},
+                  {label:"Learning activities",count:activityAssignments.length,tab:"activities"},
+                  {label:"Completed activities",count:completedActivities,tab:"activities"}
+                ].map(item=><div key={item.label} style={{background:"#ffffff14",border:"1px solid #ffffff30",borderRadius:10,padding:14}}><div style={{fontSize:26,fontWeight:800}}>{item.count}</div><div style={{fontSize:13}}>{item.label}</div></div>)}
+              </div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:16}}>
+                <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/student-progress")}>Student Progress</button>
+                <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp")}>Development Plans</button>
+                <button type="button" style={primaryButton} onClick={()=>router.push("/staff/assessment-certificates")}>Certificates</button>
+              </div>
+            </section>
             <h2>Analytics & Charts Overview</h2>
 
             <p style={{ color: "#667a74" }}>
