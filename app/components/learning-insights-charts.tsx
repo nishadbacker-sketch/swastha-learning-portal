@@ -12,6 +12,7 @@ type Props={
  activities:Activity[];
  reviewedResults?:ReviewedResult[];
  audience:"family"|"teacher";
+ hideStudentOverview?:boolean;
 };
 const green="#176b58",navy="#0f4c5c",blue="#0284c7",orange="#b45309",grey="#64748b";
 const shell:React.CSSProperties={border:"1px solid #dce8e1",background:"#fff",borderRadius:13,padding:16,minWidth:0};
@@ -26,7 +27,7 @@ function Bar({value,max=100,color,label}:{value:number;max?:number;color:string;
  </div>;
 }
 /** Presentation only: callers supply records already limited by Supabase RLS and their selected children/assigned students. */
-export default function LearningInsightsCharts({students,assessments,activities,reviewedResults=[],audience}:Props){
+export default function LearningInsightsCharts({students,assessments,activities,reviewedResults=[],audience,hideStudentOverview=false}:Props){
  const [selected,setSelected]=useState("all");
  const ids=new Set(students.map(s=>s.id));
  const scoped=students.some(s=>s.id===selected)?selected:"all";
@@ -92,7 +93,7 @@ export default function LearningInsightsCharts({students,assessments,activities,
     </>}
    </section>
   </div>
-  <section style={shell}>
+  {!(audience==="teacher"&&hideStudentOverview)&&<section style={shell}>
    <h3 style={{fontSize:16,margin:"0 0 8px"}}>{audience==="teacher"?"Per-Student Progress Overview":"Progress by Child"}</h3>
    <p style={{fontSize:12,color:grey,margin:"0 0 14px"}}>Each row represents one student. Empty activity records are shown as not assigned, not as 0% mastery.</p>
    {byStudent.length===0?<p style={{fontSize:13,color:grey}}>No permitted student records available.</p>:
@@ -106,7 +107,7 @@ export default function LearningInsightsCharts({students,assessments,activities,
       <small style={{color:grey}}>{s.completed}/{s.assigned} activities · {s.reviewed}/{s.assessments} assessments reviewed</small>
      </div>)}
     </div>}
-  </section>
+  </section>}
   {audience==="family"&&<section style={shell}>
    <h3 style={{fontSize:16,margin:"0 0 8px"}}>Approved Assessment Readiness</h3>
    <p style={{fontSize:12,color:grey,margin:"0 0 13px"}}>Only reviewed, published standard assessments are shown. Percentages are assessment indicators, not a diagnosis.</p>
