@@ -14,7 +14,7 @@ SELECT
  '{"0":{"en":"Not demonstrated","ml":"പ്രകടമാക്കിയില്ല"},"1":{"en":"Full assistance","ml":"പൂർണ്ണ സഹായം"},"2":{"en":"Partial assistance","ml":"ഭാഗിക സഹായം"},"3":{"en":"Independent","ml":"സ്വതന്ത്രമായി"},"NA":{"en":"Not observed or not applicable (specify N/O or N/A in remarks)","ml":"നിരീക്ഷിച്ചില്ല അല്ലെങ്കിൽ ബാധകമല്ല (കുറിപ്പിൽ N/O അഥവാ N/A വ്യക്തമാക്കുക)"}}'::jsonb
 FROM public.user_roles ur
 JOIN auth.users au ON au.id=ur.user_id
-WHERE ur.role='owner'
+WHERE ur.role IN ('owner','teacher')
   AND NOT EXISTS (SELECT 1 FROM public.custom_assessment_templates t WHERE t.title='Behavioural Therapy — Informal Skills Assessment')
-ORDER BY ur.created_at ASC
+ORDER BY CASE WHEN ur.role='owner' THEN 0 ELSE 1 END, ur.created_at ASC
 LIMIT 1;
