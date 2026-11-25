@@ -131,7 +131,7 @@ export default function StaffCoursePreview(){
  {sectionsCount>0&&<nav aria-label="Assessment sections" style={{display:"flex",gap:8,flexWrap:"wrap",margin:"20px 0"}}>
  {Array.from({length:sectionsCount},(_,i)=>{const label=bank?
   bankLabel("AREA_"+(i+1),standardAreas[i].title,LP_MALAYALAM_AREAS[i]):
-  (language==="ml"&&(language==="ml"&&customSections[i].title_ml?customSections[i].title_ml:customSections[i].title)_ml?customSections[i].title_ml:customSections[i].title);
+  (language==="ml"&&customSections[i].title_ml?customSections[i].title_ml:customSections[i].title);
  return <button type="button" key={i} onClick={()=>setActive(i)} aria-current={current===i?"step":undefined} style={{...action,background:current===i?"#176b58":"#eaf4ef",color:current===i?"white":"#175d4e"}}>{i+1}. {label}</button>})}
  </nav>}
  {bank&&standardAreas[current]&&<section style={panel}>
