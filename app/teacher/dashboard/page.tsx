@@ -1336,8 +1336,8 @@ export default function TeacherDashboard() {
                     {stages.map(([label,status],i)=><div key={label} style={{padding:10,background:"#f3f9f6",borderRadius:8}}><small>{i+1}. {label}</small><div style={{fontWeight:700,fontSize:13}}>{status}</div></div>)}
                   </div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
-                    <button type="button" style={primaryButton} onClick={()=>setActiveTab("students")}>Student & guardian records</button>
-                    <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp")}>Open IDP</button>
+                    <button type="button" style={primaryButton} onClick={()=>{setProfileId(student.id);setActiveTab("students");}}>Student & guardian records</button>
+                    <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp?student="+encodeURIComponent(student.id))}>Open IDP</button>
                     <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/student-progress")}>Progress history</button>
                     <button type="button" style={primaryButton} onClick={()=>router.push("/staff/assessment-certificates")}>Certificates</button>
                   </div>
@@ -1947,7 +1947,7 @@ export default function TeacherDashboard() {
 
               <div style={panel}>
                 <h3>
-                  Student Profile & Guardian Contact Details
+                  Student 360° Profile
                 </h3>
 
                 {profileId&&<button type="button"
@@ -2053,6 +2053,16 @@ export default function TeacherDashboard() {
                       </p>
                     </div>
 
+                    <section style={{marginTop:20}}>
+                      <h3>Assessment & Activity History</h3>
+                      <p>Reviewed assessments: {assessments.filter(a=>a.student_id===selectedProfile.id&&a.status==="reviewed").length} / {assessments.filter(a=>a.student_id===selectedProfile.id).length}</p>
+                      <p>Completed activities: {activityAssignments.filter(a=>a.student_id===selectedProfile.id&&a.status==="completed").length} / {activityAssignments.filter(a=>a.student_id===selectedProfile.id).length}</p>
+                      {assessments.filter(a=>a.student_id===selectedProfile.id).slice().sort((a,b)=>b.assigned_at.localeCompare(a.assigned_at)).map(a=><div key={a.id} style={{padding:10,borderBottom:"1px solid #dce8e1"}}>{formatDate(a.assigned_at)} · {a.assessment_level} · <StatusBadge value={a.status}/>{a.status==="reviewed"&&<button type="button" style={{...primaryButton,marginLeft:8}} onClick={()=>router.push("/assessment-report/"+a.id)}>Report</button>}</div>)}
+                      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
+                        <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp?student="+encodeURIComponent(selectedProfile.id))}>Development plan</button>
+                        <button type="button" style={primaryButton} onClick={()=>router.push("/student/history/"+selectedProfile.id)}>Full development history</button>
+                      </div>
+                    </section>
                     <h3 style={{ marginTop: 24 }}>
                       Parent / Guardian Details
                     </h3>
