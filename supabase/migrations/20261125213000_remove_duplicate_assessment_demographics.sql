@@ -19,7 +19,7 @@ SET structure = (
                'q_BT2_CLIENT_01','q_BT2_CLIENT_02','q_BT2_CLIENT_03'
              ))
           )
-        ) ORDER BY c.ordinality
+        )) ORDER BY c.ordinality
       )
       FROM jsonb_array_elements(s.value->'categories') WITH ORDINALITY AS c(value,ordinality)
     )) ORDER BY s.ordinality
