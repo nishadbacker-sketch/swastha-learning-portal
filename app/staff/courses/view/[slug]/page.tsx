@@ -25,6 +25,7 @@ const standardOptions:[string,string,string][]=[
  ["3","Independent","#10b981"],
  ["NA","Not assessed","#64748b"]
 ];
+const behaviourOptions:[string,string,string][]=[["0","Not demonstrated","#ef4444"],["1","Full assistance","#f97316"],["2","Partial assistance","#0284c7"],["3","Independent","#10b981"],["NA","Not observed / Not applicable","#64748b"]];
 const customOptions:[string,string,string][]=[
  ["1","Needs support","#f97316"],
  ["2","Developing","#0284c7"],
@@ -141,7 +142,7 @@ export default function StaffCoursePreview(){
   {q.response_type==="written"?<PreviewObservation label={tr("Written answer (disabled)","എഴുത്ത് ഉത്തരം (പ്രവർത്തനരഹിതം)")}/>:
    q.response_type==="multiple_choice"?
    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>{(q.options||[]).map(option=><button key={option.id} type="button" disabled role="radio" aria-checked={false} style={mutedControl}>{language==="ml"&&option.text_ml?option.text_ml:option.text}</button>)}</div>:
-   <PreviewRating options={customOptions}/>}
+   <PreviewRating options={template.title==="Behavioural Therapy — Skills Assessment"?behaviourOptions:customOptions}/>}
   <PreviewObservation label={tr("Observation or example (disabled)","നിരീക്ഷണം / ഉദാഹരണം (പ്രവർത്തനരഹിതം)")}/>
  </article>)}</section>)}</section>}
  {sectionsCount>1&&<div style={{display:"flex",justifyContent:"space-between",gap:12,marginTop:18}}>

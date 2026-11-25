@@ -66,6 +66,8 @@ export default function CustomAssessmentPage(){
  const status=assessment?.status||"assigned";
  const readOnly=status==="submitted"||status==="reviewed";
  const progress=total?Math.round(done/total*100):0;
+ const isBehaviouralSkills=template?.title==="Behavioural Therapy — Skills Assessment";
+ const ratingChoices:[string,string,string][]=isBehaviouralSkills?[["0","Not demonstrated","#ef4444"],["1","Full assistance","#f97316"],["2","Partial assistance","#0284c7"],["3","Independent","#10b981"],["NA","Not observed / Not applicable","#64748b"]]:palette;
  function answer(id:string,patch:Partial<Answer>){
   setAnswers(previous=>({...previous,[id]:{score:previous[id]?.score??null,choice:previous[id]?.choice??null,written_answer:previous[id]?.written_answer??"",observation:previous[id]?.observation??"",...patch}}));
   setMessage("");
@@ -124,11 +126,11 @@ export default function CustomAssessmentPage(){
      </button>)}
     </section>}
     <section style={panel}><h3>{tr("How to Answer","ഉത്തരം നൽകേണ്ട വിധം")}</h3>
-     <p>{tr("For rating questions choose 1, 2 or 3 (or NA). For multiple-choice questions select an option. For written questions type your own answer.","റേറ്റിംഗ് ചോദ്യങ്ങൾക്ക് 1, 2, 3 അല്ലെങ്കിൽ NA തിരഞ്ഞെടുക്കുക. ഓപ്ഷൻ ചോദ്യങ്ങൾക്ക് ഒരു ഉത്തരം തിരഞ്ഞെടുക്കുക. എഴുത്തുചോദ്യങ്ങൾക്ക് സ്വന്തം വാക്കുകളിൽ ഉത്തരം എഴുതുക.")}</p>
+     <p>{tr("For rating questions select the score shown (or NA). For multiple-choice questions select an option. For written questions type your own answer.","റേറ്റിംഗ് ചോദ്യങ്ങൾക്ക് കാണിച്ചിരിക്കുന്ന സ്കോർ അല്ലെങ്കിൽ NA തിരഞ്ഞെടുക്കുക. ഓപ്ഷൻ ചോദ്യങ്ങൾക്ക് ഒരു ഉത്തരം തിരഞ്ഞെടുക്കുക. എഴുത്തുചോദ്യങ്ങൾക്ക് സ്വന്തം വാക്കുകളിൽ ഉത്തരം എഴുതുക.")}</p>
     </section>
     <section style={panel}><h3>{tr("Assessment Sections","വിലയിരുത്തൽ വിഭാഗങ്ങൾ")}</h3><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{sections.map((s,si)=>{
      const ids=s.categories.flatMap(c=>c.questions.map(q=>q.id));
-     const count=ids.filter(id=>answers[id]?.score!=null).length;
+     const count=ids.filter(id=>{const item=items.find(q=>q.id===id);return item?.response_type==="written"?Boolean(answers[id]?.written_answer?.trim()):item?.response_type==="multiple_choice"?answers[id]?.choice!=null:answers[id]?.score!=null;}).length;
      return <button key={s.id} style={activeSection===si?btn:{...btn,background:"#e0f2f1",color:"#0f4c5c"}} onClick={()=>setActiveSection(si)}>{tr("Section","വിഭാഗം")} {si+1} · {count}/{ids.length}</button>;
     })}</div></section>
     {sections[activeSection]&&<section style={panel}><h2>{sections[activeSection].title}</h2>
@@ -157,7 +159,7 @@ export default function CustomAssessmentPage(){
            </button>)}
           </div>
         : <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
-           {palette.map(([score,label,color])=><button key={score} title={label} aria-pressed={a?.score===score} style={{border:"1px solid "+color,background:a?.score===score?color:"white",color:a?.score===score?"white":color,padding:"10px 16px",borderRadius:8,fontWeight:700,cursor:"pointer"}} onClick={()=>answer(q.id,{choice:null,score})}>{score}</button>)}
+           {ratingChoices.map(([score,label,color])=><button key={score} title={label} aria-pressed={a?.score===score} style={{border:"1px solid "+color,background:a?.score===score?color:"white",color:a?.score===score?"white":color,padding:"10px 16px",borderRadius:8,fontWeight:700,cursor:"pointer"}} onClick={()=>answer(q.id,{choice:null,score})}>{score}</button>)}
           </div>}
         <textarea style={{...control,minHeight:62}} value={a?.observation||""} maxLength={2000} placeholder={tr("Observation or example (optional)","നിരീക്ഷണം അല്ലെങ്കിൽ ഉദാഹരണം (നിർബന്ധമല്ല)")} onChange={e=>answer(q.id,{observation:e.target.value})}/>
        </div>;
