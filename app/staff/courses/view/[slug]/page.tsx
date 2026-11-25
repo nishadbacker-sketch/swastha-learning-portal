@@ -8,8 +8,8 @@ import {LP_MALAYALAM_QUESTIONS,LP_MALAYALAM_INTERVIEW,LP_MALAYALAM_TALENTS,LP_MA
 
 type Choice={id:string;text:string;text_ml?:string};
 type Question={id?:string;text?:string;text_ml?:string;response_type?:"rating"|"multiple_choice"|"written";options?:Choice[]};
-type Category={id?:string;title:string;questions:Question[]};
-type Section={id?:string;title:string;categories:Category[]};
+type Category={id?:string;title:string;title_ml?:string;questions:Question[]};
+type Section={id?:string;title:string;title_ml?:string;categories:Category[]};
 type Template={id:string;title:string;description:string;level:string;status:string;structure:Section[]};
 type Language="en"|"ml";
 type Publisher={template_id:string;creator_name:string;creator_staff_id:string|null;creator_user_id:string};
@@ -58,6 +58,7 @@ export default function StaffCoursePreview(){
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
  const [language,setLanguage]=useState<Language>("en");
+ const [standardTranslations,setStandardTranslations]=useState<Record<string,{original_text:string;text_ml:string}>>({});
  const [active,setActive]=useState(0);
  const tr=(en:string,ml:string)=>language==="ml"?ml:en;
 
@@ -68,6 +69,13 @@ export default function StaffCoursePreview(){
   const {data:userRole,error:roleError}=await supabase.from("user_roles").select("role").eq("user_id",auth.user.id).single();
   if(roleError||!userRole||!["owner","admin","clinic_admin","teacher"].includes(userRole.role)){router.replace("/login");return;}
   if(mounted)setRole(userRole.role);
+  if(isStandard && slug!=="LP"){
+    const {data:rows,error:trError}=await supabase.from("standard_assessment_translations")
+      .select("question_id,original_text,text_ml").eq("level",slug);
+    if(trError)throw Error("Malayalam translations unavailable: "+trError.message);
+    if(mounted)setStandardTranslations(Object.fromEntries(((rows||[]) as {question_id:string;original_text:string;text_ml:string}[])
+      .map(row=>[row.question_id,{original_text:row.original_text,text_ml:row.text_ml}])));
+  }
   if(!isStandard){
    if(!/^custom-[0-9a-f-]{36}$/i.test(slug))throw Error("Unknown assessment link.");
    const {data,error:fetchError}=await supabase.from("custom_assessment_templates")
@@ -91,10 +99,15 @@ export default function StaffCoursePreview(){
  const isLP=slug==="LP";
  const lpTranslated=language==="ml"&&isLP;
  const lpBase=isLP?CHECKLIST_DATA.LP:null;
+ function bankLabel(id:string,original:string,lpText?:string){
+  if(language!=="ml")return original;
+  if(isLP)return lpText||original;
+  const translated=standardTranslations[id];
+  return translated?.original_text===original?translated.text_ml:original;
+ }
  function lpQuestion(domainId:string,index:number,original:string){
-  if(!lpTranslated)return original;
-  const key=domainId+"_"+(index+1);
-  return LP_MALAYALAM_QUESTIONS[key]||original;
+  const id=domainId+"_"+(index+1);
+  return bankLabel(id,original,LP_MALAYALAM_QUESTIONS[id]);
  }
  if(loading)return <main style={{padding:32}}>Loading assessment preview…</main>;
  if(!role)return <main style={{padding:32}} role="alert">{error||"Access denied"}</main>;
@@ -117,25 +130,25 @@ export default function StaffCoursePreview(){
  {bank&&<section style={panel}><h2>{tr("Assessment instructions","വിലയിരുത്തൽ നിർദേശങ്ങൾ")}</h2><p>{bank.purpose}</p><p>{tr("Student identity, class, birth date and guardian information are automatically shown when an assessment is assigned. This unassigned staff preview contains no student data.","വിദ്യാർത്ഥിക്ക് അസൈൻ ചെയ്യുമ്പോൾ പേരും ക്ലാസും ജനനത്തീയതിയും രക്ഷിതാവിന്റെ വിവരങ്ങളും സ്വയമേവ കാണിക്കും. ഈ സ്റ്റാഫ് പ്രിവ്യൂവിൽ വിദ്യാർത്ഥിയുടെ വിവരങ്ങൾ ഇല്ല.")}</p></section>}
  {sectionsCount>0&&<nav aria-label="Assessment sections" style={{display:"flex",gap:8,flexWrap:"wrap",margin:"20px 0"}}>
  {Array.from({length:sectionsCount},(_,i)=>{const label=bank?
-  (lpTranslated?LP_MALAYALAM_AREAS[i]||standardAreas[i].title:standardAreas[i].title):
-  customSections[i].title;
+  bankLabel("AREA_"+(i+1),standardAreas[i].title,LP_MALAYALAM_AREAS[i]):
+  (language==="ml"&&customSections[i].title_ml?customSections[i].title_ml:customSections[i].title);
  return <button type="button" key={i} onClick={()=>setActive(i)} aria-current={current===i?"step":undefined} style={{...action,background:current===i?"#176b58":"#eaf4ef",color:current===i?"white":"#175d4e"}}>{i+1}. {label}</button>})}
  </nav>}
  {bank&&standardAreas[current]&&<section style={panel}>
- <h2>{lpTranslated?LP_MALAYALAM_AREAS[current]||standardAreas[current].title:standardAreas[current].title}</h2>
+ <h2>{bankLabel("AREA_"+(current+1),standardAreas[current].title,LP_MALAYALAM_AREAS[current])}</h2>
  {standardAreas[current].subDomains.map((domain,di)=><section key={domain.id} style={{borderTop:"1px solid #dce8e1",paddingTop:16,marginTop:16}}>
- <h3>{lpTranslated?LP_MALAYALAM_DOMAINS[current]?.[di]||domain.title:domain.title}</h3>
+ <h3>{bankLabel("DOMAIN_"+domain.id,domain.title,LP_MALAYALAM_DOMAINS[current]?.[di])}</h3>
  {domain.items.map((q,qi)=><article key={domain.id+"_"+(qi+1)} style={{padding:"15px 11px",borderBottom:"1px solid #e2e8f0",borderLeft:"4px solid #e0ece6",scrollMarginTop:100}}>
   <strong>{domain.title.match(/^([A-Z])\./)?.[1]||domain.id.slice(-1)}.{qi+1} — {lpQuestion(domain.id,qi,q)}</strong>
   <PreviewRating options={standardOptions}/><PreviewObservation label={tr("Observation or example (disabled)","നിരീക്ഷണം / ഉദാഹരണം (പ്രവർത്തനരഹിതം)")}/>
  </article>)}</section>)}</section>}
- {bank&&<><section style={panel}><h2>{tr("Parent / Guardian Interview","രക്ഷിതാവുമായുള്ള അഭിമുഖം")}</h2>{bank.parentInterview.map((q,i)=><article key={i} style={{padding:"12px 0",borderBottom:"1px solid #e2e8f0"}}><strong>{i+1}. {lpTranslated&&lpBase&&q===lpBase.parentInterview[i]?LP_MALAYALAM_INTERVIEW[i]||q:q}</strong><PreviewObservation label={tr("Answer (disabled)","ഉത്തരം (പ്രവർത്തനരഹിതം)")}/></article>)}</section>
- <section style={panel}><h2>{tr("Practical activities","പ്രായോഗിക പ്രവർത്തനങ്ങൾ")}</h2>{bank.practicalActivities.map((p,i)=><article key={i} style={{padding:"12px 0",borderBottom:"1px solid #e2e8f0"}}><strong>{p.name}</strong><p>{p.task}</p><small>{tr("Observe","നിരീക്ഷിക്കുക")}: {p.observe}</small><PreviewObservation label={tr("Observation (disabled)","നിരീക്ഷണം (പ്രവർത്തനരഹിതം)")}/></article>)}</section>
- <section style={panel}><h2>{tr("Strengths and talents","കഴിവുകളും താൽപര്യങ്ങളും")}</h2>{bank.talents.map((t,i)=><div key={i} style={{padding:10,borderBottom:"1px solid #e2e8f0"}}><input type="checkbox" disabled aria-label={t}/> {lpTranslated&&lpBase&&t===lpBase.talents[i]?LP_MALAYALAM_TALENTS[i]||t:t}</div>)}</section></>}
+ {bank&&<><section style={panel}><h2>{tr("Parent / Guardian Interview","രക്ഷിതാവുമായുള്ള അഭിമുഖം")}</h2>{bank.parentInterview.map((q,i)=><article key={i} style={{padding:"12px 0",borderBottom:"1px solid #e2e8f0"}}><strong>{i+1}. {bankLabel("PARENT_INTERVIEW_"+(i+1),q,lpBase&&q===lpBase.parentInterview[i]?LP_MALAYALAM_INTERVIEW[i]:undefined)}</strong><PreviewObservation label={tr("Answer (disabled)","ഉത്തരം (പ്രവർത്തനരഹിതം)")}/></article>)}</section>
+ <section style={panel}><h2>{tr("Practical activities","പ്രായോഗിക പ്രവർത്തനങ്ങൾ")}</h2>{bank.practicalActivities.map((p,i)=><article key={i} style={{padding:"12px 0",borderBottom:"1px solid #e2e8f0"}}><strong>{bankLabel("PRACTICAL_NAME_"+(i+1),p.name)}</strong><p>{bankLabel("PRACTICAL_TASK_"+(i+1),p.task)}</p><small>{tr("Observe","നിരീക്ഷിക്കുക")}: {bankLabel("PRACTICAL_OBSERVE_"+(i+1),p.observe)}</small><PreviewObservation label={tr("Observation (disabled)","നിരീക്ഷണം (പ്രവർത്തനരഹിതം)")}/></article>)}</section>
+ <section style={panel}><h2>{tr("Strengths and talents","കഴിവുകളും താൽപര്യങ്ങളും")}</h2>{bank.talents.map((t,i)=><div key={i} style={{padding:10,borderBottom:"1px solid #e2e8f0"}}><input type="checkbox" disabled aria-label={t}/> {bankLabel("PARENT_TALENT_"+(i+1),t,lpBase&&t===lpBase.talents[i]?LP_MALAYALAM_TALENTS[i]:undefined)}</div>)}</section></>}
  {template&&<section style={panel}><strong>{tr("Assessment level","വിലയിരുത്തൽ ലെവൽ")}:</strong> {template.level} · <strong>{tr("Status","നില")}:</strong> {template.status} · <strong>{tr("Questions","ചോദ്യങ്ങൾ")}:</strong> {totalCustom}{template.status==="published"&&<p style={{marginBottom:0,marginTop:10,overflowWrap:"anywhere"}}><strong>{tr("Published by","പ്രസിദ്ധീകരിച്ചത്")}:</strong> {publisher?.creator_name||tr("Creator unavailable","സ്രഷ്ടാവിന്റെ വിവരങ്ങൾ ലഭ്യമല്ല")} ({publisher?.creator_staff_id||publisher?.creator_user_id||tr("ID unavailable","ഐഡി ലഭ്യമല്ല")})</p>}</section>}
- {template&&customSections[current]&&<section style={panel}><h2>{customSections[current].title}</h2>
+ {template&&customSections[current]&&<section style={panel}><h2>{language==="ml"&&customSections[current].title_ml?customSections[current].title_ml:customSections[current].title}</h2>
  {customSections[current].categories.map((cat,ci)=><section key={cat.id||ci} style={{borderTop:"1px solid #dce8e1",paddingTop:16,marginTop:16}}>
- <h3>{cat.title}</h3>
+ <h3>{language==="ml"&&cat.title_ml?cat.title_ml:cat.title}</h3>
  {cat.questions.map((q,qi)=><article key={q.id||qi} style={{padding:"16px 11px",borderBottom:"1px solid #e2e8f0",borderLeft:"4px solid #e0ece6"}}>
   <strong>{String.fromCharCode(65+ci)}.{qi+1} — {language==="ml"&&q.text_ml?q.text_ml:q.text||"Untitled question"}</strong>
   {q.response_type==="written"?<PreviewObservation label={tr("Written answer (disabled)","എഴുത്ത് ഉത്തരം (പ്രവർത്തനരഹിതം)")}/>:

@@ -84,6 +84,7 @@ export default function ParentAssessmentPage() {
     useState<Assignment | null>(null);
 
   const [versionedChecklist,setVersionedChecklist]=useState<(typeof CHECKLIST_DATA)[AssessmentLevel]|null>(null);
+  const [standardTranslations,setStandardTranslations]=useState<Record<string,{original_text:string;text_ml:string}>>({});
 
   const [student, setStudent] =
     useState<Student | null>(null);
@@ -194,6 +195,11 @@ export default function ParentAssessmentPage() {
 
         const latestChecklist=await checklistForAssignment(assigned.assessment_level as AssessmentLevel,assigned.assigned_at);
         setVersionedChecklist(latestChecklist);
+        if(assigned.assessment_level!=="LP"){
+          const {data:rows,error:translationError}=await supabase.from("standard_assessment_translations").select("question_id,original_text,text_ml").eq("level",assigned.assessment_level);
+          if(translationError)throw new Error("Malayalam translations could not be loaded: "+translationError.message);
+          setStandardTranslations(Object.fromEntries(((rows||[]) as {question_id:string;original_text:string;text_ml:string}[]).map(item=>[item.question_id,{original_text:item.original_text,text_ml:item.text_ml}])));
+        }
         setAssignment(assigned as Assignment);
         setStudent(child as Student);
 
@@ -238,6 +244,19 @@ export default function ParentAssessmentPage() {
   }, [assignmentId, router]);
 
   const checklist = assignment ? versionedChecklist : null;
+  function localizedQuestion(id:string,original:string){
+    if(!malayalam)return original;
+    if(assignment?.assessment_level==="LP"){
+      const bankQuestion=CHECKLIST_DATA.LP.areas.flatMap(a=>a.subDomains).flatMap(d=>d.items.map((text,i)=>({id:d.id+"_"+(i+1),text}))).find(item=>item.id===id)?.text;
+      return bankQuestion===original?LP_MALAYALAM_QUESTIONS[id]||original:original;
+    }
+    const translation=standardTranslations[id];return translation?.original_text===original?translation.text_ml:original;
+  }
+  function localizedLabel(id:string,original:string,lpText?:string){
+    if(!malayalam)return original;
+    if(assignment?.assessment_level==="LP")return lpText||original;
+    const translation=standardTranslations[id];return translation?.original_text===original?translation.text_ml:original;
+  }
 
   const questionIds = checklist
     ? checklist.areas.flatMap((area) =>
@@ -643,7 +662,7 @@ export default function ParentAssessmentPage() {
                       onClick={() => jumpToQuestion(item.areaIndex,item.id)}
                       style={{textAlign:"left",background:"#fff",border:"1px solid #fbbf24",borderRadius:8,padding:12,cursor:"pointer",color:"#78350f"}}>
                       <strong>{tr("Area","മേഖല")} {item.areaIndex + 1} · {item.domainTitle} · {tr("Question","ചോദ്യം")} {item.domainTitle.match(/^([A-Z])\./)?.[1] || item.id.split("_")[1]?.slice(-1) || ""}.{item.index + 1}</strong>
-                      <span style={{display:"block",marginTop:5}}>{lpMalayalam && item.question === CHECKLIST_DATA.LP.areas.flatMap(a=>a.subDomains).flatMap(d=>d.items.map((q,i)=>({id:d.id+"_"+(i+1),q}))).find(q=>q.id===item.id)?.q ? LP_MALAYALAM_QUESTIONS[item.id] || item.question : item.question}</span>
+                      <span style={{display:"block",marginTop:5}}>{localizedQuestion(item.id,item.question)}</span>
                     </button>
                   ))}
                 </div>
@@ -761,7 +780,7 @@ export default function ParentAssessmentPage() {
               {activeArea < checklist.areas.length ? (
                 <section style={card}>
                   <h3 style={{ color: "#0f4c5c" }}>
-                    {lpMalayalam ? LP_MALAYALAM_AREAS[activeArea] : checklist.areas[activeArea].title}
+                    {localizedLabel("AREA_"+(activeArea+1),checklist.areas[activeArea].title,lpMalayalam?LP_MALAYALAM_AREAS[activeArea]:undefined)}
                   </h3>
 
                   {checklist.areas[
@@ -776,7 +795,7 @@ export default function ParentAssessmentPage() {
                           borderRadius: 9,
                         }}
                       >
-                        {lpMalayalam ? LP_MALAYALAM_DOMAINS[activeArea]?.[domainIndex] || domain.title : domain.title}
+                        {localizedLabel("DOMAIN_"+domain.id,domain.title,lpMalayalam?LP_MALAYALAM_DOMAINS[activeArea]?.[domainIndex]:undefined)}
                       </h4>
 
                       {domain.items.map((question, index) => {
@@ -802,7 +821,7 @@ export default function ParentAssessmentPage() {
                                 lineHeight: 1.6,
                               }}
                             >
-                              {domain.title.match(/^([A-Z])\./)?.[1] || domain.id.slice(-1)}.{index + 1} — {lpMalayalam && question === CHECKLIST_DATA.LP.areas.flatMap(a=>a.subDomains).flatMap(d=>d.items.map((q,i)=>({id:d.id+"_"+(i+1),q}))).find(q=>q.id===id)?.q ? LP_MALAYALAM_QUESTIONS[id] || question : question}
+                              {domain.title.match(/^([A-Z])\./)?.[1] || domain.id.slice(-1)}.{index + 1} — {localizedQuestion(id,question)}
                             </p>
 
                             <div
@@ -879,7 +898,7 @@ export default function ParentAssessmentPage() {
                             key={id}
                             style={{ marginBottom: 20 }}
                           >
-                            <p><strong>{lpMalayalam && question===CHECKLIST_DATA.LP.parentInterview[index] ? LP_MALAYALAM_INTERVIEW[index] || question : question}</strong></p>
+                            <p><strong>{localizedLabel("PARENT_INTERVIEW_"+(index+1),question,lpMalayalam&&question===CHECKLIST_DATA.LP.parentInterview[index]?LP_MALAYALAM_INTERVIEW[index]:undefined)}</strong></p>
 
                             <textarea
                               style={input}
@@ -915,7 +934,7 @@ export default function ParentAssessmentPage() {
                           key={id}
                           style={{ marginBottom: 16 }}
                         >
-                          <p><strong>{lpMalayalam && talent===CHECKLIST_DATA.LP.talents[index] ? LP_MALAYALAM_TALENTS[index] || talent : talent}</strong></p>
+                          <p><strong>{localizedLabel("PARENT_TALENT_"+(index+1),talent,lpMalayalam&&talent===CHECKLIST_DATA.LP.talents[index]?LP_MALAYALAM_TALENTS[index]:undefined)}</strong></p>
 
                           <textarea
                             rows={2}
