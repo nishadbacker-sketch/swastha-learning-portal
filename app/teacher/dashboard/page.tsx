@@ -1206,6 +1206,26 @@ export default function TeacherDashboard() {
 
         {activeTab === "overview" && (
           <section>
+            <section aria-label="Teacher Command Centre" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:24,borderRadius:16,marginBottom:20}}>
+              <div style={{fontSize:12,letterSpacing:2,color:"#e6c875"}}>SWASTHA 2030 · TEACHER WORKSPACE</div>
+              <h2 style={{margin:"8px 0"}}>Clinical & Educational Command Centre</h2>
+              <p style={{color:"#dbeafe"}}>Monitor your assigned students and open existing development workflows.</p>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:10}}>
+                {[
+                  {label:"Assigned students",count:students.length,tab:"students"},
+                  {label:"Assessments",count:assessments.length,tab:"assessments"},
+                  {label:"Awaiting review",count:assessments.filter(a=>a.status==="submitted").length,tab:"assessments"},
+                  {label:"Reviewed",count:assessments.filter(a=>a.status==="reviewed").length,tab:"assessments"},
+                  {label:"Learning activities",count:activityAssignments.length,tab:"activities"},
+                  {label:"Completed activities",count:completedActivities,tab:"activities"}
+                ].map(item=><button type="button" key={item.label} onClick={()=>setActiveTab(item.tab as Tab)} style={{background:"#ffffff14",color:"#fff",textAlign:"left",cursor:"pointer",border:"1px solid #ffffff30",borderRadius:10,padding:14}}><div style={{fontSize:26,fontWeight:800}}>{item.count}</div><div style={{fontSize:13}}>{item.label}</div></button>)}
+              </div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:16}}>
+                <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/student-progress")}>Student Progress</button>
+                <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp")}>Development Plans</button>
+                <button type="button" style={primaryButton} onClick={()=>router.push("/staff/assessment-certificates")}>Certificates</button>
+              </div>
+            </section>
             <h2>Analytics & Charts Overview</h2>
 
             <p style={{ color: "#667a74" }}>
@@ -1293,6 +1313,37 @@ export default function TeacherDashboard() {
                 )}
               </div>
             </div>
+            <section style={{...panel,marginTop:16}}>
+              <h3>Student Development Journey</h3>
+              <p style={{color:"#667a74"}}>Observed milestones for assigned students. Open the linked workflows to verify plan, report and certificate status.</p>
+              {students.length===0?<p>No assigned students.</p>:students.map(student=>{
+                const records=assessments.filter(a=>a.student_id===student.id);
+                const tasks=activityAssignments.filter(a=>a.student_id===student.id);
+                const reviewed=records.filter(a=>a.status==="reviewed");
+                const stages=[
+                  ["Registration","Recorded"],
+                  ["Baseline assessment",records.length?"Assigned":"Not assigned"],
+                  ["Teacher review",reviewed.length?"Reviewed":"Not confirmed"],
+                  ["Individual development plan","Open plan"],
+                  ["Learning activities",tasks.length?tasks.filter(a=>a.status==="completed").length+" / "+tasks.length+" completed":"Not assigned"],
+                  ["Reassessment","Verify history"],
+                  ["Progress report","Open progress"],
+                  ["Certificate","Verify issuance"]
+                ];
+                return <details key={student.id} style={{border:"1px solid #dce8e1",borderRadius:10,padding:12,marginBottom:10}}>
+                  <summary style={{cursor:"pointer",fontWeight:700}}>{student.full_name} ({student.student_code||"ID unavailable"})</summary>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:8,marginTop:12}}>
+                    {stages.map(([label,status],i)=><div key={label} style={{padding:10,background:"#f3f9f6",borderRadius:8}}><small>{i+1}. {label}</small><div style={{fontWeight:700,fontSize:13}}>{status}</div></div>)}
+                  </div>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
+                    <button type="button" style={primaryButton} onClick={()=>setActiveTab("students")}>Student & guardian records</button>
+                    <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp")}>Open IDP</button>
+                    <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/student-progress")}>Progress history</button>
+                    <button type="button" style={primaryButton} onClick={()=>router.push("/staff/assessment-certificates")}>Certificates</button>
+                  </div>
+                </details>;
+              })}
+            </section>
             <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments}/>
             <AssessmentAnalytics assessments={assessments} students={students} />
           </section>
