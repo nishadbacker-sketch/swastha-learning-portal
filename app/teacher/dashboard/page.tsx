@@ -1103,11 +1103,11 @@ export default function TeacherDashboard() {
           <nav aria-label="Teacher dashboard sections" style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",marginBottom:12}}>
             {([
               ["overview","Overview",null],
-              ["students","My Students",students.length],
-              ["assessments","Assessments",assessments.length],
-              ["activities","Learning Activities",activities.length]
+              ["students","My Students",null],
+              ["assessments","Assessments",null],
+              ["activities","Learning Activities",null]
             ] as [Tab,string,number|null][]).map(([id,label,count])=><button key={id} type="button" aria-current={activeTab===id?"page":undefined} onClick={()=>setActiveTab(id)} style={{...primaryButton,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal",border:activeTab===id?"2px solid #e6c875":"2px solid transparent"}}>{label}{count!==null?" ("+count+")":""}</button>)}
-            <button type="button" style={{...primaryButton,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>{const pending=assessments.find(a=>a.status==="submitted");if(pending)router.push("/teacher/assessment-review/"+pending.id);else setActiveTab("assessments");}}>Pending Reviews ({assessments.filter(a=>a.status==="submitted").length})</button>
+
           </nav>
           <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",alignItems:"stretch"}}>
           <button type="button" onClick={()=>router.push("/teacher/custom-assessments")}
@@ -1132,6 +1132,52 @@ export default function TeacherDashboard() {
 
           </section>
         </div>
+
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 14,
+            marginBottom: 25,
+          }}
+        >
+          <Metric
+            label="Assigned Students"
+            value={students.length}
+            color="#176b58"
+            onClick={() => setActiveTab("students")}
+          />
+
+          <Metric
+            label="Learning Activities"
+            value={activities.length}
+            color="#2563eb"
+            onClick={() => setActiveTab("activities")}
+          />
+
+          <Metric
+            label="Assessments"
+            value={assessments.length}
+            color="#7c3aed"
+            onClick={() => setActiveTab("assessments")}
+          />
+
+          <Metric
+            label="Pending Reviews"
+            value={
+              assessments.filter(
+                (a) => a.status === "submitted"
+              ).length
+            }
+            color="#d97706"
+            onClick={() => {
+              const pending = assessments.find((a) => a.status === "submitted");
+              if (pending) router.push("/teacher/assessment-review/" + pending.id);
+              else setActiveTab("assessments");
+            }}
+          />
+        </section>
 
         {activeTab === "overview" && (
           <section>
