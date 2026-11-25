@@ -1321,10 +1321,11 @@ export default function TeacherDashboard() {
             <section aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
               <h2 style={{marginTop:0,color:"#0f4c5c"}}>Analytics Dashboard</h2>
               <AssessmentAnalytics assessments={assessments} students={students} hideDashboardTitle>
+              {(selectedStudentId)=>(
             <section style={{...panel,marginTop:16}}>
               <h3>Student Development Journey & Progress Overview</h3>
-              <p style={{color:"#667a74"}}>Observed milestones for assigned students. Open the linked workflows to verify plan, report and certificate status.</p>
-              {students.length===0?<p>No assigned students.</p>:students.map(student=>{
+              <p style={{color:"#667a74"}}>Observed milestones for the selected student. Open the linked workflows to verify plan, report and certificate status.</p>
+              {!selectedStudentId?<p>No student assessment selected.</p>:students.filter(student=>student.id===selectedStudentId).map(student=>{
                 const records=assessments.filter(a=>a.student_id===student.id);
                 const tasks=activityAssignments.filter(a=>a.student_id===student.id);
                 const reviewed=records.filter(a=>a.status==="reviewed");
@@ -1339,7 +1340,7 @@ export default function TeacherDashboard() {
                   ["Progress report","Open progress"],
                   ["Certificate","Verify issuance"]
                 ];
-                return <details key={student.id} style={{border:"1px solid #dce8e1",borderRadius:10,padding:12,marginBottom:10}}>
+                return <details open key={student.id} style={{border:"1px solid #dce8e1",borderRadius:10,padding:12,marginBottom:10}}>
                   <summary style={{cursor:"pointer",fontWeight:700}}>{student.full_name} ({student.student_code||"ID unavailable"})</summary>
                   <div style={{marginTop:10,fontSize:13,color:"#0f4c5c"}}>{reviewed.length}/{records.length} assessments reviewed · {tasks.length?done+"/"+tasks.length+" activities completed ("+Math.round(done/tasks.length*100)+"%)":"No activities assigned"}</div>
                   {tasks.length>0&&<div role="progressbar" aria-label={"Activity completion for "+student.full_name} aria-valuemin={0} aria-valuemax={tasks.length} aria-valuenow={done} style={{height:10,background:"#e2e8f0",borderRadius:8,marginTop:6,overflow:"hidden"}}><div style={{height:"100%",width:(done/tasks.length*100)+"%",background:"#176b58"}}/></div>}
@@ -1355,6 +1356,7 @@ export default function TeacherDashboard() {
                 </details>;
               })}
             </section>
+                            )}
               </AssessmentAnalytics>
             </section>
           </section>
