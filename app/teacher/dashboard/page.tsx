@@ -1178,35 +1178,8 @@ export default function TeacherDashboard() {
           />
         </section>
 
-        <section aria-label="Staff tools" style={{...panel, marginBottom:24}}>
-          <h2 style={{fontSize:18,margin:"0 0 12px"}}>Staff Tools</h2>
-          <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-          <button type="button" onClick={()=>router.push("/teacher/custom-assessments")}
-            style={{...primaryButton,background:"#176b58",color:"white"}}>
-            + Custom Assessment Builder
-          </button>
-          <button type="button" onClick={()=>router.push("/teacher/coordination")}
-            style={{...primaryButton,background:"#0f4c5c",color:"#fff"}}>
-            Teacher Coordination
-          </button>
-          <button type="button" onClick={()=>router.push("/teacher/appointments")}
-            style={{...primaryButton,background:"#fff1f2",color:"#b42318",border:"1px solid #fecdd3"}}>
-            Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
-          </button>
-          <button type="button" style={{...primaryButton,background:"#14532d"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
-          <button type="button" style={{...primaryButton,background:"#0f4c5c"}} onClick={()=>router.push("/teacher/sessions")}>Sessions & Attendance</button>
-          <button type="button" onClick={()=>router.push("/staff/assessment-certificates")} style={{...primaryButton,background:"#176b58"}}>Assessment Certificates</button>
-          <button type="button" onClick={()=>router.push("/teacher/student-progress")} style={{...primaryButton,marginRight:8}}>Student Progress Tracking</button>
-          <button type="button" onClick={()=>router.push("/teacher/idp")}
-            style={{...primaryButton,background:"#0f4c5c",color:"white"}}>
-            Individual Development Plan (IDP)
-          </button>
-          </div>
-        </section>
-
         {activeTab === "overview" && (
-          <section>
-            <section aria-label="Teacher Command Centre" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:24,borderRadius:16,marginBottom:20}}>
+            <section aria-label="Teacher Command Centre" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:24,borderRadius:16,marginBottom:24,minWidth:0,boxSizing:"border-box",overflowWrap:"anywhere"}}>
               <div style={{fontSize:12,letterSpacing:2,color:"#e6c875"}}>SWASTHA 2030 · TEACHER WORKSPACE</div>
               <h2 style={{margin:"8px 0"}}>Clinical & Educational Command Centre</h2>
               <p style={{color:"#dbeafe"}}>Monitor your assigned students and open existing development workflows.</p>
@@ -1215,6 +1188,37 @@ export default function TeacherDashboard() {
                 <span>Completed activity assignments: <strong>{completedActivities}</strong> / {activityAssignments.length}</span>
               </div>
             </section>
+        )}
+
+        <section aria-label="Staff tools" style={{...panel, marginBottom:24, position:"relative", minWidth:0, boxSizing:"border-box", overflowWrap:"anywhere"}}>
+          <h2 style={{fontSize:18,margin:"0 0 12px"}}>Staff Tools</h2>
+          <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",alignItems:"stretch"}}>
+          <button type="button" onClick={()=>router.push("/teacher/custom-assessments")}
+            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>
+            + Custom Assessment Builder
+          </button>
+          <button type="button" onClick={()=>router.push("/teacher/coordination")}
+            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#0f4c5c",color:"#fff"}}>
+            Teacher Coordination
+          </button>
+          <button type="button" onClick={()=>router.push("/teacher/appointments")}
+            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#fff1f2",color:"#b42318",border:"1px solid #fecdd3"}}>
+            Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
+          </button>
+          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#14532d"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
+          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#0f4c5c"}} onClick={()=>router.push("/teacher/sessions")}>Sessions & Attendance</button>
+          <button type="button" onClick={()=>router.push("/staff/assessment-certificates")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58"}}>Assessment Certificates</button>
+          <button type="button" onClick={()=>router.push("/teacher/student-progress")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,marginRight:0}}>Student Progress Tracking</button>
+          <button type="button" onClick={()=>router.push("/teacher/idp")}
+            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#0f4c5c",color:"white"}}>
+            Individual Development Plan (IDP)
+          </button>
+          </div>
+        </section>
+
+        {activeTab === "overview" && (
+          <section>
+
             <h2>Analytics & Charts Overview</h2>
 
             <p style={{ color: "#667a74" }}>
