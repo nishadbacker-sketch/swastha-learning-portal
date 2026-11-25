@@ -1087,9 +1087,9 @@ export default function TeacherDashboard() {
 
         <div style={{marginBottom:24}}>
           <section aria-label="Teacher Command Centre" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:16,borderRadius:12,marginBottom:0,minWidth:0,boxSizing:"border-box",overflowWrap:"anywhere"}}>
-              <h1 style={{fontSize:20,margin:"0 0 12px",overflowWrap:"anywhere"}}>Welcome, {teacherName}!</h1>
+              <h1 style={{fontSize:20,margin:"0 0 12px",overflowWrap:"anywhere"}}>Welcome to Staff Tools, {teacherName}!</h1>
 <div aria-label="Staff tools" style={{marginTop:0,paddingTop:0,minWidth:0}}>
-          <h2 style={{fontSize:18,margin:"0 0 12px"}}>Staff Tools</h2>
+          
           <nav aria-label="Teacher dashboard sections" style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",marginBottom:12}}>
             {([
               ["overview","Overview",null],
