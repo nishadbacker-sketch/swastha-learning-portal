@@ -1027,7 +1027,7 @@ export default function TeacherDashboard() {
           <StaffNotificationsPopup/>
           <button type="button" onClick={()=>router.push("/teacher/appointments")}
             style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#fff1f2",color:"#b42318",border:"1px solid #fecdd3"}}>
-            Appointment Follow-up{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
+            Appointment{pendingFollowupCount === null ? "" : ` (${pendingFollowupCount})`}
           </button>
           <button type="button" onClick={()=>router.push("/my-profile")}
             style={{...primaryButton,background:"#eaf4ef",color:"#176b58",border:"1px solid #b9d9cc"}}>My Profile</button>
