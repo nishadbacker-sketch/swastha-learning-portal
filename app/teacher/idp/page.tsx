@@ -22,6 +22,7 @@ export default function TeacherIDPPage(){
 
  useEffect(()=>{
   let live=true;
+  setChildId(new URLSearchParams(window.location.search).get("student")||"");
   async function load(){
    if(!supabase){setError("Supabase is not configured.");setLoading(false);return;}
    try{
@@ -69,6 +70,11 @@ export default function TeacherIDPPage(){
    <h1 style={{fontSize:26,margin:"0 0 8px"}}>Individual Development Plan (IDP)</h1>
    <p style={{color:"#64748b",fontSize:13}}>Manage targeted learning goals and progress for students with teacher-approved assessments.</p>
    {loading?<p>Loading approved assessments...</p>:error?<section role="alert" style={{...card,color:"#b42318"}}>{error}</section>:!readyStudents.length?<section style={card}><h2>No approved assessments yet</h2><p>Once a student's assessment is reviewed and approved, their development plan can be managed here.</p></section>:<>
+    <section style={{...card,background:"#132838",color:"#fff"}}>
+      <h2 style={{marginTop:0}}>Development Plan Workspace</h2>
+      <p>{readyStudents.length} students with approved assessments · {assessments.length} approved assessment records</p>
+      <button type="button" style={button} onClick={()=>router.push("/teacher/student-progress")}>Goal progress & overdue reviews</button>
+    </section>
     <section style={card}>
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))",gap:12}}>
       <label style={{fontSize:13,fontWeight:700}}>Select Student
