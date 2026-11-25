@@ -24,7 +24,6 @@ as $function$
       )
       or (
         target_role.role <> 'owner'
-        and not public.is_creator_account(au.id)
       )
     );
 $function$;
