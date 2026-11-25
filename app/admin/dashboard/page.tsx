@@ -7,9 +7,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import AppointmentEscalations from "../appointment-escalations";
-import ClinicAdminManagement from "../clinic-admin-management";
-import TeacherManagement from "../../components/teacher-management";
-import SuperAdminManagement from "../../owner/super-admin-management";
 
 type Student = {id:string;student_code:string;full_name:string;current_class:string|null;status:string;created_at:string};
 type Teacher = {id:string;user_id:string;status:string;profiles?:{full_name:string|null;staff_code?:string|null}[]|{full_name:string|null;staff_code?:string|null}|null};
@@ -82,6 +79,7 @@ export default function AdminDashboard(){
  <h1 style={{fontSize:20,margin:"0 0 12px",overflowWrap:"anywhere"}}>Welcome to Staff Tools, {name}!</h1>
  
  <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))"}}>
+ <button type="button" style={{...action,margin:0}} onClick={()=>router.push("/admin/users")}>User Management</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/assessment-certificates")}>Assessment Certificates</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/sessions")}>Sessions & Attendance</button>
@@ -95,9 +93,7 @@ export default function AdminDashboard(){
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/announcements")}>Manage Announcements</button>
  </div></section>
  <AppointmentEscalations/>
- {creatorMode&&<SuperAdminManagement/>}
- <ClinicAdminManagement/>
-  <TeacherManagement/>
+
  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14}}>
  <section style={box}><small>Registered Students</small><h1>{students.length}</h1></section>
  <section style={box}><small>Awaiting Teacher Assignment</small><h1>{students.filter(s=>!assignments.some(a=>a.student_id===s.id)).length}</h1></section>
