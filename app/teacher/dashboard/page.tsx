@@ -1210,20 +1210,9 @@ export default function TeacherDashboard() {
               <div style={{fontSize:12,letterSpacing:2,color:"#e6c875"}}>SWASTHA 2030 · TEACHER WORKSPACE</div>
               <h2 style={{margin:"8px 0"}}>Clinical & Educational Command Centre</h2>
               <p style={{color:"#dbeafe"}}>Monitor your assigned students and open existing development workflows.</p>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:10}}>
-                {[
-                  {label:"Assigned students",count:students.length,tab:"students"},
-                  {label:"Assessments",count:assessments.length,tab:"assessments"},
-                  {label:"Awaiting review",count:assessments.filter(a=>a.status==="submitted").length,tab:"assessments"},
-                  {label:"Reviewed",count:assessments.filter(a=>a.status==="reviewed").length,tab:"assessments"},
-                  {label:"Learning activities",count:activityAssignments.length,tab:"activities"},
-                  {label:"Completed activities",count:completedActivities,tab:"activities"}
-                ].map(item=><button type="button" key={item.label} onClick={()=>setActiveTab(item.tab as Tab)} style={{background:"#ffffff14",color:"#fff",textAlign:"left",cursor:"pointer",border:"1px solid #ffffff30",borderRadius:10,padding:14}}><div style={{fontSize:26,fontWeight:800}}>{item.count}</div><div style={{fontSize:13}}>{item.label}</div></button>)}
-              </div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:16}}>
-                <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/student-progress")}>Student Progress</button>
-                <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp")}>Development Plans</button>
-                <button type="button" style={primaryButton} onClick={()=>router.push("/staff/assessment-certificates")}>Certificates</button>
+              <div style={{display:"flex",gap:24,flexWrap:"wrap"}}>
+                <span>Reviewed assessments: <strong>{assessments.filter(a=>a.status==="reviewed").length}</strong></span>
+                <span>Completed activity assignments: <strong>{completedActivities}</strong> / {activityAssignments.length}</span>
               </div>
             </section>
             <h2>Analytics & Charts Overview</h2>
@@ -1338,8 +1327,8 @@ export default function TeacherDashboard() {
                   <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
                     <button type="button" style={primaryButton} onClick={()=>{setProfileId(student.id);setActiveTab("students");}}>Student & guardian records</button>
                     <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp?student="+encodeURIComponent(student.id))}>Open IDP</button>
-                    <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/student-progress")}>Progress history</button>
-                    <button type="button" style={primaryButton} onClick={()=>router.push("/staff/assessment-certificates")}>Certificates</button>
+                    
+                    
                   </div>
                 </details>;
               })}
@@ -2070,7 +2059,7 @@ export default function TeacherDashboard() {
                       {assessments.filter(a=>a.student_id===selectedProfile.id).slice().sort((a,b)=>b.assigned_at.localeCompare(a.assigned_at)).map(a=><div key={a.id} style={{padding:10,borderBottom:"1px solid #dce8e1"}}>{formatDate(a.assigned_at)} · {a.assessment_level} · <StatusBadge value={a.status}/>{a.status==="reviewed"&&<button type="button" style={{...primaryButton,marginLeft:8}} onClick={()=>router.push("/assessment-report/"+a.id)}>Report</button>}</div>)}
                       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
                         <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp?student="+encodeURIComponent(selectedProfile.id))}>Development plan</button>
-                        <button type="button" style={primaryButton} onClick={()=>router.push("/student/history/"+selectedProfile.id)}>Full development history</button>
+                        
                       </div>
                     </section>
                     <h3 style={{ marginTop: 24 }}>
