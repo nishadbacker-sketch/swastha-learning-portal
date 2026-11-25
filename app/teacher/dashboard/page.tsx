@@ -1218,7 +1218,7 @@ export default function TeacherDashboard() {
                   {label:"Reviewed",count:assessments.filter(a=>a.status==="reviewed").length,tab:"assessments"},
                   {label:"Learning activities",count:activityAssignments.length,tab:"activities"},
                   {label:"Completed activities",count:completedActivities,tab:"activities"}
-                ].map(item=><div key={item.label} style={{background:"#ffffff14",border:"1px solid #ffffff30",borderRadius:10,padding:14}}><div style={{fontSize:26,fontWeight:800}}>{item.count}</div><div style={{fontSize:13}}>{item.label}</div></div>)}
+                ].map(item=><button type="button" key={item.label} onClick={()=>setActiveTab(item.tab as Tab)} style={{background:"#ffffff14",color:"#fff",textAlign:"left",cursor:"pointer",border:"1px solid #ffffff30",borderRadius:10,padding:14}}><div style={{fontSize:26,fontWeight:800}}>{item.count}</div><div style={{fontSize:13}}>{item.label}</div></button>)}
               </div>
               <div style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:16}}>
                 <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/student-progress")}>Student Progress</button>
