@@ -204,7 +204,6 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
    </select>
    </>}
   </div>
-  {typeof children==="function"?children(assignment?.student_id??null):children}
   {error&&<p role="alert" style={{color:palette.red}}>{error}</p>}
   {loading||loadedAssessmentId!==selected?<p>Loading submitted answers for the selected assessment...</p>:error?<p role="alert">Analytics are unavailable because the saved responses could not be loaded.</p>:!responses.length?<p>No recorded responses found for the selected assessment.</p>:<>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:16,marginBottom:19}}>
@@ -262,5 +261,6 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
    </div>}
    <p style={{fontSize:12,color:palette.muted}}>Educational assessment profile based on reported/observed ratings. The number or percentage of indicators is not a clinical diagnosis or a standardised measure of intelligence or developmental age.</p>
   </>}
+  {typeof children==="function"?children(assignment?.student_id??null):children}
  </section>;
 }
