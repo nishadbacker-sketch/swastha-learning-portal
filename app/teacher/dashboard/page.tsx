@@ -1308,24 +1308,27 @@ export default function TeacherDashboard() {
               </div>
             </div>
             <section style={{...panel,marginTop:16}}>
-              <h3>Student Development Journey</h3>
+              <h3>Student Development Journey & Progress Overview</h3>
               <p style={{color:"#667a74"}}>Observed milestones for assigned students. Open the linked workflows to verify plan, report and certificate status.</p>
               {students.length===0?<p>No assigned students.</p>:students.map(student=>{
                 const records=assessments.filter(a=>a.student_id===student.id);
                 const tasks=activityAssignments.filter(a=>a.student_id===student.id);
                 const reviewed=records.filter(a=>a.status==="reviewed");
+                const done=tasks.filter(a=>a.status==="completed"||a.status==="reviewed").length;
                 const stages=[
                   ["Registration","Recorded"],
                   ["Baseline assessment",records.length?"Assigned":"Not assigned"],
                   ["Teacher review",reviewed.length?"Reviewed":"Not confirmed"],
                   ["Individual development plan","Open plan"],
-                  ["Learning activities",tasks.length?tasks.filter(a=>a.status==="completed").length+" / "+tasks.length+" completed":"Not assigned"],
+                  ["Learning activities",tasks.length?done+" / "+tasks.length+" completed":"Not assigned"],
                   ["Reassessment","Verify history"],
                   ["Progress report","Open progress"],
                   ["Certificate","Verify issuance"]
                 ];
                 return <details key={student.id} style={{border:"1px solid #dce8e1",borderRadius:10,padding:12,marginBottom:10}}>
                   <summary style={{cursor:"pointer",fontWeight:700}}>{student.full_name} ({student.student_code||"ID unavailable"})</summary>
+                  <div style={{marginTop:10,fontSize:13,color:"#0f4c5c"}}>{reviewed.length}/{records.length} assessments reviewed · {tasks.length?done+"/"+tasks.length+" activities completed ("+Math.round(done/tasks.length*100)+"%)":"No activities assigned"}</div>
+                  {tasks.length>0&&<div role="progressbar" aria-label={"Activity completion for "+student.full_name} aria-valuemin={0} aria-valuemax={tasks.length} aria-valuenow={done} style={{height:10,background:"#e2e8f0",borderRadius:8,marginTop:6,overflow:"hidden"}}><div style={{height:"100%",width:(done/tasks.length*100)+"%",background:"#176b58"}}/></div>}
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:8,marginTop:12}}>
                     {stages.map(([label,status],i)=><div key={label} style={{padding:10,background:"#f3f9f6",borderRadius:8}}><small>{i+1}. {label}</small><div style={{fontWeight:700,fontSize:13}}>{status}</div></div>)}
                   </div>
@@ -1338,7 +1341,7 @@ export default function TeacherDashboard() {
                 </details>;
               })}
             </section>
-            <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments}/>
+            <LearningInsightsCharts hideStudentOverview audience="teacher" students={students} assessments={assessments} activities={activityAssignments}/>
             <section style={{...panel,marginTop:16}}>
               <h3>Assessment Assignment Trends</h3>
               <p style={{color:"#667a74",fontSize:13}}>Monthly assignment volume and current review status, not historical review dates or ability scores.</p>
