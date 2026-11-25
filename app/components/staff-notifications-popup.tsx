@@ -6,6 +6,7 @@ import {supabase} from "../../lib/supabase";
 
 type Event={id:string;student_id:string;event_type:string;source_id:string;created_at:string};
 type Student={full_name:string;student_code:string|null};
+type NewAppointment={id:string;child_name:string;created_at:string};
 type FollowupAlert={id:string;child_name:string;next_followup_date:string;status:string};
 type FollowupHistory={id:string;enquiry_id:string;followup_date:string;kind:"due_tomorrow"|"due_today"|"overdue";created_at:string};
 const indiaDate=()=>{
@@ -29,6 +30,7 @@ export default function StaffNotificationsPopup(){
  const router=useRouter();
  const [userId,setUserId]=useState("");
  const [events,setEvents]=useState<Event[]>([]);
+ const [newAppointments,setNewAppointments]=useState<NewAppointment[]>([]);
  const [followups,setFollowups]=useState<FollowupAlert[]>([]);
  const [followupHistory,setFollowupHistory]=useState<FollowupHistory[]>([]);
  const [students,setStudents]=useState<Record<string,Student>>({});
@@ -47,7 +49,7 @@ export default function StaffNotificationsPopup(){
   const {data:role,error:roleError}=await supabase.from("user_roles").select("role").eq("user_id",user).single();
   if(roleError||!role||!["teacher","admin","clinic_admin","owner"].includes(role.role)){setLoading(false);return;}
   setUserId(user);
-  const [result,acks,followupResult,historyResult]=await Promise.all([
+  const [result,acks,followupResult,historyResult,newResult]=await Promise.all([
    supabase.from("portal_notification_events").select("id,student_id,event_type,source_id,created_at")
     .eq("recipient_user_id",user).in("event_type",["assessment_submitted","custom_assessment_submitted","teacher_assigned"])
     .order("created_at",{ascending:false}).limit(100),
@@ -59,9 +61,11 @@ export default function StaffNotificationsPopup(){
    supabase.from("appointment_followup_notification_history")
     .select("id,enquiry_id,followup_date,kind,created_at")
     .eq("recipient_user_id",user)
-    .order("created_at",{ascending:false}).limit(100)
+    .order("created_at",{ascending:false}).limit(100),
+   supabase.from("appointment_enquiries").select("id,child_name,created_at").eq("status","new").order("created_at",{ascending:false})
   ]);
-  if(result.error||acks.error||followupResult.error||historyResult.error){setError("Could not load notifications. Please try again.");setLoading(false);return;}
+  if(result.error||acks.error||followupResult.error||historyResult.error||newResult.error){setError("Could not load notifications. Please try again.");setLoading(false);return;}
+  setNewAppointments((newResult.data||[]) as NewAppointment[]);
   setFollowupHistory((historyResult.data||[]) as FollowupHistory[]);
   setFollowups(dueFollowups((followupResult.data||[]).filter(r=>r.next_followup_date) as FollowupAlert[],indiaDate()));
   const rows=(result.data||[]) as Event[];
@@ -92,14 +96,14 @@ export default function StaffNotificationsPopup(){
   if(destination)router.push(destination);
  }
  return <>
-  <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58",border:"1px solid #cce3d5"}} aria-label={"Notifications"+(unread.length+followups.length?" ("+(unread.length+followups.length)+" attention items)":"")} onClick={()=>{setOpen(true);void refresh();}}>
-   Notifications {unread.length+followups.length>0?"("+(unread.length+followups.length)+")":""}
+  <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58",border:"1px solid #cce3d5"}} aria-label={"Notifications"+(unread.length+followups.length+newAppointments.length?" ("+(unread.length+followups.length+newAppointments.length)+" attention items)":"")} onClick={()=>{setOpen(true);void refresh();}}>
+   Notifications {unread.length+followups.length+newAppointments.length>0?"("+(unread.length+followups.length+newAppointments.length)+")":""}
   </button>
   {open&&<div role="presentation" style={{position:"fixed",inset:0,background:"rgba(15,23,42,.63)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:12}}>
    <section role="dialog" aria-modal="true" aria-labelledby="staff-notification-title" style={panel}>
     <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"flex-start"}}>
      <div><h2 id="staff-notification-title" style={{margin:"0 0 5px",fontSize:21,color:"#0f4c5c"}}>Staff Notifications</h2>
-      <p style={{margin:"0 0 14px",fontSize:13,color:"#64748b"}}>Assessment updates and appointment follow-ups. No WhatsApp or email messages are sent.</p></div>
+      <p style={{margin:"0 0 14px",fontSize:13,color:"#64748b"}}>Assessment updates, new appointments and appointment follow-ups. No WhatsApp or email messages are sent.</p></div>
      <button type="button" aria-label="Close notifications" disabled={saving} onClick={()=>setOpen(false)} style={{...button,background:"#f1f5f9",color:"#334155"}}>Close</button>
     </div>
     <div style={{display:"flex",gap:8,margin:"0 0 14px"}}>
@@ -107,6 +111,14 @@ export default function StaffNotificationsPopup(){
      <button type="button" style={{...button,background:view==="history"?"#176b58":"#eaf4ef",color:view==="history"?"#fff":"#176b58"}} onClick={()=>setView("history")}>Notification history</button>
     </div>
     {error&&<p role="alert" style={{fontSize:13,color:"#b42318"}}>{error}</p>}
+    {!loading&&view==="updates"&&newAppointments.length>0&&<section aria-label="New appointment requests" style={{marginBottom:14}}>
+     <h3 style={{fontSize:15,color:"#183a35"}}>New appointment requests ({newAppointments.length})</h3>
+     {newAppointments.slice(0,50).map(item=><div key={item.id} style={{border:"1px solid #dce8e1",background:"#f0f8f4",borderRadius:10,padding:12,marginBottom:8}}>
+      <strong>New appointment · {item.child_name}</strong>
+      <p style={{fontSize:12,color:"#64748b"}}>Received {new Date(item.created_at).toLocaleString("en-IN")}</p>
+      <button type="button" style={button} onClick={()=>{setOpen(false);router.push("/teacher/appointments");}}>Open Appointment</button>
+     </div>)}
+    </section>}
     {!loading&&view==="updates"&&followups.length>0&&<section aria-label="Appointment follow-up alerts" style={{marginBottom:14}}>
      <h3 style={{fontSize:15,color:"#183a35",margin:"8px 0"}}>Appointment follow-ups needing attention ({followups.length})</h3>
      {followups.slice(0,30).map(item=>{
@@ -128,7 +140,7 @@ export default function StaffNotificationsPopup(){
      </div>)}
     </section>}
     {loading?<p>Loading notifications...</p>:(
-     (view==="updates"?unread:events).length===0?((view==="updates"&&followups.length>0||view==="history"&&followupHistory.length>0)?null:<p style={{fontSize:14}}>{view==="updates"?"No new notifications.":"No notification history yet."}</p>):
+     (view==="updates"?unread:events).length===0?((view==="updates"&&(followups.length>0||newAppointments.length>0)||view==="history"&&followupHistory.length>0)?null:<p style={{fontSize:14}}>{view==="updates"?"No new notifications.":"No notification history yet."}</p>):
      <div style={{display:"grid",gap:9}}>
       {(view==="updates"?unread:events).slice(0,50).map(e=>{
        const info=eventMeta[e.event_type];if(!info)return null;
