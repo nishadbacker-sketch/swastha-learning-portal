@@ -7,7 +7,7 @@ import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {supabase} from "../../../lib/supabase";
 import AppointmentEscalations from "../../admin/appointment-escalations";
-import TeacherStudentAssignments from "../../components/teacher-student-assignments";
+
 import TeacherManagement from "../../components/teacher-management";
 
 const action:React.CSSProperties={border:0,borderRadius:8,padding:"10px 14px",background:"#176b58",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"};
@@ -72,7 +72,7 @@ export default function ClinicAdminDashboard(){
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/announcements")}>Manage Announcements</button>
  </div></section>
-  <TeacherStudentAssignments/>
+
   <TeacherManagement/>
    <AppointmentEscalations/>
   </div>
