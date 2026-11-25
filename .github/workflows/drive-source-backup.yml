@@ -1,0 +1,34 @@
+name: Swastha source code archive for Drive backup
+
+on:
+  push:
+    branches:
+      - backup/drive-source-snapshot-20261125
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive application source without secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p backup
+          files=()
+          for item in app lib public sql tests package.json package-lock.json next.config.js next.config.mjs next.config.ts tsconfig.json postcss.config.js postcss.config.mjs middleware.ts README.md; do
+            if [ -e "$item" ]; then files+=("$item"); fi
+          done
+          git archive --format=zip --output=backup/swastha-portal-source-2026-11-25.zip HEAD "${files[@]}"
+          sha256sum backup/swastha-portal-source-2026-11-25.zip > backup/SHA256SUMS.txt
+          echo "Source commit: $(git rev-parse HEAD)" > backup/SOURCE-COMMIT.txt
+      - name: Upload source snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: swastha-portal-source-2026-11-25
+          path: backup/
+          retention-days: 30
