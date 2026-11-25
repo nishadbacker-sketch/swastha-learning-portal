@@ -21,7 +21,7 @@ export default function PublicAppointmentPage(){
  function edit<K extends keyof FormState>(key:K,value:FormState[K]){submissionKey.current=null;setForm(p=>({...p,[key]:value}));}
  async function submit(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();setMessage("");
-  if(bot){setCompleted(true);return;}
+  if(bot){setMessage("Invalid appointment submission. Please refresh and try again.");return;}
   if(!form.consent){setMessage("Please give consent to be contacted.");return;}
   const phone=/^[+\d\s()-]{8,20}$/;
   if(!phone.test(form.whatsapp_number)||form.contact_differs&&!phone.test(form.contact_number)){setMessage("Enter a valid contact number.");return;}
@@ -49,7 +49,8 @@ export default function PublicAppointmentPage(){
     }),
    });
    if(!response.ok) {
-    setMessage("Could not submit your appointment request. Please try again.");
+    const result=await response.json().catch(()=>null);
+    setMessage(typeof result?.error==="string"?result.error+" (HTTP "+response.status+")":"Could not submit your appointment request. (HTTP "+response.status+")");
    } else {
     setCompleted(true);
     submissionKey.current=null;
