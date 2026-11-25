@@ -103,15 +103,7 @@ export default function AdminDashboard(){
  </div>
  {error&&<p role="alert" style={{...box,color:"#b42318",background:"#fff1f2"}}>{error}</p>}
  {notice&&<p role="status" style={{...box,color:"#176b58",background:"#e9f7ef"}}>{notice}</p>}
- <section style={box}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><h2>Assign Students to Teachers</h2><label>Show: <select value={filter} onChange={e=>setFilter(e.target.value as "all"|"unassigned")} style={{padding:10}}><option value="unassigned">Unassigned Students</option><option value="all">All Students</option></select></label></div>
- {!available.length?<p>No students in this view.</p>:available.map(s=>{
- const linked=assignments.filter(a=>a.student_id===s.id);
- return <section key={s.id} style={{...box,background:"#f8faf7"}}>
- <div style={{display:"flex",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
- <div><h3 style={{marginTop:0}}>{s.full_name} · {s.student_code}</h3><p>Student ID: {s.student_code}</p><p>Class: {s.current_class||"Not recorded"} · Status: {s.status}</p><p style={{fontSize:13,color:"#64748b"}}>Assigned teacher(s): {linked.length?linked.map(a=>{const t=teachers.find(x=>x.id===a.teacher_id);const profile=Array.isArray(t?.profiles)?t.profiles[0]:t?.profiles;return profile?.full_name&&profile.full_name!=="Name not provided"?profile.full_name:"Teacher "+(teachers.findIndex(x=>x.id===a.teacher_id)+1)}).join(", "):"None"}</p></div>
- <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><select value={selected[s.id]||""} onChange={e=>setSelected(old=>({...old,[s.id]:e.target.value}))} style={{padding:10,maxWidth:"100%"}} aria-label={"Choose teacher for "+s.full_name}><option value="">Select a teacher</option>{teachers.map((t,i)=>{const p=Array.isArray(t.profiles)?t.profiles[0]:t.profiles;return <option value={t.id} key={t.id}>{p?.full_name&&p.full_name!=="Name not provided"?p.full_name:"Teacher "+(i+1)}</option>})}</select><button style={{...action,opacity:busy===s.id?0.6:1}} disabled={busy===s.id} onClick={()=>assign(s)}>{busy===s.id?"Assigning...":"Assign Teacher"}</button></div>
- </div></section>})}
- </section>
+ <section style={box}><h2>Student Management</h2><p>Student records, progress and teacher assignments are managed in one place.</p><button style={action} onClick={()=>router.push("/admin/students")}>Open Student Management</button></section>
  <p style={{color:"#64748b",fontSize:13}}>Super Admin and Admin can assign teachers to students. Only Super Admin can change account roles. Parents cannot remove registered children. A student may have more than one assigned teacher.</p>
  </div></main>;
 }
