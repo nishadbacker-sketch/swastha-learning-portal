@@ -30,9 +30,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$PG_DSN" || { echo 'Missing DB URL secret'; exit 1; }
-          test -n "$BACKUP_PASSPHRASE" || { echo 'Missing encryption passphrase secret'; exit 1; }
-          test -n "$RCLONE_CONFIG_B64" || { echo 'Missing Drive rclone configuration secret'; exit 1; }
+          missing=0
+          if [ -z "$PG_DSN" ]; then echo "::error::Missing GitHub Actions secret SWASTHA_BACKUP_DB_URL"; missing=1; fi
+          if [ -z "$BACKUP_PASSPHRASE" ]; then echo "::error::Missing GitHub Actions secret SWASTHA_BACKUP_PASSPHRASE"; missing=1; fi
+          if [ -z "$RCLONE_CONFIG_B64" ]; then echo "::error::Missing GitHub Actions secret SWASTHA_RCLONE_CONFIG_B64"; missing=1; fi
+          test "$missing" -eq 0
       - name: Dump PostgreSQL 17 using matching client
         shell: bash
         run: |
