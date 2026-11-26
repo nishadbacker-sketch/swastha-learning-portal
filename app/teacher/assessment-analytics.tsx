@@ -198,9 +198,9 @@ export default function AssessmentAnalytics({assessments,students,hideSelector=f
    {!hideDashboardTitle&&<h2 style={{marginTop:0,fontSize:22,color:"#0f4c5c"}}>Analytics Dashboard</h2>}
    <p style={{fontSize:13,color:palette.muted}}>Live, question-level analysis of submitted responses. Select an assessment to view its readiness indicators and support priorities. These are educational screening indicators, not a diagnosis.</p>
    {!hideSelector && <>
-   <label style={{display:"block",fontWeight:700,marginBottom:6}} htmlFor="analytics-assessment">Select student and assessment</label>
+   <label style={{display:"block",fontWeight:700,marginBottom:6}} htmlFor="analytics-assessment">Select assessment</label>
    <select id="analytics-assessment" value={selected} onChange={e=>setSelected(e.target.value)} style={{padding:12,borderRadius:9,border:"1px solid #a9bfb5",maxWidth:"100%",width:650}}>
-    {available.map(a=><option key={a.id} value={a.id}>{((s:InputStudent|undefined)=>s?s.full_name+(s.student_code?" · "+s.student_code:""):"Student")(students.find(s=>s.id===a.student_id))} — {a.assessment_level} — {a.status} — {new Date(a.assigned_at).toLocaleDateString("en-IN")}</option>)}
+    {available.map(a=><option key={a.id} value={a.id}>{studentFilterId==="all"?((s:InputStudent|undefined)=>s?s.full_name+(s.student_code?" · "+s.student_code:""):"Student")(students.find(s=>s.id===a.student_id))+" — ":""}{a.assessment_level} — {a.status} — {new Date(a.assigned_at).toLocaleDateString("en-IN")}</option>)}
    </select>
    </>}
   </div>
