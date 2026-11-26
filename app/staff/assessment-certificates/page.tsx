@@ -30,7 +30,7 @@ export default function AssessmentCertificateStaffPage(){
   if(!supabase)return;
   const [a,s,c]=await Promise.all([
    supabase.from("assessment_assignments").select("id,student_id,assessment_level,status").eq("status","reviewed").limit(500),
-   supabase.from("students").select("id,full_name,student_code").limit(500),
+   supabase.from("students").select("id,full_name,student_code").is("removed_at",null).limit(500),
    supabase.from("assessment_completion_certificates").select("id,assignment_id,student_id,student_name,student_code,assessment_title,assessment_level,completion_date,reference_code,issued_at,programme_coordinator,approving_director").order("issued_at",{ascending:false}).limit(500)
   ]);
   if(a.error||s.error||c.error){setError("Unable to load approved assessment certificates: "+(a.error||s.error||c.error)?.message);return;}
