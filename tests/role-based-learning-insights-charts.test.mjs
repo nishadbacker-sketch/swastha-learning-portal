@@ -18,13 +18,13 @@ test("Shared Parent/Learner dashboard contains the new data visualisations witho
  assert.match(parent,/import ParentSessionUpdates from/);
 });
 
-test("Teacher charts consume already scoped students and assessments and retain existing analytics",()=>{
- assert.match(teacher,/import LearningInsightsCharts from/);
- assert.match(teacher,/<LearningInsightsCharts audience="teacher" students=\{students\} assessments=\{assessments\} activities=\{activityAssignments\} selectedStudentId=\{analyticsStudentId\} onStudentChange=\{setAnalyticsStudentId\} hideStudentSelector\/>/);
- assert.match(teacher,/import AssessmentAnalytics from/);
- assert.match(teacher,/studentFilterId=\{analyticsStudentId\}/);
+test("Teacher dashboard hides duplicate analytics, preserving scoped student detail insights",()=>{
+ assert.doesNotMatch(teacher,/import LearningInsightsCharts from|<LearningInsightsCharts|<AssessmentAnalytics|analyticsStudentId/);
  assert.match(teacher,/\.from\("teacher_assignments"\)/);
- assert.doesNotMatch(teacher,/<LearningInsightsCharts audience="teacher"[^>]*reviewedResults=/);
+ const details=read("app/staff/students/[id]/page.tsx");
+ assert.match(details,/<LearningInsightsCharts audience="teacher"/);
+ assert.match(details,/\.is\("removed_at",null\)/);
+ assert.match(read("app/teacher/assessment-analytics.tsx"),/Holistic Sub-Domain Competency Radar/);
 });
 
 test("Shared charts do not fetch or write records, and expose approved scores only to family audiences",()=>{

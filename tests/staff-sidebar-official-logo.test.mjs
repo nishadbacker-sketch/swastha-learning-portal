@@ -16,7 +16,8 @@ test("Teacher tabs and common staff links move to sidebar without losing click a
  assert.match(menu,/router\.push\(tool\.href\)/);
  assert.match(menu,/aria-current=\{activeSection===item\.id/);
  assert.match(menu,/aria-label="Role-based staff tools"/);
- assert.match(menu,/summary\.map\(item/);
+ assert.doesNotMatch(menu,/summary\.map\(item/);
+ assert.match(menu,/<StaffLiveDashboard role=\{role\}/);
 });
 test("All four staff role dashboards use the same responsive sidebar layout",()=>{
  const teacher=read("app/teacher/dashboard/page.tsx");

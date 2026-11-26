@@ -28,12 +28,14 @@ test("Administrative tools are not included in teacher menus", () => {
   assert.match(menu, /role === "clinic_admin"/);
 });
 
-test("Teacher keeps assessment charts, selected student support and assessment review", () => {
-  assert.match(teacher, /import LearningInsightsCharts from/);
-  assert.match(teacher, /<LearningInsightsCharts audience="teacher" students=\{students\} assessments=\{assessments\} activities=\{activityAssignments\} selectedStudentId=\{analyticsStudentId\} onStudentChange=\{setAnalyticsStudentId\} hideStudentSelector\/>/);
-  assert.match(teacher, /<AssessmentAnalytics assessments=\{assessments\} students=\{students\} studentFilterId=\{analyticsStudentId\}/);
+test("Teacher dashboard removes legacy analytics while detailed charts and review remain available", () => {
+  assert.doesNotMatch(teacher, /<LearningInsightsCharts|<AssessmentAnalytics/);
+  assert.doesNotMatch(teacher, /analyticsStudentId|Student Development Journey & Progress Overview/);
   assert.match(charts, /Choose student for learning insights/);
+  assert.match(read("app/staff/students/[id]/page.tsx"), /<LearningInsightsCharts/);
+  assert.match(read("app/teacher/assessment-analytics.tsx"), /Holistic Sub-Domain Competency Radar/);
   assert.match(teacher, /assessment-review/);
+  assert.match(menu, /Students & Progress/);
 });
 
 test("Parent dashboard remains separate and unified typography supports Malayalam", () => {

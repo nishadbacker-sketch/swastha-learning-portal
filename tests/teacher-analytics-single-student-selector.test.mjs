@@ -6,16 +6,13 @@ const teacher=read("app/teacher/dashboard/page.tsx");
 const insights=read("app/components/learning-insights-charts.tsx");
 const assessment=read("app/teacher/assessment-analytics.tsx");
 
-test("Teacher analytics has one student selector controlling both chart components",()=>{
- assert.match(teacher,/id="teacher-analytics-student"/);
- assert.match(teacher,/aria-label="Select student for all analytics"/);
- assert.equal((teacher.match(/id="teacher-analytics-student"/g)||[]).length,1);
- assert.match(teacher,/onChange=\{event=>setAnalyticsStudentId\(event\.target\.value\)\}/);
- assert.match(teacher,/<LearningInsightsCharts audience="teacher"[^>]*hideStudentSelector\/>/);
- assert.match(teacher,/<AssessmentAnalytics assessments=\{assessments\} students=\{students\} studentFilterId=\{analyticsStudentId\}/);
+test("Legacy teacher analytics student selector is removed from main dashboard",()=>{
+ assert.doesNotMatch(teacher,/teacher-analytics-student|setAnalyticsStudentId/);
+ assert.doesNotMatch(teacher,/<LearningInsightsCharts|<AssessmentAnalytics/);
  assert.match(insights,/!hideStudentSelector&&students\.length>1/);
  assert.match(assessment,/Select assessment/);
  assert.doesNotMatch(assessment,/Select student and assessment/);
+ assert.match(read("app/staff/students/[id]/page.tsx"), /<LearningInsightsCharts/);
 });
 
 test("Existing distinct teaching workflows and family student chart selector stay available",()=>{
