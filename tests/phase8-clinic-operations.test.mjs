@@ -36,9 +36,10 @@ test("Operations overview uses auth and RLS-scoped records and keeps Parent page
  for(const path of ["app/teacher/dashboard/page.tsx","app/admin/dashboard/page.tsx","app/clinic-admin/dashboard/page.tsx"]){
   assert.match(read(path),/StaffToolsMenu/);
  }
- assert.match(read("app/components/staff-tools-menu.tsx"),/ClinicOperationsPanel/);
+ assert.match(read("app/components/staff-tools-menu.tsx"),/Session Calendar & Reports/);
+ assert.doesNotMatch(read("app/components/staff-tools-menu.tsx"),/ClinicOperationsPanel/);
  assert.doesNotMatch(read("app/components/staff-tools-menu.tsx"),/label: "Clinic Operations & Analytics"/);
- assert.match(redirect,/router\.replace\(target/);
+ assert.match(redirect,/Session Calendar/);
 });
 test("CSV export guards formula injection and does not export private notes",()=>{
  assert.match(page,/\^\[=\+@\\-\\t\\r\]/);
