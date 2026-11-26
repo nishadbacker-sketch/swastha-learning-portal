@@ -172,6 +172,7 @@ export default function TeacherCoordination(){
       <section style={sheet}>
        <h2 style={{fontSize:21,margin:"0 0 4px"}}>{student.full_name} · {student.student_code}</h2>
        <p style={caption}>Student ID: {student.student_code} · Class: {student.current_class||"Not recorded"} · Student status: {student.status}</p>
+       <div style={{marginTop:12}}><button type="button" style={btn} onClick={()=>router.push("/staff/students/"+encodeURIComponent(student.id))}>Open Complete Student Record</button></div>
        <h3 style={{fontSize:15,margin:"17px 0 9px"}}>Learning pipeline</h3>
        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:9}}>
         {[
