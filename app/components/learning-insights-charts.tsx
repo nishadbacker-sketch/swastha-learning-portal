@@ -13,6 +13,8 @@ type Props={
  reviewedResults?:ReviewedResult[];
  audience:"family"|"teacher";
  hideStudentOverview?:boolean;
+ selectedStudentId?:string;
+ onStudentChange?:(id:string)=>void;
 };
 const green="#176b58",navy="#0f4c5c",blue="#0284c7",orange="#b45309",grey="#64748b";
 const shell:React.CSSProperties={border:"1px solid #dce8e1",background:"#fff",borderRadius:13,padding:16,minWidth:0};
@@ -27,8 +29,10 @@ function Bar({value,max=100,color,label}:{value:number;max?:number;color:string;
  </div>;
 }
 /** Presentation only: callers supply records already limited by Supabase RLS and their selected children/assigned students. */
-export default function LearningInsightsCharts({students,assessments,activities,reviewedResults=[],audience,hideStudentOverview=false}:Props){
- const [selected,setSelected]=useState("all");
+export default function LearningInsightsCharts({students,assessments,activities,reviewedResults=[],audience,hideStudentOverview=false,selectedStudentId,onStudentChange}:Props){
+ const [internalSelected,setInternalSelected]=useState("all");
+ const selected=selectedStudentId??internalSelected;
+ const changeSelection=(id:string)=>{if(onStudentChange)onStudentChange(id);else setInternalSelected(id);};
  const ids=new Set(students.map(s=>s.id));
  const scoped=students.some(s=>s.id===selected)?selected:"all";
  const visibleIds=new Set(scoped==="all"?students.map(s=>s.id):[scoped]);
@@ -59,7 +63,7 @@ export default function LearningInsightsCharts({students,assessments,activities,
      <p style={{fontSize:12,color:grey,margin:0}}>Based on saved activities and assessment workflow. Scores are shown only after Teacher approval.</p>
     </div>
     {students.length>1&&<label style={{fontSize:12,fontWeight:700}}>Student
-     <select aria-label="Choose student for learning insights" value={scoped} onChange={e=>setSelected(e.target.value)}
+     <select aria-label="Choose student for learning insights" value={scoped} onChange={e=>changeSelection(e.target.value)}
       style={{display:"block",padding:9,marginTop:5,border:"1px solid #bcd3c6",borderRadius:7,background:"#fff",maxWidth:260}}>
       <option value="all">All permitted students</option>
       {students.map(s=><option key={s.id} value={s.id}>{s.full_name} ({s.student_code||"ID pending"})</option>)}
