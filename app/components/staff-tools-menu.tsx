@@ -10,7 +10,7 @@ type Summary = {label:string; value:string|number; onClick?:()=>void};
 type Section = {id:string;label:string};
 type Props = { role:StaffRole; name?:string; summary?:Summary[]; sections?:Section[]; activeSection?:string; onSectionChange?:(id:string)=>void; children?:ReactNode };
 
-const COMMON_TOOLS: Tool[] = [
+export const COMMON_TOOLS: Tool[] = [
   { label: "Students & Progress", href: "/staff/students", description: "One authorized record for each student, charts and reports" },
   { label: "Staff Action Center", href: "/staff/actions", description: "Reviews, upcoming sessions and coordination priorities" },
   { label: "Clinic Operations & Analytics", href: "/staff/operations", description: "Calendar, attendance and operational charts" },
@@ -21,7 +21,7 @@ const COMMON_TOOLS: Tool[] = [
   { label: "Staff Notifications", href: "/staff/notifications", description: "Staff messages and notifications" }
 ];
 
-function roleTools(role: StaffRole): Tool[] {
+export function roleTools(role: StaffRole): Tool[] {
   if (role === "teacher") return [
     { label: "Approved Progress Reports", href: "/teacher/student-progress", description: "Reviewed progress and activity tracking" },
     { label: "Development Plans (IDP)", href: "/teacher/idp", description: "Individual development plans" },
