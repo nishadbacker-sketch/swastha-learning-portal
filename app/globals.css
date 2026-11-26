@@ -514,3 +514,33 @@ body .swastha-site-footer__bottom p {
 .swastha-staff-workspace__tool strong { font-size:13px; line-height:1.3; }
 .swastha-staff-workspace__tool span { font-size:11px; line-height:1.45; color:#d7eee7; }
 @media(max-width:480px) { .swastha-staff-workspace__grid {grid-template-columns:1fr 1fr;} .swastha-staff-workspace__tool {padding:10px; min-height:85px;} }
+
+
+/* Unified, responsive role-scoped student and staff operations workspaces. */
+.swastha-workspace-page {min-height:100vh;background:#f8faf7;color:#183a35;}
+.swastha-workspace-header {display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#fff;padding:14px max(16px,calc((100% - 1180px)/2));border-bottom:1px solid #dce8e1;}
+.swastha-workspace-header>div {display:grid;gap:3px;flex:1 1 180px;font-size:13px;}
+.swastha-workspace-header small {color:#64748b;font-size:11px;}
+.swastha-workspace-content {max-width:1180px;margin:auto;padding:25px 16px 75px;display:grid;gap:15px;}
+.swastha-workspace-content h1 {margin:0;font-size:clamp(23px,3vw,30px);}
+.swastha-workspace-content h2 {font-size:19px;margin:0 0 12px;}
+.swastha-workspace-content h3 {font-size:15px;margin:14px 0 10px;}
+.swastha-workspace-content p {overflow-wrap:anywhere;}
+.swastha-muted {color:#64748b;font-size:13px;margin:0;}
+.swastha-workspace-heading {display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap;}
+.swastha-workspace-toolbar {display:flex;gap:12px;align-items:end;flex-wrap:wrap;background:#fff;padding:15px;border:1px solid #dce8e1;border-radius:12px;}
+.swastha-workspace-toolbar label {flex:1 1 225px;display:grid;gap:6px;font-size:12px;font-weight:700;}
+.swastha-workspace-toolbar input,.swastha-workspace-toolbar select {font-size:14px;padding:10px;border:1px solid #bcd3c6;border-radius:8px;background:#fff;color:#183a35;min-height:39px;max-width:100%;}
+.swastha-workspace-tabs {display:flex;gap:7px;flex-wrap:wrap;border-bottom:1px solid #dce8e1;padding-bottom:9px;}
+.swastha-workspace-tabs button {background:#eaf4ef;border:1px solid #cce3d5;color:#176b58;font-weight:700;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;}
+.swastha-workspace-tabs button.active {background:#176b58;border-color:#176b58;color:#fff;}
+.swastha-workspace-metrics {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:10px;}
+.swastha-workspace-three {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:12px;align-items:start;}
+.swastha-workspace-record {display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid #e2e8e0;padding:11px 0;font-size:13px;}
+.swastha-workspace-record>span {min-width:0;overflow-wrap:anywhere;flex:1 1 170px;}
+.swastha-workspace-goal {border-top:1px solid #e2e8e0;padding:12px 0;font-size:13px;}
+.swastha-workspace-progress {height:10px;background:#e2e8e0;border-radius:100px;overflow:hidden;margin-top:9px;}
+.swastha-workspace-progress>div {height:100%;background:#176b58;border-radius:100px;}
+.swastha-secondary-button {padding:9px 12px;border:1px solid #cce3d5;background:#eaf4ef;color:#176b58;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;}
+.swastha-workspace-page button:focus-visible {outline:3px solid #b45309;outline-offset:2px;}
+@media(max-width:600px) {.swastha-workspace-content {padding:16px 12px 55px;}.swastha-workspace-header {padding:12px;}.swastha-workspace-tabs button {flex:1 1 110px;}.swastha-workspace-metrics {grid-template-columns:repeat(2,minmax(0,1fr));}.swastha-workspace-three {grid-template-columns:minmax(0,1fr);}}
