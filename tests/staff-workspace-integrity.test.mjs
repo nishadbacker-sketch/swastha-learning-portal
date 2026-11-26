@@ -82,3 +82,15 @@ test("Removed students are filtered out of older teacher and administrative work
  assert.match(certificates,/\.is\("removed_at",null\)/);
  assert.match(oversight,/\.is\("removed_at",null\)/);
 });
+
+test("Operations charts use one accessible visualization component and respect student filters",()=>{
+ const ops=source("app/staff/operations/page.tsx");
+ const bars=source("app/components/staff-metric-bars.tsx");
+ assert.match(ops,/import StaffMetricBars from/);
+ assert.ok((ops.match(/<StaffMetricBars/g)||[]).length>=3);
+ assert.match(ops,/studentFilter==="all"/);
+ assert.match(ops,/const allowedStudentIds=ss\.map/);
+ assert.match(bars,/role="progressbar"/);
+ assert.match(bars,/aria-valuenow=\{item\.value\}/);
+ assert.doesNotMatch(bars,/\.from\(|supabase/);
+});
