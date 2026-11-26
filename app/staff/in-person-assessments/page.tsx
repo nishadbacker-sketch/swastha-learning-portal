@@ -37,7 +37,6 @@ export default function StaffInPersonAssessmentPage(){
  const router=useRouter();
  const [role,setRole]=useState("");
  const [students,setStudents]=useState<Student[]>([]);
- const [sessions,setSessions]=useState<SessionSummary[]>([]);
  const [templates,setTemplates]=useState<Template[]>([]);
  const [studentId,setStudentId]=useState("");
  const [kind,setKind]=useState<"standard"|"custom">("standard");
@@ -61,14 +60,12 @@ export default function StaffInPersonAssessmentPage(){
 
  const refresh=useCallback(async()=>{
   if(!supabase)return;
-  const [s,a,t]=await Promise.all([
+  const [s,t]=await Promise.all([
    supabase.rpc("staff_assessment_students"),
-   supabase.rpc("staff_assessment_sessions_list"),
    supabase.from("custom_assessment_templates").select("id,title,level,description,structure").eq("status","published").order("title")
   ]);
-  if(s.error||a.error||t.error)throw new Error(s.error?.message||a.error?.message||t.error?.message);
+  if(s.error||t.error)throw new Error(s.error?.message||t.error?.message);
   setStudents((s.data||[]) as Student[]);
-  setSessions((a.data||[]) as SessionSummary[]);
   setTemplates((t.data||[]) as Template[]);
  },[]);
  useEffect(()=>{
@@ -122,20 +119,6 @@ export default function StaffInPersonAssessmentPage(){
    setNewStudent({name:"",dob:"",grade:"",language:"en",guardian:"",phone:"",consent:false});
    setMessage("Student profile created with a permanent Swastha ID. Select the assessment below.");
   }catch(e){setError(e instanceof Error?e.message:"Unable to create student.");}
-  finally{setBusy(false);}
- }
- async function openSession(id:string){
-  if(!supabase||busy)return;setBusy(true);setError("");setMessage("");
-  try{
-   const {data,error:e}=await supabase.rpc("staff_assessment_session_get",{p_id:id});
-   if(e)throw e;
-   const result=(data as Session[]|null)?.[0];
-   if(!result)throw new Error("Assessment not found or access denied.");
-   setActive(result);setAnswers(result.answers||{});setEvaluation(result.evaluation||"");
-   setStrengths(result.strengths||"");setSupportNeeds(result.support_needs||"");
-   setRecommendations(result.recommendations||"");setSection("all");
-   setStudentId(result.student_id);
-  }catch(e){setError(e instanceof Error?e.message:"Could not open assessment.");}
   finally{setBusy(false);}
  }
  async function startSession(){
@@ -226,16 +209,6 @@ export default function StaffInPersonAssessmentPage(){
      </div>
      <p style={{fontSize:13,color:"#667a74",margin:"11px 0"}}>Grade level for selected student: <strong>{selectedLevel||"Choose a student in Classes 1–12"}</strong>. Standard assessment must match the student’s class. Existing students may be selected without creating another profile.</p>
      <button type="button" disabled={busy||!selectedLevel||(kind==="custom"&&!templateId)||(kind==="standard"&&standardLevel!==selectedLevel)} style={{...button,opacity:busy||!selectedLevel?0.55:1}} onClick={()=>void startSession()}>Start Assessment</button>
-    </section>
-    <section style={card}>
-     <h2 style={{fontSize:19,margin:"0 0 12px"}}>3. Saved and Submitted Sessions</h2>
-     <div style={{display:"grid",gap:9}}>
-      {sessions.length===0&&<p style={{color:"#64748b"}}>No in-person sessions yet.</p>}
-      {sessions.map(s=><div key={s.id} style={{border:"1px solid #dce8e1",borderRadius:9,padding:12,display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-       <div><strong>{s.student_name} · {s.student_code}</strong><div style={{color:"#64748b",fontSize:12,marginTop:4}}>{s.assessment_kind==="custom"?"Custom":"Standard"} · {s.assessment_level} · {s.status.toUpperCase()} · {new Date(s.created_at).toLocaleDateString("en-IN")}</div></div>
-       <button type="button" style={button} disabled={busy} onClick={()=>void openSession(s.id)}>{s.status==="submitted"?"View Submitted":"Continue Assessment"}</button>
-      </div>)}
-     </div>
     </section>
    </>:<>
     <section style={card}>
