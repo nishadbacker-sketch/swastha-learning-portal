@@ -81,7 +81,7 @@ export default function ClinicAdminUsersPage() {
     if (!supabase || busyId || account.account_role !== "parent") return;
     const confirmation = window.prompt(
       "Permanently remove unused Parent account: " + account.full_name +
-      "\\nAccounts with completed courses, child links or registrations cannot be removed. Type REMOVE to confirm."
+      "\\nStudent profiles are preserved, but their link to this Parent will be removed. Completed courses and registrations block removal. Type REMOVE to confirm."
     );
     if (confirmation !== "REMOVE") return;
     setBusyId(account.user_id);
