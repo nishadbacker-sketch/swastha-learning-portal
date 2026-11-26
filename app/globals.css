@@ -561,3 +561,40 @@ body .swastha-site-footer__bottom p {
 .swastha-staff-workspace__extras {margin-top:18px;color:#183a35;}
 .swastha-staff-workspace__extras>section {background:#fff;}
 @media(max-width:600px) {.swastha-staff-workspace__summary {grid-template-columns:repeat(2,minmax(0,1fr));}.swastha-staff-workspace__sections {gap:6px;}.swastha-staff-workspace__sections button {flex:1 1 calc(50% - 6px);}}
+
+
+/* Official Swastha logo and fixed staff sidebar: desktop spacious content, mobile stacked menu. */
+.swastha-staff-sidebar{position:fixed;inset:0 auto 0 0;width:294px;height:100dvh;overflow-y:auto;z-index:30;overscroll-behavior:contain;background:linear-gradient(165deg,#075b4d,#043c36);color:#fff;padding:14px 12px 30px;box-shadow:2px 0 20px #052d2929;}
+.swastha-staff-sidebar__brand{display:grid;gap:9px;padding:6px 5px 14px;border-bottom:1px solid #ffffff43;}
+.swastha-staff-sidebar__brand img{display:block;width:min(255px,100%);height:auto;object-fit:contain;background:#fff;border-radius:9px;padding:5px;box-sizing:border-box;}
+.swastha-staff-sidebar__role{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#d7f1e3;}
+.swastha-staff-sidebar__sections{display:grid;gap:3px;margin:12px 0 16px;}
+.swastha-staff-sidebar__sections button{width:100%;border:1px solid transparent;border-radius:8px;text-align:left;background:transparent;color:#fff;padding:10px 12px;cursor:pointer;font-size:14px;font-weight:700;}
+.swastha-staff-sidebar__sections button.active{background:#c9efda;border-color:#c9efda;color:#064c40;}
+.swastha-staff-sidebar__sections button:hover:not(.active),.swastha-staff-sidebar__tool:hover{background:#ffffff20;}
+.swastha-staff-sidebar__tools{border-top:1px solid #ffffff40;padding-top:12px;}
+.swastha-staff-sidebar__tools h2{font-size:16px;font-weight:750;margin:0 0 9px;color:#fff;}
+.swastha-staff-sidebar__tools nav{display:grid;gap:2px;}
+.swastha-staff-sidebar__tool{display:grid;gap:2px;width:100%;padding:9px 10px;text-align:left;border:0;border-bottom:1px solid #ffffff25;border-radius:6px;background:transparent;color:#fff;cursor:pointer;}
+.swastha-staff-sidebar__tool strong{font-size:12.5px;line-height:1.35;}
+.swastha-staff-sidebar__tool span{color:#d2ece3;font-size:10px;line-height:1.35;}
+.swastha-staff-sidebar button:focus-visible{outline:3px solid #f7df9b;outline-offset:2px;}
+.swastha-staff-dashboard-shell>header{padding-left:calc(294px + 24px)!important;}
+.swastha-staff-dashboard-shell>main,.swastha-staff-dashboard-shell>.swastha-staff-dashboard-content{margin-left:294px!important;max-width:none!important;}
+.swastha-staff-workspace--sidebar{background:transparent;color:#183a35;box-shadow:none;padding:14px 0 24px;margin-bottom:6px;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__heading h1{color:#183a35;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__heading p{color:#667a74;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__eyebrow{color:#176b58;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric{background:#fff;border:1px solid #dce8e1;color:#183a35;box-shadow:0 2px 10px #153b2810;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric>span,.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-button>span{color:#526e63;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-button:hover{background:#eaf4ef;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__extras{margin-top:20px;}
+@media(max-width:900px){
+.swastha-staff-sidebar{position:relative;width:auto;height:auto;max-height:52vh;border-radius:12px;box-shadow:none;overflow-y:auto;margin-bottom:14px;}
+.swastha-staff-sidebar__brand img{max-width:210px;}
+.swastha-staff-sidebar__sections{grid-template-columns:repeat(2,minmax(0,1fr));}
+.swastha-staff-sidebar__tools nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;}
+.swastha-staff-dashboard-shell>header{padding-left:16px!important;}
+.swastha-staff-dashboard-shell>main,.swastha-staff-dashboard-shell>.swastha-staff-dashboard-content{margin-left:0!important;}
+}
+@media(max-width:460px){.swastha-staff-sidebar__tools nav{grid-template-columns:1fr;}.swastha-staff-sidebar__sections button{padding:9px;}}
