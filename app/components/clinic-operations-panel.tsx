@@ -38,6 +38,7 @@ export default function ClinicOperationsPanel(){
  const [studentFilter,setStudentFilter]=useState("all");
  const [teacherFilter,setTeacherFilter]=useState("all");
  const [tab,setTab]=useState<"calendar"|"attention"|"workload">("calendar");
+ useEffect(()=>{const next=new URLSearchParams(window.location.search).get("view");if(next==="attention"||next==="workload"||next==="calendar")setTab(next);},[]);
  const load=useCallback(async()=>{
   const db=supabase;
   if(!db){setError("Supabase unavailable.");setLoading(false);return;}
@@ -58,16 +59,26 @@ export default function ClinicOperationsPanel(){
    const links=(l.data||[]) as Link[];
    const ids=[...new Set((currentRole==="teacher"?links.filter(x=>teacherRows.some(t=>t.id===x.teacher_id&&t.user_id===auth.user!.id&&t.status==="active")):links).map(x=>x.student_id))];
    const staffTeachers=currentRole==="teacher"?teacherRows.filter(t=>t.user_id===auth.user!.id):teacherRows;
-   if(!ids.length){setTeachers(staffTeachers);setStudents([]);setSessions([]);setSummaries([]);setGoals([]);setAssessments([]);setEnquiries([]);return;}
    const chunks=<T,>(arr:T[])=>Array.from({length:Math.ceil(arr.length/100)},(_,i)=>arr.slice(i*100,(i+1)*100));
-   const ss:Student[]=[];const aa:Assessment[]=[];
-   for(const chunk of chunks(ids)){
-    const [s,a]=await Promise.all([
-     db.from("students").select("id,full_name,student_code").in("id",chunk).is("removed_at",null),
-     db.from("assessment_assignments").select("id,student_id").in("student_id",chunk).eq("status","reviewed")
-    ]);
-    if(s.error||a.error)throw Error("Authorised students or assessments could not be loaded.");
-    ss.push(...(s.data||[]) as Student[]);aa.push(...(a.data||[]) as Assessment[]);
+   const ss:Student[]=[];
+   // Administrative roles see all active students permitted by RLS, including unassigned students.
+   // Teachers are restricted further to active teacher assignment links.
+   if(currentRole==="teacher"){
+    for(const chunk of chunks(ids)){
+     const r=await db.from("students").select("id,full_name,student_code").in("id",chunk).is("removed_at",null);
+     if(r.error)throw Error("Assigned student records could not be loaded.");
+     ss.push(...(r.data||[]) as Student[]);
+    }
+   }else{
+    const r=await db.from("students").select("id,full_name,student_code").is("removed_at",null).order("full_name").limit(2000);
+    if(r.error)throw Error("Authorised student records could not be loaded.");
+    ss.push(...(r.data||[]) as Student[]);
+   }
+   const aa:Assessment[]=[];
+   for(const chunk of chunks(ss.map(item=>item.id))){
+    const r=await db.from("assessment_assignments").select("id,student_id").in("student_id",chunk).eq("status","reviewed");
+    if(r.error)throw Error("Authorised reviewed assessments could not be loaded.");
+    aa.push(...(r.data||[]) as Assessment[]);
    }
    const allowedStudentIds=ss.map(student=>student.id);
    const allowedSet=new Set(allowedStudentIds);
@@ -137,10 +148,10 @@ export default function ClinicOperationsPanel(){
   ["Student","Student ID","Teacher user ID","Session date (ISO)","Duration minutes","Session type","Attendance status","Parent summary approved"],
   ...visible.map(s=>{const child=students.find(x=>x.id===s.student_id);return [child?.full_name||"Unknown",child?.student_code||"",s.teacher_user_id,s.scheduled_at,s.duration_minutes,s.session_type,s.status,sessionSummaryIds.has(s.id)?"Yes":"No"];})
  ]);
- return <section id="clinic-operations" aria-label="Clinic Operations" className="swastha-clinic-operations-panel">
-  <header className="swastha-clinic-operations-panel__heading"><div>
+ return <section aria-label="Clinic Operations" className="swastha-clinic-operations-panel">
+  <div className="swastha-clinic-operations-panel__heading"><div>
    <h2>Clinic Operations</h2><p>Session calendar, outstanding approvals, follow-ups and detailed workload reporting</p>
-  </div><button type="button" style={action} onClick={()=>router.push(sessionRoute)}>Manage Sessions</button></header>
+  </div><button type="button" style={action} onClick={()=>router.push(sessionRoute)}>Manage Sessions</button></div>
    {error&&<section role="alert" style={{...card,marginBottom:12,color:"#b42318"}}>{error}</section>}
    {loading?<p>Loading authorised clinic records...</p>:<>
     <div style={{...card,display:"flex",gap:12,alignItems:"end",flexWrap:"wrap",marginBottom:12}}>
