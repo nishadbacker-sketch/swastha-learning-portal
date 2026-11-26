@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import {useEffect,useState} from "react";
 import type { ReactNode } from "react";
 import StaffLiveDashboard from "./staff-live-dashboard";
+import ClinicOperationsPanel from "./clinic-operations-panel";
 import {StaffDashboardIcon,StaffMenuIcon} from "./staff-menu-icon";
 
 export type StaffRole = "owner" | "admin" | "clinic_admin" | "teacher";
@@ -15,7 +17,6 @@ type Props = { role:StaffRole; name?:string; summary?:Summary[]; sections?:Secti
 export const COMMON_TOOLS: Tool[] = [
   { label: "Students & Progress", href: "/staff/students", description: "One authorized record for each student, charts and reports" },
   { label: "Staff Action Center", href: "/staff/actions", description: "Reviews, upcoming sessions and coordination priorities" },
-  { label: "Clinic Operations & Analytics", href: "/staff/operations", description: "Calendar, attendance and operational charts" },
   { label: "Courses & Assessments", href: "/staff/courses", description: "Browse published assessments and courses" },
   { label: "In-Person Assessments", href: "/staff/in-person-assessments", description: "Record supervised assessments" },
   { label: "Certificates & Verification", href: "/staff/assessment-certificates", description: "Issue, download and verify approved certificates" },
@@ -48,6 +49,8 @@ export function roleTools(role: StaffRole): Tool[] {
 /** One navigation definition for all staff dashboards. Individual routes and RLS still enforce permission. */
 export default function StaffToolsMenu({ role, name, summary = [], sections = [], activeSection, onSectionChange, children }: Props) {
   const router = useRouter();
+  const [operationsOpen,setOperationsOpen]=useState(false);
+  useEffect(()=>{if(new URLSearchParams(window.location.search).get("clinic")==="operations")setOperationsOpen(true);},[]);
   const tools = [...COMMON_TOOLS, ...roleTools(role)];
   const home=role==="owner"?"/owner/dashboard":role==="admin"?"/admin/dashboard":role==="clinic_admin"?"/clinic-admin/dashboard":"/teacher/dashboard";
 
@@ -88,6 +91,10 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
             </button>:<><span>{item.label}</span><strong>{item.value}</strong></>}
           </div>)}
         </div></details>}
+        <details id="clinic-operations" className="swastha-staff-workspace__operational" open={operationsOpen} onToggle={event=>setOperationsOpen(event.currentTarget.open)}>
+          <summary>Clinic Operations — Session Calendar, Pending Actions, Workload & CSV Export</summary>
+          {operationsOpen&&<ClinicOperationsPanel/>}
+        </details>
         {children&&<div className="swastha-staff-workspace__extras">{children}</div>}
       </section>
     </>

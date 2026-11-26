@@ -196,8 +196,11 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
   {label:"Attended",count:sessions.filter(s=>["completed","attended"].includes(s.status)).length},
   {label:"Cancelled",count:sessions.filter(s=>["cancelled","canceled"].includes(s.status)).length},
   {label:"Rescheduled",count:sessions.filter(s=>s.status==="rescheduled").length},
-  {label:"Missed / Other",count:sessions.filter(s=>!["completed","attended","cancelled","canceled","rescheduled"].includes(s.status)).length}
+  {label:"Absent / Scheduled",count:sessions.filter(s=>!["completed","attended","cancelled","canceled","rescheduled"].includes(s.status)).length}
  ];
+ const attendedCount=sessionOutcomes[0].count;
+ const absentCount=sessions.filter(s=>["absent","missed","no_show"].includes(s.status)).length;
+ const attendanceRate=attendedCount+absentCount>0?Math.round(attendedCount/(attendedCount+absentCount)*100):null;
  let attendanceRunning=0;
  const attendanceArcs=sessionOutcomes.map((o,i)=>{const from=attendanceRunning;attendanceRunning+=sessions.length?o.count/sessions.length*100:0;return colors[i]+" "+from+"% "+attendanceRunning+"%";});
  const domainMap=new Map<string,{sum:number;count:number}>();
@@ -301,7 +304,7 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
    </article>
    <article className="swastha-live-panel"><h3>Session Attendance</h3><p>Therapy / learning session attendance</p>
     {sessions.length===0?<div className="swastha-live-dashboard__empty">No sessions recorded yet.</div>:
-     <div className="swastha-live-dashboard__donut-row"><div className="swastha-live-dashboard__donut" role="img" aria-label={sessionOutcomes.map(x=>x.label+" "+x.count).join(", ")} style={{background:"conic-gradient("+attendanceArcs.join(",")+")"}}><div><strong>{Math.round(sessionOutcomes[0].count/sessions.length*100)}%</strong><small>Attendance</small></div></div><div className="swastha-live-dashboard__legend">{sessionOutcomes.map((o,i)=><div key={o.label}><i style={{background:colors[i]}}/><span>{o.label}</span><strong>{Math.round(o.count/sessions.length*100)}%</strong></div>)}</div></div>}
+     <div className="swastha-live-dashboard__donut-row"><div className="swastha-live-dashboard__donut" role="img" aria-label={sessionOutcomes.map(x=>x.label+" "+x.count).join(", ")} style={{background:"conic-gradient("+attendanceArcs.join(",")+")"}}><div><strong>{attendanceRate===null?"—":attendanceRate+"%"}</strong><small>Attendance</small></div></div><div className="swastha-live-dashboard__legend">{sessionOutcomes.map((o,i)=><div key={o.label}><i style={{background:colors[i]}}/><span>{o.label}</span><strong>{Math.round(o.count/sessions.length*100)}%</strong></div>)}</div></div>}
    </article>
   </div>
   <div className="swastha-live-dashboard__charts swastha-live-dashboard__charts--bottom swastha-approved-dashboard__three">
@@ -334,7 +337,7 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
     <div className="swastha-approved-dashboard__actions">{[
      {label:"Assessments to Review",count:assessments.filter(a=>a.status==="submitted").length,href:role==="teacher"?"/teacher/dashboard":"/staff/actions"},
      {label:"IDP Goals Due for Update",count:goals.filter(g=>g.target_date&&g.target_date<today&&!["completed","achieved","met"].includes(g.status)).length,href:role==="teacher"?"/teacher/idp":"/staff/actions"},
-     {label:"Follow-up Appointments",count:role==="teacher"?null:appointments.filter(a=>a.status==="new").length,href:"/staff/operations"},
+     {label:"Follow-up Appointments",count:role==="teacher"?null:appointments.filter(a=>a.status==="new").length,href:"/staff/operations?view=attention"},
      {label:"Certificates Ready to Issue",count:assessments.filter(a=>a.status==="reviewed"&&!certificates.some(c=>c.student_id===a.student_id)).length,href:"/staff/assessment-certificates"}
     ].map((item,i)=><button type="button" key={item.label} onClick={()=>router.push(item.href)} className="swastha-approved-dashboard__action"><span className={"swastha-approved-dashboard__count n"+i}>{item.count===null?"—":item.count}</span><span>{item.label}</span><strong aria-hidden="true">›</strong></button>)}</div>
    </article>

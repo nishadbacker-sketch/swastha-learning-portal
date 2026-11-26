@@ -9,7 +9,8 @@ const clinic=read("app/clinic-admin/dashboard/page.tsx");
 const owner=read("app/owner/dashboard/page.tsx");
 const staffTools=read("app/components/staff-tools-menu.tsx");
 const chart=read("app/components/learning-insights-charts.tsx");
-const operations=read("app/staff/operations/page.tsx");
+const operations=read("app/components/clinic-operations-panel.tsx");
+const operationsRedirect=read("app/staff/operations/page.tsx");
 const actions=read("app/staff/actions/page.tsx");
 const parent=read("app/parent/dashboard/page.tsx");
 
@@ -19,9 +20,11 @@ test("Shared Staff Workspace is reused by Teacher, Clinic Admin, Super Admin and
  assert.match(admin,/<StaffToolsMenu role=\{creatorMode\?"owner":"admin"\}/);
  assert.match(owner,/AdminDashboard/);
  assert.match(staffTools,/const COMMON_TOOLS/);
- for(const href of ["/staff/students","/staff/actions","/staff/operations","/staff/in-person-assessments","/staff/assessment-certificates"]){
+ for(const href of ["/staff/students","/staff/actions","/staff/in-person-assessments","/staff/assessment-certificates"]){
   assert.ok(staffTools.includes('href: "'+href+'"'),"Shared tool link missing: "+href);
  }
+ assert.match(staffTools,/ClinicOperationsPanel/);
+ assert.match(operationsRedirect,/clinic:"operations"/);
  assert.doesNotMatch(parent,/StaffToolsMenu/);
 });
 
