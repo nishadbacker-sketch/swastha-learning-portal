@@ -67,7 +67,7 @@ export default function ClinicAdminDashboard(){
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/in-person-assessments")}>In-Person Assessments</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/assessment-certificates")}>Assessment Certificates</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/clinic-admin/sessions")}>Sessions & Attendance</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/students")}>Open Student Management</button>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/students")}>Student Management</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/teacher/coordination")}>Open Coordination Overview</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/notifications")}>Open Staff Notifications</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/questions")}>Manage Assessment Questions</button>
