@@ -598,3 +598,93 @@ body .swastha-site-footer__bottom p {
 .swastha-staff-dashboard-shell>main,.swastha-staff-dashboard-shell>.swastha-staff-dashboard-content{margin-left:0!important;}
 }
 @media(max-width:460px){.swastha-staff-sidebar__tools nav{grid-template-columns:1fr;}.swastha-staff-sidebar__sections button{padding:9px;}}
+
+
+/* Compact layout for EVERY staff route: teacher, admin, clinic admin, owner and staff tools.
+   Keep the official logo in the top-left sidebar on desktop; avoid a second centered logo
+   and return the unused header height to the dashboard. Family routes are untouched. */
+.swastha-staff-route{min-height:100vh;background:#f8faf7;color:#183a35;}
+.swastha-staff-route :is(main,div).swastha-staff-dashboard-shell>header{
+  min-height:66px!important;padding:10px 24px 10px calc(294px + 24px)!important;
+  display:flex;justify-content:flex-end;align-items:center;gap:12px;
+  box-sizing:border-box;border-bottom:1px solid #dce8e1;background:#fff;
+}
+.swastha-staff-route .swastha-staff-dashboard-shell>header>div{
+  max-width:none!important;width:100%;margin:0!important;
+  justify-content:flex-end!important;align-items:center;gap:12px!important;
+}
+.swastha-staff-route .swastha-staff-dashboard-shell>header>div>div:first-child:not(:last-child){
+  display:none!important;
+}
+.swastha-staff-route .swastha-staff-dashboard-shell>header>div>div:last-child{
+  display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap;
+}
+.swastha-staff-route .swastha-staff-dashboard-shell>header button{
+  min-height:38px;min-width:0;padding:8px 12px!important;margin:0!important;
+  font-size:13px!important;white-space:normal;
+}
+.swastha-staff-route .swastha-staff-dashboard-shell>main,
+.swastha-staff-route .swastha-staff-dashboard-shell>.swastha-staff-dashboard-content{
+  padding:18px 20px 55px!important;box-sizing:border-box;
+}
+.swastha-staff-route .swastha-staff-workspace--sidebar{
+  padding:4px 0 14px;margin:0;
+}
+.swastha-staff-route .swastha-staff-workspace--sidebar .swastha-staff-workspace__heading h1{
+  font-size:clamp(19px,2vw,26px);line-height:1.2;overflow-wrap:anywhere;margin:3px 0 7px;
+}
+.swastha-staff-route .swastha-staff-workspace--sidebar .swastha-staff-workspace__summary{
+  margin-top:12px;gap:10px;
+}
+.swastha-staff-route .swastha-staff-workspace--sidebar .swastha-staff-workspace__extras{
+  margin-top:14px;
+}
+.swastha-staff-route .swastha-staff-sidebar{
+  padding-top:10px;
+}
+.swastha-staff-route .swastha-staff-sidebar__brand{
+  padding-top:2px;padding-bottom:10px;
+}
+.swastha-staff-route .swastha-staff-sidebar__brand img{
+  width:min(224px,100%);padding:4px;margin:0;
+}
+/* Subpages keep a single left-aligned logo, compact heading and consistent spacing. */
+.swastha-staff-route>main>header,
+.swastha-staff-route>div:not(.swastha-staff-dashboard-shell)>header{
+  padding:10px 20px!important;min-height:66px;box-sizing:border-box;
+}
+.swastha-staff-route>main>header img[alt^="Swastha Learning Clinic"],
+.swastha-staff-route>div>header img[alt^="Swastha Learning Clinic"],
+.swastha-staff-route .swastha-workspace-header img[alt^="Swastha Learning Clinic"]{
+  width:min(185px,100%)!important;height:auto!important;
+}
+.swastha-staff-route .swastha-workspace-content{padding-top:18px;}
+.swastha-staff-route .swastha-workspace-toolbar{padding:12px;gap:10px;}
+@media(max-width:900px){
+ .swastha-staff-route :is(main,div).swastha-staff-dashboard-shell>header{
+   padding:10px 16px!important;min-height:64px;
+ }
+ .swastha-staff-route .swastha-staff-dashboard-shell>header>div>div:first-child:not(:last-child){
+   display:block!important;
+ }
+ .swastha-staff-route .swastha-staff-dashboard-shell>header>div{
+   justify-content:space-between!important;flex-wrap:wrap;
+ }
+ .swastha-staff-route .swastha-staff-dashboard-shell>header>div>div:last-child{
+   justify-content:flex-start;gap:7px;
+ }
+ .swastha-staff-route .swastha-staff-sidebar__brand img{display:none;}
+ .swastha-staff-route .swastha-staff-sidebar__brand{padding-bottom:7px;}
+ .swastha-staff-route .swastha-staff-dashboard-shell>main,
+ .swastha-staff-route .swastha-staff-dashboard-shell>.swastha-staff-dashboard-content{
+   padding:14px 12px 45px!important;
+ }
+}
+@media(max-width:480px){
+ .swastha-staff-route .swastha-staff-dashboard-shell>header button{
+   font-size:12px!important;padding:7px 9px!important;
+ }
+ .swastha-staff-route .swastha-staff-workspace--sidebar .swastha-staff-workspace__summary{
+   grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+}
