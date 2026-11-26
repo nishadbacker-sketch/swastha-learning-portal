@@ -463,6 +463,7 @@ export default function TeacherDashboard() {
 
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [analyticsStudentId,setAnalyticsStudentId]=useState("all");
 
   const [students, setStudents] = useState<Student[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
@@ -1152,8 +1153,8 @@ export default function TeacherDashboard() {
 
             <section id="staff-analytics" aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
               <h2 style={{marginTop:0,color:"#0f4c5c"}}>Analytics Dashboard</h2>
-              <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments}/>
-              <AssessmentAnalytics assessments={assessments} students={students} hideDashboardTitle>
+              <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments} selectedStudentId={analyticsStudentId} onStudentChange={setAnalyticsStudentId}/>
+              <AssessmentAnalytics assessments={assessments} students={students} studentFilterId={analyticsStudentId} hideDashboardTitle>
               {(selectedStudentId)=>(
             <section style={{...panel,marginTop:16}}>
               <h3>Student Development Journey & Progress Overview</h3>
