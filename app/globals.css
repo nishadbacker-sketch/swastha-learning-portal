@@ -1065,3 +1065,17 @@ body .swastha-site-footer__bottom p {
 .swastha-live-dashboard--reference .swastha-approved-dashboard__three>article:last-child{grid-column:auto;}
 .swastha-live-dashboard--reference .swastha-approved-dashboard__filters select{max-width:180px;}
 }
+
+/* Reuse the approved Clinic Dashboard cards for consolidated operational tools.
+   No styling changes to the new KPI, radar, funnel, IDP, attendance or action panels. */
+.swastha-clinic-operations-panel{display:grid;gap:12px;padding:14px 0 4px;color:#183a35;}
+.swastha-clinic-operations-panel__heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.swastha-clinic-operations-panel__heading h2{font-size:19px;color:#173d34;margin:0 0 4px;}
+.swastha-clinic-operations-panel__heading p{font-size:12px;color:#667a74;margin:0;}
+.swastha-clinic-operations-panel label{display:block;font-size:12px;font-weight:600;}
+.swastha-clinic-operations-panel select,.swastha-clinic-operations-panel input{max-width:100%;border-radius:8px;border:1px solid #bdd4c7;background:#fff;color:#183a35;}
+.swastha-clinic-operations-panel section{min-width:0;}
+.swastha-clinic-operations-panel button:focus-visible{outline:3px solid #9de3bd;outline-offset:2px;}
+.swastha-staff-workspace__operational#clinic-operations{margin-top:18px;scroll-margin-top:100px;}
+.swastha-staff-workspace__operational#clinic-operations>summary{padding:4px 2px;list-style-position:inside;font-size:15px;}
+@media(max-width:640px){.swastha-clinic-operations-panel__heading button{width:100%;}.swastha-staff-workspace__operational#clinic-operations{padding:9px;}}
