@@ -613,6 +613,9 @@ body .swastha-site-footer__bottom p {
   max-width:none!important;width:100%;margin:0!important;
   justify-content:flex-end!important;align-items:center;gap:12px!important;
 }
+.swastha-staff-route .swastha-staff-dashboard-shell>header>div:first-child:not(:last-child){
+ display:none!important;
+}
 .swastha-staff-route .swastha-staff-dashboard-shell>header>div>div:first-child:not(:last-child){
   display:none!important;
 }
@@ -663,6 +666,9 @@ body .swastha-site-footer__bottom p {
 @media(max-width:900px){
  .swastha-staff-route :is(main,div).swastha-staff-dashboard-shell>header{
    padding:10px 16px!important;min-height:64px;
+ }
+ .swastha-staff-route .swastha-staff-dashboard-shell>header>div:first-child:not(:last-child){
+   display:block!important;
  }
  .swastha-staff-route .swastha-staff-dashboard-shell>header>div>div:first-child:not(:last-child){
    display:block!important;
