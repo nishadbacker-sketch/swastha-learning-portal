@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import BrandLogo from "../components/brand-logo";
 
 export default function LoginPage({ initialRegister = false }: { initialRegister?: boolean }) {
   const router = useRouter();
@@ -196,11 +197,8 @@ export default function LoginPage({ initialRegister = false }: { initialRegister
   return (
     <main>
       <nav className="nav">
-        <a className="brand" href="/">
-          <span className="brand-mark">S</span>
-          <span>
-            SWASTHA<span className="brand-light"> LEARNING CLINIC</span>
-          </span>
+        <a className="brand" href="/" aria-label="Swastha Learning Clinic home" style={{ letterSpacing: 0 }}>
+          <BrandLogo />
         </a>
         <span className="nav-tag">SECURE ACCESS</span>
       </nav>
