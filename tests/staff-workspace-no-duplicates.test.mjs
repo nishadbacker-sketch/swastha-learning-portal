@@ -27,8 +27,9 @@ test("Teacher has one tab navigation and one set of summary metrics inside Staff
  assert.doesNotMatch(teacher,/<nav aria-label="Teacher dashboard sections"/);
  assert.doesNotMatch(teacher,/<Metric\s+label=/);
  assert.match(teacher,/assessments\.filter\(a=>a\.status==="submitted"\)/);
- assert.match(teacher,/setActiveTab\("students"\)/);
- assert.match(teacher,/setActiveTab\("activities"\)/);
+ assert.match(menu,/<StaffDashboardInsights role=\{role\}\/>/);
+ assert.match(teacher,/id:"students",label:"My Students"/);
+ assert.match(teacher,/id:"activities",label:"Learning Activities"/);
 });
 
 test("Super Admin and Owner show all dashboard counters within Staff Workspace only",()=>{
