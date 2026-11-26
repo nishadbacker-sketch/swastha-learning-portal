@@ -50,7 +50,7 @@ export default function TeacherCoordination(){
  const refresh=useCallback(async()=>{
   if(!supabase)throw new Error("Supabase is not configured");
   const [a,b,c,d,e,codes]=await Promise.all([
-   supabase.from("students").select("id,student_code,full_name,current_class,status").order("full_name"),
+   supabase.from("students").select("id,student_code,full_name,current_class,status").is("removed_at",null).order("full_name"),
    supabase.from("student_coordination_tasks").select("id,student_id,title,description,category,status,priority,due_date,assigned_to,created_by,created_at").order("created_at",{ascending:false}).limit(1500),
    supabase.from("student_coordination_notes").select("id,student_id,task_id,category,body,author_id,created_at").order("created_at",{ascending:false}).limit(1500),
    supabase.rpc("coordination_staff_directory"),
