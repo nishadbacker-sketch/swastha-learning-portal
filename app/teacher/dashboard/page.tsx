@@ -8,8 +8,6 @@ import StaffNotificationsPopup from "../../components/staff-notifications-popup"
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
-import AssessmentAnalytics from "../assessment-analytics";
-import LearningInsightsCharts from "../../components/learning-insights-charts";
 
 type Level = "LP" | "UP" | "HS" | "HSS";
 type Tab = "overview" | "assessments" | "activities" | "students";
@@ -1098,72 +1096,7 @@ export default function TeacherDashboard() {
           ]}
           activeSection={activeTab}
           onSectionChange={id=>setActiveTab(id as Tab)}
-          summary={[
-            {label:"Assigned Students",value:students.length,onClick:()=>setActiveTab("students")},
-            {label:"Learning Activities",value:activities.length,onClick:()=>setActiveTab("activities")},
-            {label:"Assessments",value:assessments.length,onClick:()=>setActiveTab("assessments")},
-            {label:"Pending Reviews",value:assessments.filter(a=>a.status==="submitted").length,onClick:()=>{
-              const pending=assessments.find(a=>a.status==="submitted");
-              if(pending)router.push("/teacher/assessment-review/"+pending.id);
-              else setActiveTab("assessments");
-            }}
-          ]}
         />
-
-        {activeTab === "overview" && (
-          <section>
-
-            <section id="staff-analytics" aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
-              <h2 style={{marginTop:0,color:"#0f4c5c"}}>Analytics Dashboard</h2>
-              <label htmlFor="teacher-analytics-student" style={{display:"grid",gap:6,fontWeight:700,fontSize:13,maxWidth:520,margin:"12px 0 18px"}}>
-                Select Student
-                <select id="teacher-analytics-student" aria-label="Select student for all analytics" value={students.some(student=>student.id===analyticsStudentId)?analyticsStudentId:"all"} onChange={event=>setAnalyticsStudentId(event.target.value)} style={{padding:11,borderRadius:9,border:"1px solid #a9bfb5",background:"white",color:"#183a35"}}>
-                  <option value="all">All assigned students</option>
-                  {students.map(student=><option key={student.id} value={student.id}>{student.full_name} ({student.student_code||"ID pending"})</option>)}
-                </select>
-              </label>
-              <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments} selectedStudentId={analyticsStudentId} onStudentChange={setAnalyticsStudentId} hideStudentSelector/>
-              <AssessmentAnalytics assessments={assessments} students={students} studentFilterId={analyticsStudentId} hideDashboardTitle>
-              {(selectedStudentId)=>(
-            <section style={{...panel,marginTop:16}}>
-              <h3>Student Development Journey & Progress Overview</h3>
-              <p style={{color:"#667a74"}}>Observed milestones for the selected student. Open the linked workflows to verify plan, report and certificate status.</p>
-              {!selectedStudentId?<p>No student assessment selected.</p>:students.filter(student=>student.id===selectedStudentId).map(student=>{
-                const records=assessments.filter(a=>a.student_id===student.id);
-                const tasks=activityAssignments.filter(a=>a.student_id===student.id);
-                const reviewed=records.filter(a=>a.status==="reviewed");
-                const done=tasks.filter(a=>a.status==="completed"||a.status==="reviewed").length;
-                const stages=[
-                  ["Registration","Recorded"],
-                  ["Baseline assessment",records.length?"Assigned":"Not assigned"],
-                  ["Teacher review",reviewed.length?"Reviewed":"Not confirmed"],
-                  ["Individual development plan","Open plan"],
-                  ["Learning activities",tasks.length?done+" / "+tasks.length+" completed":"Not assigned"],
-                  ["Reassessment","Verify history"],
-                  ["Progress report","Open progress"],
-                  ["Certificate","Verify issuance"]
-                ];
-                return <details open key={student.id} style={{border:"1px solid #dce8e1",borderRadius:10,padding:12,marginBottom:10}}>
-                  <summary style={{cursor:"pointer",fontWeight:700}}>{student.full_name} ({student.student_code||"ID unavailable"})</summary>
-                  <div style={{marginTop:10,fontSize:13,color:"#0f4c5c"}}>{reviewed.length}/{records.length} assessments reviewed · {tasks.length?done+"/"+tasks.length+" activities completed ("+Math.round(done/tasks.length*100)+"%)":"No activities assigned"}</div>
-                  {tasks.length>0&&<div role="progressbar" aria-label={"Activity completion for "+student.full_name} aria-valuemin={0} aria-valuemax={tasks.length} aria-valuenow={done} style={{height:10,background:"#e2e8f0",borderRadius:8,marginTop:6,overflow:"hidden"}}><div style={{height:"100%",width:(done/tasks.length*100)+"%",background:"#176b58"}}/></div>}
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:8,marginTop:12}}>
-                    {stages.map(([label,status],i)=><div key={label} style={{padding:10,background:"#f3f9f6",borderRadius:8}}><small>{i+1}. {label}</small><div style={{fontWeight:700,fontSize:13}}>{status}</div></div>)}
-                  </div>
-                  <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
-                    <button type="button" style={primaryButton} onClick={()=>{setProfileId(student.id);setActiveTab("students");}}>Student & guardian records</button>
-                    <button type="button" style={primaryButton} onClick={()=>router.push("/teacher/idp?student="+encodeURIComponent(student.id))}>Open IDP</button>
-                    
-                    
-                  </div>
-                </details>;
-              })}
-            </section>
-                            )}
-              </AssessmentAnalytics>
-            </section>
-          </section>
-        )}
 
         {activeTab === "assessments" && (
           <section>
