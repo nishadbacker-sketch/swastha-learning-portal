@@ -21,6 +21,7 @@ export default function AdminDashboard(){
  const [students,setStudents]=useState<Student[]>([]);
  const [teachers,setTeachers]=useState<Teacher[]>([]);
  const [assignments,setAssignments]=useState<Assignment[]>([]);
+ const [learningCounts,setLearningCounts]=useState<{assessments:number|null;activities:number|null}>({assessments:null,activities:null});
  const [selected,setSelected]=useState<Record<string,string>>({});
  const [busy,setBusy]=useState("");
  const [notice,setNotice]=useState("");
@@ -37,13 +38,16 @@ export default function AdminDashboard(){
    setCreatorMode(role.data.role==="owner");
    const {data:currentProfile}=await db.from("profiles").select("full_name,staff_code").eq("id",auth.user.id).maybeSingle();
    setName((currentProfile?.full_name||auth.user.user_metadata?.full_name||auth.user.email||"Super Admin")+(currentProfile?.staff_code?" · "+currentProfile.staff_code:""));
-   const [s,t,a]=await Promise.all([
-    db.from("students").select("id,student_code,full_name,current_class,status,created_at").order("created_at",{ascending:false}),
+   const [s,t,a,assessmentCount,activityCount]=await Promise.all([
+    db.from("students").select("id,student_code,full_name,current_class,status,created_at").is("removed_at",null).order("created_at",{ascending:false}),
     db.from("teachers").select("id,user_id,status").eq("status","active"),
-    db.from("teacher_assignments").select("id,student_id,teacher_id")
+    db.from("teacher_assignments").select("id,student_id,teacher_id"),
+    db.from("assessment_assignments").select("id",{count:"exact",head:true}),
+    db.from("student_activity_assignments").select("id",{count:"exact",head:true})
    ]);
    if(s.error)throw s.error;if(t.error)throw t.error;if(a.error)throw a.error;
    setStudents(s.data||[]);
+   setLearningCounts({assessments:assessmentCount.error?null:assessmentCount.count,activities:activityCount.error?null:activityCount.count});
    setAssignments(a.data||[]);
    const list=t.data||[];
    const userIds=list.map(x=>x.user_id);
@@ -79,7 +83,9 @@ export default function AdminDashboard(){
  
  <StaffToolsMenu role={creatorMode?"owner":"admin"} name={name}
    summary={[
-    {label:"Registered Students",value:students.length,onClick:()=>router.push("/admin/students")},
+    {label:"Total Students",value:students.length,onClick:()=>router.push("/admin/students")},
+    {label:"Assessments",value:learningCounts.assessments??"—",onClick:()=>router.push("/admin/assessment-oversight"),note:learningCounts.assessments===null?"Data unavailable":"All permitted assignments"},
+    {label:"Learning Activities",value:learningCounts.activities??"—",onClick:()=>router.push("/staff/courses"),note:learningCounts.activities===null?"Data unavailable":"Assigned learning activities"},
     {label:"Awaiting Teacher Assignment",value:students.filter(student=>!assignments.some(a=>a.student_id===student.id)).length,onClick:()=>router.push("/admin/students")},
     {label:"Active Teachers",value:teachers.length,onClick:()=>router.push("/admin/users")},
     {label:"Teacher–Student Links",value:assignments.length,onClick:()=>router.push("/admin/students")}
