@@ -72,7 +72,7 @@ test("Existing Student Management and coordination lead to the shared record",()
 test("Removed students are filtered out of older teacher and administrative worklists",()=>{
  const teacher=source("app/teacher/dashboard/page.tsx");
  const coordination=source("app/teacher/coordination/page.tsx");
- const operations=source("app/staff/operations/page.tsx");
+ const operations=source("app/components/clinic-operations-panel.tsx");
  const certificates=source("app/staff/assessment-certificates/page.tsx");
  const oversight=source("app/admin/assessment-oversight/page.tsx");
  assert.match(teacher,/\.is\("removed_at", null\)/);
@@ -84,10 +84,13 @@ test("Removed students are filtered out of older teacher and administrative work
 });
 
 test("Operations charts use one accessible visualization component and respect student filters",()=>{
- const ops=source("app/staff/operations/page.tsx");
+ const ops=source("app/components/clinic-operations-panel.tsx");
  const bars=source("app/components/staff-metric-bars.tsx");
  assert.match(ops,/import StaffMetricBars from/);
- assert.ok((ops.match(/<StaffMetricBars/g)||[]).length>=3);
+ assert.ok((ops.match(/<StaffMetricBars/g)||[]).length>=1);
+ const dashboard=source("app/components/staff-live-dashboard.tsx");
+ assert.match(dashboard,/Session Attendance/);
+ assert.match(dashboard,/Goal Achievement \(IDP\)/);
  assert.match(ops,/studentFilter==="all"/);
  assert.match(ops,/const allowedStudentIds=ss\.map/);
  assert.match(bars,/role="progressbar"/);
