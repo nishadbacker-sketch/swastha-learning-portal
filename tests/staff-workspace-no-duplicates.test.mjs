@@ -23,7 +23,11 @@ test("Teacher has one tab navigation and one set of summary metrics inside Staff
  assert.match(teacher,/<StaffToolsMenu role="teacher" name=\{teacherName\}/);
  assert.match(teacher,/activeSection=\{activeTab\}/);
  assert.match(teacher,/onSectionChange=\{id=>setActiveTab\(id as Tab\)\}/);
- for(const label of ["Overview","My Students","Assessments","Learning Activities"])assert.match(teacher,new RegExp('label:"'+label+'"'));
+ const sidebar=teacher.slice(teacher.indexOf('sections={['),teacher.indexOf('activeSection={activeTab}'));
+ assert.match(sidebar,/id:"overview",label:"Overview"/);
+ for(const label of ["My Students","Assessments","Learning Activities"])assert.doesNotMatch(sidebar,new RegExp('label:"'+label+'"'));
+ // Only sidebar links are removed: existing tab views and their actions stay intact.
+ for(const tab of ["students","assessments","activities"])assert.match(teacher,new RegExp('activeTab === "'+tab+'"'));
  assert.doesNotMatch(teacher,/<nav aria-label="Teacher dashboard sections"/);
  assert.doesNotMatch(teacher,/<Metric\s+label=/);
  assert.match(teacher,/assessments\.filter\(a=>a\.status==="submitted"\)/);
