@@ -55,7 +55,7 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
     if(se)throw se;
     const ss=(students||[]) as Student[];
     if(!ss.length){if(live)setData(empty);return;}
-    const result:Dataset={...empty,students:ss};
+    const result:Dataset={students:ss,assessments:[],results:[],activities:[],sessions:[],inPerson:[]};
     // Batch every foreign-key list to avoid PostgREST URL and in() limits.
     for(let start=0;start<ss.length;start+=80){
      const chunk=ss.slice(start,start+80).map(s=>s.id);
