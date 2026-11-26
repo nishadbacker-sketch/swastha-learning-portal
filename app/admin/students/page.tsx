@@ -7,7 +7,7 @@ import {useRouter} from "next/navigation";
 import {supabase} from "../../../lib/supabase";
 import StudentAppointmentHistory from "../../components/student-appointment-history";
 
-type Student={id:string;student_code:string|null;full_name:string;date_of_birth:string|null;current_class:string|null;preferred_language:"en"|"ml";status:string;created_at:string};
+type Student={id:string;student_code:string|null;full_name:string;date_of_birth:string|null;current_class:string|null;preferred_language:"en"|"ml";status:string;created_at:string;removed_at:string|null};
 type Teacher={id:string;user_id:string;status:string;name:string};
 type Link={id:string;student_id:string;teacher_id:string};
 type StudentContact={school_name:string;emergency_contact_name:string;emergency_contact_phone:string};
@@ -48,7 +48,7 @@ export default function StudentManagementPage(){
   setError("");
   try{
    const [s,t,l,p]=await Promise.all([
-    supabase.from("students").select("id,student_code,full_name,date_of_birth,current_class,preferred_language,status,created_at").order("full_name"),
+    supabase.from("students").select("id,student_code,full_name,date_of_birth,current_class,preferred_language,status,created_at,removed_at").order("full_name"),
     supabase.from("teachers").select("id,user_id,status").order("created_at"),
     supabase.from("teacher_assignments").select("id,student_id,teacher_id"),
     supabase.rpc("admin_student_progress_summary")
@@ -62,7 +62,7 @@ export default function StudentManagementPage(){
     if(r.error)throw r.error;
     names=Object.fromEntries((r.data||[]).map(x=>[x.id,(x.full_name||"Teacher")+(x.staff_code?" · "+x.staff_code:"")]));
    }
-   setStudents((s.data||[]) as Student[]);
+   setStudents(((s.data||[]) as Student[]).filter(x=>!x.removed_at));
    setLinks((l.data||[]) as Link[]);
    setTeachers(staff.map((x,i)=>({...x,name:names[x.user_id]?.trim()||"Teacher "+(i+1)})));
    setProgress(Object.fromEntries(((p.data||[]) as Progress[]).map(x=>[x.student_id,x])));
@@ -98,6 +98,27 @@ export default function StudentManagementPage(){
    setReplacements(x=>({...x,[studentId+":"+teacherId]:""}));
   }catch(e){setError(e instanceof Error?e.message:"Unable to update teacher assignment.");}
   finally{setBusy("");setConfirmRemove(null);}
+ }
+
+ async function removeStudent(student:Student){
+  if(!supabase||busy)return;
+  const expected=student.student_code||student.full_name;
+  const confirmed=window.prompt(
+   "Remove student "+student.full_name+" ("+(student.student_code||"no ID")+") from active use?\\n"+
+   "This is allowed only when no course or assessment is completed.\\n"+
+   "The permanent student profile and historical records will be retained; guardian and teacher access will be disconnected.\\n"+
+   "Type "+expected+" to confirm."
+  );
+  if(confirmed!==expected)return;
+  setBusy(student.id);setError("");setNotice("");
+  try{
+   const {data,error:e}=await supabase.rpc("admin_remove_uncompleted_student",{p_student_id:student.id});
+   if(e)throw e;
+   setExpandedStudent(null);setEditingChild(null);setEditingContactId(null);setHistoryStudent(null);
+   await load();
+   setNotice(typeof data==="string"?data:"Student removed from active use.");
+  }catch(e){setError(e instanceof Error?e.message:"Student removal was blocked.");}
+  finally{setBusy("");}
  }
 
  async function openContactDetails(studentId:string){
@@ -212,6 +233,7 @@ export default function StudentManagementPage(){
      {expandedStudent===s.id&&<div id={"student-details-"+s.id} style={{marginTop:14,paddingTop:14,borderTop:"1px solid #dce8e1"}}>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
        <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>{setEditingChild(editingChild?.id===s.id?null:{...s});setEditingContactId(null);setHistoryStudent(null);}}>Edit student profile</button>
+       <button type="button" style={{...button,background:"#fff1f2",color:"#9f1239",border:"1px solid #fecdd3"}} disabled={!!busy} onClick={()=>void removeStudent(s)}>{busy===s.id?"Removing...":"Remove student"}</button>
        <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>{setEditingChild(null);setHistoryStudent(null);void openContactDetails(s.id);}}>{editingContactId===s.id?"Close contacts":"School & emergency contacts"}</button>
        <button type="button" style={{...button,background:"#edf2f5",color:"#183a35"}} onClick={()=>{setEditingChild(null);setEditingContactId(null);void toggleHistory(s.id);}}>{historyStudent===s.id?"Close history":"Profile change history"}</button>
       </div>
