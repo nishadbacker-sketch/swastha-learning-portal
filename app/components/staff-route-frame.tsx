@@ -38,6 +38,7 @@ export default function StaffRouteFrame({children}:{children:ReactNode}){
    <div className="swastha-staff-sidebar__brand">
     <img src="/swastha-learning-clinic-logo.png" alt="Swastha Learning Clinic — official logo" width={260} height={87}/>
     <span className="swastha-staff-sidebar__role">{role.replace("_"," ")} Workspace</span>
+    <button type="button" className="swastha-staff-sidebar__certificate-link" onClick={()=>router.push("/staff/assessment-certificates")}>Certificates &amp; Verification</button>
    </div>
    <nav aria-label="Staff sections" className="swastha-staff-sidebar__sections">
     <button type="button" onClick={()=>router.push(roleHome(role))}>Dashboard Overview</button>
