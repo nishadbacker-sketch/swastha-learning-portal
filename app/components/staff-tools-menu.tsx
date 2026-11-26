@@ -52,6 +52,7 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
     <>
       <aside aria-label="Staff navigation" className="swastha-staff-sidebar">
         <div className="swastha-staff-sidebar__brand">
+          <img src="/swastha-learning-clinic-logo.png" alt="Swastha Learning Clinic — official logo" width={260} height={87}/>
           <span className="swastha-staff-sidebar__role">{role === "owner" ? "Owner" : role === "admin" ? "Super Admin" : role === "clinic_admin" ? "Clinic Admin" : "Teacher"} Workspace</span>
         </div>
         {sections.length>0&&<nav aria-label="Teacher dashboard sections" className="swastha-staff-sidebar__sections">

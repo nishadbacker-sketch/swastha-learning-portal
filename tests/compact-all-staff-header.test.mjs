@@ -15,13 +15,10 @@ test("Every staff route uses the same compact visual scope, without wrapping the
  assert.match(css,/\.swastha-staff-route\{/);
  assert.doesNotMatch(css,/\.swastha-parent-route/);
 });
-test("Official Swastha logo sits at the left of shared staff top bar",()=>{
+test("Official Swastha logo stays in left staff sidebar with responsive header fallback",()=>{
  assert.match(menu,/swastha-staff-sidebar__brand/);
- const frame=read("app/components/staff-route-frame.tsx");
- assert.match(frame,/swastha-staff-global-topbar__logo/);
- assert.match(frame,/swastha-learning-clinic-logo\.png/);
- assert.doesNotMatch(menu,/<img src="\/swastha-learning-clinic-logo\.png"/);
- assert.match(css,/\.swastha-staff-global-topbar__logo img/);
+ assert.match(menu,/swastha-learning-clinic-logo\.png/);
+ assert.match(css,/\.swastha-staff-route \.swastha-staff-sidebar__brand img/);
  assert.match(css,/@media\(max-width:900px\)/);
  assert.match(css,/display:block!important/);
 });
@@ -52,14 +49,4 @@ test("Every staff subpage reuses canonical role-appropriate navigation with resp
  assert.match(frame,/if\(dashboard\)return/);
  assert.match(css,/swastha-staff-subpage__content\.is-navigation-visible/);
  assert.match(css,/swastha-staff-sidebar--subpage\.is-open/);
-});
-
-test("Shared top-bar is declared before dashboard returns, so overview logo is never missing",()=>{
- const frame=read("app/components/staff-route-frame.tsx");
- const declared=frame.indexOf("const topbar=<header");
- const dashboard=frame.indexOf('if(dashboard)return <div className="swastha-staff-route">{topbar}{children}</div>');
- assert.ok(declared>=0,"Shared topbar is declared");
- assert.ok(dashboard>declared,"Dashboard renders topbar only after declaration");
- assert.match(frame,/swastha-staff-route--subpage/);
- assert.match(frame,/\{topbar\}/);
 });

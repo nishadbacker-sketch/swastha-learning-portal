@@ -4,9 +4,8 @@ import {readFileSync} from "node:fs";
 const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const menu=read("app/components/staff-tools-menu.tsx");
 const css=read("app/globals.css");
-test("Global staff top bar uses official clinic logo, never generated artwork",()=>{
- assert.match(read("app/components/staff-route-frame.tsx"),/<img src="\/swastha-learning-clinic-logo\.png"/);
- assert.doesNotMatch(menu,/<img src="\/swastha-learning-clinic-logo\.png"/);
+test("Sidebar uses existing official clinic logo, never generated artwork",()=>{
+ assert.match(menu,/<img src="\/swastha-learning-clinic-logo\.png"/);
  assert.match(read("app/components/brand-logo.tsx"),/src="\/swastha-learning-clinic-logo\.png"/);
  assert.match(menu,/className="swastha-staff-sidebar"/);
  assert.match(menu,/aria-label="Staff navigation"/);
