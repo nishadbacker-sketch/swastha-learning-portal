@@ -44,7 +44,7 @@ export default function StaffRouteFrame({children}:{children:ReactNode}){
    </nav>
    <div className="swastha-staff-sidebar__tools"><h2>Staff Tools</h2>
     <nav aria-label="Role-based staff tools">{links.map(item=><button key={item.href} type="button" aria-current={pathname===item.href?"page":undefined}
-     className={"swastha-staff-sidebar__tool"+(pathname===item.href?" active":"")+(item.href==="/staff/assessment-certificates"?" swastha-staff-sidebar__tool--certificate":"")}
+     className={"swastha-staff-sidebar__tool"+(pathname===item.href?" active":"")}
      onClick={()=>router.push(item.href)}><strong>{item.label}</strong><span>{item.description}</span></button>)}</nav>
    </div>
   </aside>}
