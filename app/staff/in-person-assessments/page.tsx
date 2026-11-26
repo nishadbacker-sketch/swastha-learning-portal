@@ -37,7 +37,6 @@ export default function StaffInPersonAssessmentPage(){
  const router=useRouter();
  const [role,setRole]=useState("");
  const [students,setStudents]=useState<Student[]>([]);
- const [sessions,setSessions]=useState<SessionSummary[]>([]);
  const [templates,setTemplates]=useState<Template[]>([]);
  const [studentId,setStudentId]=useState("");
  const [kind,setKind]=useState<"standard"|"custom">("standard");
@@ -51,7 +50,6 @@ export default function StaffInPersonAssessmentPage(){
  const [recommendations,setRecommendations]=useState("");
  const [language,setLanguage]=useState<"en"|"ml">("en");
  const [translations,setTranslations]=useState<Record<string,string>>({});
- const [section,setSection]=useState("all");
  const [newStudent,setNewStudent]=useState({name:"",dob:"",grade:"",language:"en",guardian:"",phone:"",consent:false});
  const [loading,setLoading]=useState(true);
  const [busy,setBusy]=useState(false);
@@ -61,14 +59,12 @@ export default function StaffInPersonAssessmentPage(){
 
  const refresh=useCallback(async()=>{
   if(!supabase)return;
-  const [s,a,t]=await Promise.all([
+  const [s,t]=await Promise.all([
    supabase.rpc("staff_assessment_students"),
-   supabase.rpc("staff_assessment_sessions_list"),
    supabase.from("custom_assessment_templates").select("id,title,level,description,structure").eq("status","published").order("title")
   ]);
-  if(s.error||a.error||t.error)throw new Error(s.error?.message||a.error?.message||t.error?.message);
+  if(s.error||t.error)throw new Error(s.error?.message||t.error?.message);
   setStudents((s.data||[]) as Student[]);
-  setSessions((a.data||[]) as SessionSummary[]);
   setTemplates((t.data||[]) as Template[]);
  },[]);
  useEffect(()=>{
@@ -101,8 +97,6 @@ export default function StaffInPersonAssessmentPage(){
  const availableTemplates=templates.filter(t=>t.level.toLowerCase()==="all"||t.level.toUpperCase()===selectedLevel);
  const template=templates.find(t=>t.id===active?.template_id);
  const questions=useMemo(()=>active?(active.assessment_kind==="standard"?standardQuestions(active.assessment_level):customQuestions(template)):[],[active?.id,active?.assessment_kind,active?.assessment_level,template]);
- const groups=[...new Set(questions.map(q=>q.area))];
- const shown=questions.filter(q=>section==="all"||q.area===section);
  const missing=questions.filter(q=>q.type==="written"?!answers[q.id]?.written_answer?.trim():q.type==="multiple_choice"?!answers[q.id]?.choice:!["0","1","2","3","NA"].includes(answers[q.id]?.score||""));
  const completed=questions.length-missing.length;
  const readOnly=active?.status==="submitted";
@@ -122,20 +116,6 @@ export default function StaffInPersonAssessmentPage(){
    setNewStudent({name:"",dob:"",grade:"",language:"en",guardian:"",phone:"",consent:false});
    setMessage("Student profile created with a permanent Swastha ID. Select the assessment below.");
   }catch(e){setError(e instanceof Error?e.message:"Unable to create student.");}
-  finally{setBusy(false);}
- }
- async function openSession(id:string){
-  if(!supabase||busy)return;setBusy(true);setError("");setMessage("");
-  try{
-   const {data,error:e}=await supabase.rpc("staff_assessment_session_get",{p_id:id});
-   if(e)throw e;
-   const result=(data as Session[]|null)?.[0];
-   if(!result)throw new Error("Assessment not found or access denied.");
-   setActive(result);setAnswers(result.answers||{});setEvaluation(result.evaluation||"");
-   setStrengths(result.strengths||"");setSupportNeeds(result.support_needs||"");
-   setRecommendations(result.recommendations||"");setSection("all");
-   setStudentId(result.student_id);
-  }catch(e){setError(e instanceof Error?e.message:"Could not open assessment.");}
   finally{setBusy(false);}
  }
  async function startSession(){
@@ -163,14 +143,14 @@ export default function StaffInPersonAssessmentPage(){
   const result=(data as Session[])?.[0];
   if(!result)throw new Error("Session was created but could not be loaded.");
   setActive(result);setAnswers(result.answers||{});setEvaluation(result.evaluation||"");
-  setStrengths(result.strengths||"");setSupportNeeds(result.support_needs||"");setRecommendations(result.recommendations||"");setSection("all");
+  setStrengths(result.strengths||"");setSupportNeeds(result.support_needs||"");setRecommendations(result.recommendations||"");
  }
  function answer(id:string,patch:Partial<Answer>){
   setAnswers(old=>({...old,[id]:{score:old[id]?.score??null,choice:old[id]?.choice??null,written_answer:old[id]?.written_answer??"",observation:old[id]?.observation||"",...patch}}));
  }
  async function save(submit:boolean){
   if(!supabase||!active||busy||readOnly)return;
-  if(submit&&missing.length){setError("Complete every question or select NA. "+missing.length+" unanswered.");setSection("all");return;}
+  if(submit&&missing.length){setError("Complete every question or select NA. "+missing.length+" unanswered.");return;}
   if(submit&&evaluation.trim().length<10){setError("Enter your professional evaluation (at least 10 characters).");return;}
   if(submit&&!window.confirm("Submit and lock all answers and the staff evaluation for "+active.student_name+"?"))return;
   setBusy(true);setError("");setMessage("");
@@ -227,16 +207,6 @@ export default function StaffInPersonAssessmentPage(){
      <p style={{fontSize:13,color:"#667a74",margin:"11px 0"}}>Grade level for selected student: <strong>{selectedLevel||"Choose a student in Classes 1–12"}</strong>. Standard assessment must match the student’s class. Existing students may be selected without creating another profile.</p>
      <button type="button" disabled={busy||!selectedLevel||(kind==="custom"&&!templateId)||(kind==="standard"&&standardLevel!==selectedLevel)} style={{...button,opacity:busy||!selectedLevel?0.55:1}} onClick={()=>void startSession()}>Start Assessment</button>
     </section>
-    <section style={card}>
-     <h2 style={{fontSize:19,margin:"0 0 12px"}}>3. Saved and Submitted Sessions</h2>
-     <div style={{display:"grid",gap:9}}>
-      {sessions.length===0&&<p style={{color:"#64748b"}}>No in-person sessions yet.</p>}
-      {sessions.map(s=><div key={s.id} style={{border:"1px solid #dce8e1",borderRadius:9,padding:12,display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-       <div><strong>{s.student_name} · {s.student_code}</strong><div style={{color:"#64748b",fontSize:12,marginTop:4}}>{s.assessment_kind==="custom"?"Custom":"Standard"} · {s.assessment_level} · {s.status.toUpperCase()} · {new Date(s.created_at).toLocaleDateString("en-IN")}</div></div>
-       <button type="button" style={button} disabled={busy} onClick={()=>void openSession(s.id)}>{s.status==="submitted"?"View Submitted":"Continue Assessment"}</button>
-      </div>)}
-     </div>
-    </section>
    </>:<>
     <section style={card}>
      <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
@@ -247,10 +217,7 @@ export default function StaffInPersonAssessmentPage(){
      <div style={{background:"#e2e8f0",height:8,borderRadius:8,overflow:"hidden"}}><div style={{width:(questions.length?completed/questions.length*100:0)+"%",height:"100%",background:"#176b58"}}/></div>
      <p style={{fontSize:12,color:"#667a74",marginTop:10,marginBottom:0}}>Select NA for questions that could not be assessed. Record direct observations and the child's spoken or written responses.</p>
     </section>
-    <section style={card}>
-     <label>Assessment section<select style={field} value={section} onChange={e=>setSection(e.target.value)}><option value="all">All sections</option>{groups.map(g=><option key={g} value={g}>{g}</option>)}</select></label>
-    </section>
-    {shown.map((q,index)=>{
+    {questions.map((q,index)=>{
      const value=answers[q.id]||{observation:""};const isMissing=missing.some(x=>x.id===q.id);
      return <section key={q.id} style={{...card,borderLeft:isMissing&&!readOnly?"4px solid #d9a441":"4px solid #176b58"}}>
       <div style={{color:"#64748b",fontSize:12,marginBottom:5}}>{q.area} · {q.group} · {q.id}</div>
