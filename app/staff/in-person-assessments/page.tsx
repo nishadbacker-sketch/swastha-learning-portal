@@ -42,6 +42,7 @@ export default function StaffInPersonAssessmentPage(){
  const [studentId,setStudentId]=useState("");
  const [kind,setKind]=useState<"standard"|"custom">("standard");
  const [templateId,setTemplateId]=useState("");
+ const [standardLevel,setStandardLevel]=useState<Level|"">("");
  const [active,setActive]=useState<Session|null>(null);
  const [answers,setAnswers]=useState<Record<string,Answer>>({});
  const [evaluation,setEvaluation]=useState("");
@@ -139,6 +140,7 @@ export default function StaffInPersonAssessmentPage(){
  }
  async function startSession(){
   if(!supabase||busy||!selectedStudent||!selectedLevel)return;
+  if(kind==="standard"&&standardLevel!==selectedLevel){setError("Please select the standard assessment matching the student’s class.");return;}
   const t=kind==="custom"?availableTemplates.find(x=>x.id===templateId):undefined;
   if(kind==="custom"&&!t){setError("Choose a published assessment.");return;}
   setBusy(true);setError("");setMessage("");
@@ -217,12 +219,13 @@ export default function StaffInPersonAssessmentPage(){
     <section style={card}>
      <h2 style={{fontSize:19,margin:"0 0 12px"}}>2. Start In-Person Assessment</h2>
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,240px),1fr))",gap:12}}>
-      <label>Student<select style={field} value={studentId} onChange={e=>{setStudentId(e.target.value);setTemplateId("");}}><option value="">Choose student</option>{students.map(s=><option key={s.student_id} value={s.student_id}>{s.student_name} ({s.student_code}) · {s.current_class}</option>)}</select></label>
-      <label>Assessment type<select style={field} value={kind} onChange={e=>{setKind(e.target.value as "standard"|"custom");setTemplateId("");}}><option value="standard">Standard grade assessment</option><option value="custom">Published custom assessment</option></select></label>
+      <label>Student<select style={field} value={studentId} onChange={e=>{const id=e.target.value;setStudentId(id);setTemplateId("");setStandardLevel(levelForClass(students.find(s=>s.student_id===id)?.current_class||null)||"");}}><option value="">Choose student</option>{students.map(s=><option key={s.student_id} value={s.student_id}>{s.student_name} ({s.student_code}) · {s.current_class}</option>)}</select></label>
+      <label>Assessment type<select style={field} value={kind} onChange={e=>{setKind(e.target.value as "standard"|"custom");setTemplateId("");setStandardLevel(selectedLevel||"");}}><option value="standard">Standard grade assessment</option><option value="custom">Published custom assessment</option></select></label>
+      {kind==="standard"&&<label>Standard assessment<select style={field} value={standardLevel} onChange={e=>setStandardLevel(e.target.value as Level|"")}><option value="">Choose standard assessment</option><option value="LP">LP — Lower Primary (Classes 1–4)</option><option value="UP">UP — Upper Primary (Classes 5–7)</option><option value="HS">HS — High School (Classes 8–10)</option><option value="HSS">HSS — Higher Secondary (Classes 11–12)</option></select></label>}
       {kind==="custom"&&<label>Published assessment<select style={field} value={templateId} onChange={e=>setTemplateId(e.target.value)}><option value="">Choose published assessment</option>{availableTemplates.map(t=><option value={t.id} key={t.id}>{t.title} · {t.level.toUpperCase()}</option>)}</select></label>}
      </div>
-     <p style={{fontSize:13,color:"#667a74",margin:"11px 0"}}>Grade level is selected automatically: <strong>{selectedLevel||"Choose a student in Classes 1–12"}</strong>. Existing students may be selected without creating another profile.</p>
-     <button type="button" disabled={busy||!selectedLevel||(kind==="custom"&&!templateId)} style={{...button,opacity:busy||!selectedLevel?0.55:1}} onClick={()=>void startSession()}>Start Assessment</button>
+     <p style={{fontSize:13,color:"#667a74",margin:"11px 0"}}>Grade level for selected student: <strong>{selectedLevel||"Choose a student in Classes 1–12"}</strong>. Standard assessment must match the student’s class. Existing students may be selected without creating another profile.</p>
+     <button type="button" disabled={busy||!selectedLevel||(kind==="custom"&&!templateId)||(kind==="standard"&&standardLevel!==selectedLevel)} style={{...button,opacity:busy||!selectedLevel?0.55:1}} onClick={()=>void startSession()}>Start Assessment</button>
     </section>
     <section style={card}>
      <h2 style={{fontSize:19,margin:"0 0 12px"}}>3. Saved and Submitted Sessions</h2>
