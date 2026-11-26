@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const sql=read("sql/phase8_clinic_session_conflict_detection.sql");
-const page=read("app/staff/operations/page.tsx");
+const page=read("app/components/clinic-operations-panel.tsx");
+const redirect=read("app/staff/operations/page.tsx");
 test("Clinic schedule prevents Teacher and Student overlap without touching existing data",()=>{
  assert.match(sql,/CREATE OR REPLACE FUNCTION public\.clinic_session_prevent_overlap/);
  assert.match(sql,/pg_advisory_xact_lock/);
@@ -28,14 +29,16 @@ test("Operations overview uses auth and RLS-scoped records and keeps Parent page
  assert.match(page,/\.in\("student_id",chunk\)/);
  assert.match(page,/Export Session CSV/);
  assert.match(page,/Session Calendar/);
- assert.match(page,/Attendance Distribution/);
+ assert.match(read("app/components/staff-live-dashboard.tsx"),/Session Attendance/);
  assert.match(page,/Overdue IDP Goal Reviews/);
  assert.match(page,/Awaiting Parent Summary Approval/);
  assert.doesNotMatch(page,/\.insert\(|\.update\(|\.delete\(|\.upsert\(/);
  for(const path of ["app/teacher/dashboard/page.tsx","app/admin/dashboard/page.tsx","app/clinic-admin/dashboard/page.tsx"]){
   assert.match(read(path),/StaffToolsMenu/);
  }
- assert.match(read("app/components/staff-tools-menu.tsx"),/\/staff\/operations/);
+ assert.match(read("app/components/staff-tools-menu.tsx"),/ClinicOperationsPanel/);
+ assert.doesNotMatch(read("app/components/staff-tools-menu.tsx"),/label: "Clinic Operations & Analytics"/);
+ assert.match(redirect,/router\.replace\(target/);
 });
 test("CSV export guards formula injection and does not export private notes",()=>{
  assert.match(page,/\^\[=\+@\\-\\t\\r\]/);
