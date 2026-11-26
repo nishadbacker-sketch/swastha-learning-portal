@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect,useMemo,useState} from "react";
+import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {supabase} from "../../lib/supabase";
 import type {StaffRole} from "./staff-tools-menu";
@@ -30,7 +30,7 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
  const [data,setData]=useState<Dataset>(empty);
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
- const [selection,setSelection]=useState("all");
+ const [period,setPeriod]=useState<"6"|"3">("6");
  useEffect(()=>{
   let live=true;
   async function fetchData(){
@@ -87,60 +87,158 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
   void fetchData();
   return()=>{live=false;};
  },[role]);
- const ids=useMemo(()=>within(selection==="all"?data.students.map(s=>s.id):data.students.filter(s=>s.id===selection).map(s=>s.id)),[data.students,selection]);
- const assessments=data.assessments.filter(x=>ids.has(x.student_id));
- const activities=data.activities.filter(x=>ids.has(x.student_id));
- const sessions=data.sessions.filter(x=>ids.has(x.student_id));
- const inPerson=data.inPerson.filter(x=>ids.has(x.student_id));
- const resultsById=new Map(data.results.filter(x=>typeof x.overall_score==="number"&&x.overall_score>=0&&x.overall_score<=3).map(x=>[x.assignment_id,x]));
- const scored=assessments.filter(x=>x.status==="reviewed").map(x=>resultsById.get(x.id)).filter((x):x is Result=>Boolean(x));
- const avg=scored.length?Math.round(scored.reduce((s,x)=>s+Number(x.overall_score),0)/scored.length/3*100):null;
- const studentMap=new Map(data.students.map(x=>[x.id,x]));
+
+ const studentIds=new Set(data.students.map(student=>student.id));
+ const assessments=data.assessments.filter(item=>studentIds.has(item.student_id));
+ const activities=data.activities.filter(item=>studentIds.has(item.student_id));
+ const sessions=data.sessions.filter(item=>studentIds.has(item.student_id));
+ const inPerson=data.inPerson.filter(item=>studentIds.has(item.student_id));
+ const studentMap=new Map(data.students.map(student=>[student.id,student]));
+ const resultsById=new Map(data.results.filter(x=>typeof x.overall_score==="number"&&x.overall_score>=0&&x.overall_score<=3)
+  .map(x=>[x.assignment_id,x]));
+ const reviewedAssessments=assessments.filter(x=>x.status==="reviewed"&&resultsById.has(x.id));
+ const scored=reviewedAssessments.map(x=>resultsById.get(x.id)!);
+ const avg=scored.length?Math.round(scored.reduce((sum,x)=>sum+Number(x.overall_score),0)/scored.length/3*100):null;
  const today=dateKey(new Date());
- const todaySessions=sessions.filter(s=>dateKey(s.scheduled_at)===today).sort((a,b)=>a.scheduled_at.localeCompare(b.scheduled_at));
- const outcomes=statuses.map(s=>({label:s.label,count:assessments.filter(x=>x.status===s.key).length}));
- const total=outcomes.reduce((s,x)=>s+x.count,0);
- let running=0;
- const segments=outcomes.map((x,i)=>{const percent=total?x.count/total*100:0;const start=running;running+=percent;return colors[i]+" "+start+"% "+running+"%";});
- const trend=Array.from({length:6},(_,i)=>{const date=new Date();date.setDate(1);date.setMonth(date.getMonth()-(5-i));const key=dateKey(date).slice(0,7);const points=assessments.filter(x=>x.status==="reviewed").map(x=>({a:x,r:resultsById.get(x.id)})).filter(x=>x.r?.reviewed_at&&dateKey(x.r.reviewed_at).slice(0,7)===key);
-  return {name:monthLabel(date),value:points.length?Math.round(points.reduce((sum,x)=>sum+Number(x.r?.overall_score||0),0)/points.length/3*100):null,count:points.length};
+ const todaySessions=sessions.filter(x=>dateKey(x.scheduled_at)===today).sort((a,b)=>a.scheduled_at.localeCompare(b.scheduled_at));
+ const monthOf=(value:string)=>dateKey(value).slice(0,7);
+ const thisMonth=today.slice(0,7);
+ const previous=new Date();previous.setDate(1);previous.setMonth(previous.getMonth()-1);
+ const previousMonth=dateKey(previous).slice(0,7);
+ const monthlyCount=(items:{created_at?:string;assigned_at?:string}[],month:string)=>
+  items.filter(x=>monthOf(x.created_at||x.assigned_at||"")===month).length;
+ const percentChange=(current:number,prior:number)=>prior>0?Math.round((current-prior)/prior*100):null;
+ const studentGrowth=percentChange(monthlyCount(data.students,thisMonth),monthlyCount(data.students,previousMonth));
+ const assessmentGrowth=percentChange(monthlyCount(assessments,thisMonth),monthlyCount(assessments,previousMonth));
+ const activityGrowth=percentChange(monthlyCount(activities,thisMonth),monthlyCount(activities,previousMonth));
+ const trend=Array.from({length:Number(period)},(_,index)=>{
+  const date=new Date();date.setDate(1);date.setMonth(date.getMonth()-(Number(period)-1-index));
+  const key=dateKey(date).slice(0,7);
+  const monthScores=reviewedAssessments
+   .map(item=>resultsById.get(item.id))
+   .filter((score):score is Result=>Boolean(score?.reviewed_at&&monthOf(score.reviewed_at)===key));
+  return {name:monthLabel(date),value:monthScores.length?
+   Math.round(monthScores.reduce((sum,score)=>sum+Number(score.overall_score),0)/monthScores.length/3*100):null};
  });
- const points=trend.map((x,i)=>x.value===null?null:{x:48+i*102,y:190-x.value*1.45,v:x.value}).filter((p):p is {x:number;y:number;v:number}=>p!==null);
+ const previousAvg=trend.length>1?trend[trend.length-2].value:null;
+ const avgGrowth=avg!==null&&previousAvg!==null?avg-previousAvg:null;
+ const outcomes=[
+  {label:"Proficient",count:reviewedAssessments.filter(x=>Number(resultsById.get(x.id)?.overall_score)===3).length},
+  {label:"Developing",count:reviewedAssessments.filter(x=>Number(resultsById.get(x.id)?.overall_score)===2).length},
+  {label:"Beginning",count:reviewedAssessments.filter(x=>Number(resultsById.get(x.id)?.overall_score)<2).length},
+  {label:"Not Assessed",count:assessments.length-reviewedAssessments.length}
+ ];
+ const outcomeTotal=outcomes.reduce((sum,item)=>sum+item.count,0);
+ let cumulative=0;
+ const arcs=outcomes.map((entry,index)=>{
+  const start=cumulative; cumulative+=outcomeTotal?entry.count/outcomeTotal*100:0;
+  return colors[index]+" "+start+"% "+cumulative+"%";
+ });
  const feed:Feed[]=[
-  ...assessments.map(a=>({id:"a"+a.id,student_id:a.student_id,title:"Assessment "+a.status.replace(/_/g," "),detail:a.assessment_level,at:a.assigned_at,href:"/staff/students/"+a.student_id})),
-  ...activities.map(a=>({id:"l"+a.id,student_id:a.student_id,title:"Learning activity "+a.status.replace(/_/g," "),detail:"Learning activities",at:a.assigned_at,href:"/staff/students/"+a.student_id})),
-  ...inPerson.map(a=>({id:"i"+a.id,student_id:a.student_id,title:"In-person assessment "+a.status,detail:a.assessment_level,at:a.created_at,href:"/staff/in-person-assessments?session="+a.id}))
- ].filter(x=>Number.isFinite(new Date(x.at).valueOf())).sort((a,b)=>b.at.localeCompare(a.at)).slice(0,5);
- const icon=(kind:string)=><span aria-hidden="true" className="swastha-live-stat__icon">{kind}</span>;
- return <section aria-label="Live staff dashboard" className="swastha-live-dashboard">
-  <div className="swastha-live-dashboard__heading"><div><h2>Learning & Clinic Dashboard</h2><p>Current records available to your staff role. Figures update from existing student, assessment and session data.</p></div>
-   <label>View student<select aria-label="Filter live staff dashboard by student" value={data.students.some(s=>s.id===selection)?selection:"all"} onChange={e=>setSelection(e.target.value)}><option value="all">All permitted students</option>{data.students.map(s=><option key={s.id} value={s.id}>{s.full_name} ({s.student_code||"ID pending"})</option>)}</select></label>
+  ...assessments.map(item=>({id:"a"+item.id,student_id:item.student_id,title:"Assessment "+item.status.replace(/_/g," "),
+   detail:item.assessment_level,at:item.assigned_at,href:"/staff/students/"+item.student_id})),
+  ...activities.map(item=>({id:"l"+item.id,student_id:item.student_id,
+   title:"Learning activity "+item.status.replace(/_/g," "),detail:"Learning activities",at:item.assigned_at,
+   href:"/staff/students/"+item.student_id})),
+  ...inPerson.map(item=>({id:"i"+item.id,student_id:item.student_id,title:"In-person assessment "+item.status,
+   detail:item.assessment_level,at:item.created_at,href:"/staff/in-person-assessments?session="+item.id}))
+ ].filter(entry=>Number.isFinite(new Date(entry.at).valueOf()))
+  .sort((a,b)=>b.at.localeCompare(a.at)).slice(0,4);
+ const growth=(delta:number|null,suffix="%")=>
+  delta===null?"No prior-month comparison":(delta>=0?"↑ +":"↓ ")+delta+suffix+" vs. last month";
+ const growthClass=(delta:number|null)=>delta===null?"neutral":delta>=0?"positive":"negative";
+ const pictogram=(type:"students"|"assessments"|"activities"|"progress")=>{
+  const common={width:34,height:34,viewBox:"0 0 32 32",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round" as const,strokeLinejoin:"round" as const};
+  if(type==="students")return <svg {...common} aria-hidden="true"><circle cx="16" cy="8" r="4" fill="currentColor" stroke="none"/><circle cx="5.8" cy="11" r="3.2" fill="currentColor" stroke="none"/><circle cx="26.2" cy="11" r="3.2" fill="currentColor" stroke="none"/><path d="M8 25v-3c0-4.8 3-7.5 8-7.5s8 2.7 8 7.5v3H8Z" fill="currentColor" stroke="none"/><path d="M1.2 24v-3c0-3.3 1.8-5.4 5.3-5.4M30.8 24v-3c0-3.3-1.8-5.4-5.3-5.4"/></svg>;
+  if(type==="assessments")return <svg {...common} aria-hidden="true"><rect x="6" y="5" width="20" height="24" rx="2"/><path d="M12 5V3h8v2M10 18l4 4 8-9"/></svg>;
+  if(type==="activities")return <svg {...common} aria-hidden="true"><path d="M16 29c-3.5-2.8-7.3-3.7-13-3.5V5c5.9-.5 9.5.3 13 3.5 3.5-3.2 7.1-4 13-3.5v20.5c-5.7-.2-9.5.7-13 3.5ZM16 8.5V29"/></svg>;
+  return <svg {...common} aria-hidden="true"><rect x="5" y="17" width="4.6" height="10" rx="2" fill="currentColor" stroke="none"/><rect x="14" y="10" width="4.6" height="17" rx="2" fill="currentColor" stroke="none"/><rect x="23" y="3" width="4.6" height="24" rx="2" fill="currentColor" stroke="none"/></svg>;
+ };
+ const statItems=[
+  {kind:"students" as const,title:"Total Students",value:data.students.length,delta:studentGrowth,suffix:"%"},
+  {kind:"assessments" as const,title:"Assessments",value:assessments.length,delta:assessmentGrowth,suffix:"%"},
+  {kind:"activities" as const,title:"Learning Activities",value:activities.length,delta:activityGrowth,suffix:"%"},
+  {kind:"progress" as const,title:"Progress (Avg.)",value:avg===null?"—":avg+"%",delta:avgGrowth,suffix:" pp"}
+ ];
+ const axisBottom=196,axisTop=22,left=56,right=626;
+ const chartX=(index:number)=>left+(right-left)*index/Math.max(1,trend.length-1);
+ const chartY=(value:number)=>axisBottom-(value-50)/50*(axisBottom-axisTop);
+ const chartDots=trend.map((item,index)=>item.value===null?null:{x:chartX(index),y:chartY(item.value),value:item.value});
+ const chartRuns:{x:number;y:number;value:number}[][]=[];
+ chartDots.forEach(dot=>{if(!dot){return;}if(chartRuns.length===0||chartDots[chartDots.indexOf(dot)-1]===null)chartRuns.push([]);chartRuns[chartRuns.length-1].push(dot);});
+ const formatFeedDate=(value:string)=>{
+  const item=dateKey(value);
+  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  const clock=timeLabel(value);
+  return item===today?"Today, "+clock:item===dateKey(yesterday)?"Yesterday, "+clock:
+   new Date(value).toLocaleDateString("en-IN",{day:"numeric",month:"short",timeZone:"Asia/Kolkata"});
+ };
+ return <section aria-label="Live staff dashboard" className="swastha-live-dashboard swastha-live-dashboard--reference">
+  {loading?<div className="swastha-dashboard-loading" role="status">Loading current student and assessment data…</div>:
+  error?<div className="swastha-dashboard-loading" role="alert">{error}</div>:<>
+  <div className="swastha-live-dashboard__stats">
+   {statItems.map(item=><article key={item.kind} className="swastha-live-stat">
+    <div className="swastha-live-stat__icon">{pictogram(item.kind)}</div>
+    <div className="swastha-live-stat__body"><div className="swastha-live-stat__label">{item.title}</div>
+     <strong>{item.value}</strong>
+     <small className={"swastha-live-stat__change "+growthClass(item.delta)}>{growth(item.delta,item.suffix)}</small>
+    </div>
+   </article>)}
   </div>
-  {loading?<div style={card} role="status">Loading current dashboard data…</div>:error?<div style={card} role="alert">{error}</div>:<>
-   <div className="swastha-live-dashboard__stats">
-    <div style={card}>{icon("♟")}<div><span>Total Students</span><strong>{ids.size}</strong><small>Accessible student records</small></div></div>
-    <div style={card}>{icon("☑")}<div><span>Assessments</span><strong>{assessments.length}</strong><small>{outcomes[0].count} reviewed</small></div></div>
-    <div style={card}>{icon("▤")}<div><span>Learning Activities</span><strong>{activities.length}</strong><small>{activities.filter(x=>good(x.status)).length} completed</small></div></div>
-    <div style={card}>{icon("▥")}<div><span>Reviewed Score (Avg.)</span><strong>{avg===null?"—":avg+"%"}</strong><small>{scored.length} reviewed scores on a 0–3 scale</small></div></div>
-   </div>
-   <div className="swastha-live-dashboard__charts">
-    <section style={card}><h3>Student Progress Trend</h3><p>Monthly average of reviewed assessment scores (past six months)</p>{points.length===0?<div className="swastha-live-dashboard__empty">No reviewed scores for this period yet.</div>:<svg role="img" aria-label={"Six-month reviewed assessment score trend: "+trend.map(x=>x.name+" "+(x.value===null?"no data":x.value+"%")).join("; ")} viewBox="0 0 600 230" preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:"auto",maxHeight:270}}>
-      {[0,25,50,75,100].map(n=><g key={n}><line x1="48" y1={190-n*1.45} x2="575" y2={190-n*1.45} stroke="#e2e8e5"/><text x="41" y={194-n*1.45} fontSize="11" textAnchor="end" fill="#65756b">{n}%</text></g>)}
-      <polyline fill="none" stroke="#07844a" strokeWidth="3.5" points={points.map(p=>p.x+","+p.y).join(" ")}/>
-      {points.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="5" fill="#fff" stroke="#07844a" strokeWidth="3"/>)}
-      {trend.map((x,i)=><text key={i} x={48+i*102} y="220" fontSize="12" textAnchor="middle" fill="#4e6158">{x.name}</text>)}
-     </svg>}<small>Only reviewed scores are included; missing months are not estimated.</small></section>
-    <section style={card}><h3>Assessment Outcomes</h3><p>Current standard assessment workflow stages</p>{total? <div className="swastha-live-dashboard__donut-row"><div className="swastha-live-dashboard__donut" role="img" aria-label={outcomes.map(x=>x.label+" "+x.count).join(", ")} style={{background:"conic-gradient("+segments.join(",")+")"}}><div><strong>{total}</strong><small>Assessments</small></div></div><div className="swastha-live-dashboard__legend">{outcomes.map((x,i)=><div key={x.label}><i style={{background:colors[i]}}/><span>{x.label}</span><strong>{Math.round(x.count/total*100)}%</strong></div>)}</div></div>:<div className="swastha-live-dashboard__empty">No assessments have been assigned yet.</div>}</section>
-   </div>
-   <div className="swastha-live-dashboard__charts">
-    <section style={card}><div className="swastha-live-dashboard__panel-heading"><div><h3>Recent Student Activity</h3><p>Latest assessment and learning updates</p></div><button type="button" onClick={()=>router.push(action(role))}>View All</button></div>
-     {feed.length===0?<div className="swastha-live-dashboard__empty">No recent activity records are available.</div>:feed.map(f=><button key={f.id} type="button" className="swastha-live-dashboard__record" onClick={()=>router.push(f.href)}><span className="swastha-live-dashboard__avatar">●</span><span><strong>{studentMap.get(f.student_id)?.full_name||"Student"}</strong><small>{f.title} · {f.detail}</small></span><time>{new Date(f.at).toLocaleDateString("en-IN",{day:"2-digit",month:"short",timeZone:"Asia/Kolkata"})}</time></button>)}
-    </section>
-    <section style={card}><div className="swastha-live-dashboard__panel-heading"><div><h3>Today’s Schedule</h3><p>Sessions scheduled for today (India time)</p></div><button type="button" onClick={()=>router.push("/staff/operations")}>Calendar</button></div>
-     {todaySessions.length===0?<div className="swastha-live-dashboard__empty">No sessions scheduled for today.</div>:todaySessions.slice(0,8).map(s=><button key={s.id} type="button" className="swastha-live-dashboard__record" onClick={()=>router.push("/staff/students/"+s.student_id)}><time className="swastha-live-dashboard__time">{timeLabel(s.scheduled_at)}</time><span><strong>{s.session_type.replace(/_/g," ")}</strong><small>{studentMap.get(s.student_id)?.full_name||"Student"} · {s.status}</small></span></button>)}
-    </section>
-   </div>
-   <small className="swastha-live-dashboard__note">In-Person Assessment records remain available under Staff Tools. Reviewed-score percentages describe saved assessment ratings, not clinical diagnoses or validated ability scores.</small>
+  <div className="swastha-live-dashboard__charts swastha-live-dashboard__charts--top">
+   <article className="swastha-live-panel">
+    <div className="swastha-live-dashboard__panel-heading">
+     <div><h3>Student Progress Trend</h3><p>Average learning progress across all students</p></div>
+     <label className="swastha-live-dashboard__period"><span className="sr-only">Progress trend period</span>
+      <select value={period} onChange={event=>setPeriod(event.target.value as "6"|"3")} aria-label="Progress trend period"><option value="6">Last 6 Months</option><option value="3">Last 3 Months</option></select>
+     </label>
+    </div>
+    {trend.every(item=>item.value===null)?<div className="swastha-live-dashboard__empty">No teacher-reviewed scores for this period yet.</div>:
+    <svg className="swastha-dashboard-trend" role="img" viewBox="0 0 672 254" preserveAspectRatio="xMidYMid meet" aria-label={"Monthly reviewed assessment progress: "+trend.map(x=>x.name+" "+(x.value===null?"not available":x.value+" percent")).join("; ")}>
+     <defs><linearGradient id="swastha-progress-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#5ac977" stopOpacity=".43"/><stop offset="100%" stopColor="#5ac977" stopOpacity=".035"/></linearGradient></defs>
+     {[50,60,70,80,90,100].map(n=><g key={n}><line x1={left} y1={chartY(n)} x2={right} y2={chartY(n)} stroke="#e4e8e7" strokeWidth="1"/><text x="44" y={chartY(n)+4} textAnchor="end" fontSize="13" fill="#29313a">{n}%</text></g>)}
+     <line x1={left} x2={left} y1={axisTop} y2={axisBottom} stroke="#9ca3af"/><line x1={left} x2={right} y1={axisBottom} y2={axisBottom} stroke="#9ca3af"/>
+     {chartRuns.map((run,i)=><g key={i}>{run.length>1&&<path d={"M"+run[0].x+","+axisBottom+" L"+run.map(p=>p.x+","+p.y).join(" L")+" L"+run[run.length-1].x+","+axisBottom+" Z"} fill="url(#swastha-progress-fill)"/>}{run.length>1&&<polyline points={run.map(p=>p.x+","+p.y).join(" ")} fill="none" stroke="#00894a" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>}{run.map((p,j)=><circle key={j} cx={p.x} cy={p.y} r="5.1" fill="#fff" stroke="#00894a" strokeWidth="2.7"/>)}</g>)}
+     {trend.map((item,index)=><text key={index} x={chartX(index)} y="227" textAnchor="middle" fontSize="14" fill="#29313a">{item.name}</text>)}
+    </svg>}
+   </article>
+   <article className="swastha-live-panel">
+    <div><h3>Assessment Outcomes</h3><p>Latest completed assessments</p></div>
+    {outcomeTotal?<div className="swastha-live-dashboard__donut-row">
+     <div className="swastha-live-dashboard__donut" role="img" aria-label={outcomes.map(x=>x.label+": "+x.count).join("; ")} style={{background:"conic-gradient("+arcs.join(",")+")"}}>
+      <div><strong>{outcomeTotal}</strong><small>Assessments</small></div>
+     </div>
+     <div className="swastha-live-dashboard__legend">{outcomes.map((item,index)=><div key={item.label}><i style={{background:colors[index]}}/><span>{item.label}</span><strong>{Math.round(item.count/outcomeTotal*100)}%</strong></div>)}</div>
+    </div>:<div className="swastha-live-dashboard__empty">No assessments have been assigned yet.</div>}
+   </article>
+  </div>
+  <div className="swastha-live-dashboard__charts swastha-live-dashboard__charts--bottom">
+   <article className="swastha-live-panel">
+    <div className="swastha-live-dashboard__panel-heading">
+     <div><h3>Recent Student Activity</h3><p>Latest learning and assessment updates</p></div>
+     <button type="button" onClick={()=>router.push(action(role))}>View All <span aria-hidden="true">→</span></button>
+    </div>
+    {feed.length===0?<div className="swastha-live-dashboard__empty">No recent student activity recorded yet.</div>:
+    <div className="swastha-live-dashboard__feed">{feed.map(entry=><button key={entry.id} className="swastha-live-dashboard__record" type="button" onClick={()=>router.push(entry.href)}>
+     <span className="swastha-live-dashboard__avatar" aria-hidden="true">{pictogram("students")}</span>
+     <span className="swastha-live-dashboard__record-copy"><strong>{studentMap.get(entry.student_id)?.full_name||"Student"}</strong><small>{entry.title} · {entry.detail}</small></span>
+     <time>{formatFeedDate(entry.at)}</time><span className="swastha-live-dashboard__record-check" aria-hidden="true">✓</span>
+    </button>)}</div>}
+   </article>
+   <article className="swastha-live-panel">
+    <div className="swastha-live-dashboard__panel-heading">
+     <span className="swastha-live-dashboard__calendar-icon" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.3"><rect x="4" y="7" width="24" height="21" rx="2"/><path d="M10 3v8M22 3v8M4 14h24M10 19h3m5 0h3m-11 5h3"/></svg></span>
+     <div><h3>Today’s Schedule</h3><p>Your sessions, assessments and key activities</p></div>
+    </div>
+    {todaySessions.length===0?<div className="swastha-live-dashboard__empty">No sessions scheduled for today.</div>:
+    <div className="swastha-live-dashboard__schedule">{todaySessions.slice(0,5).map(item=><button key={item.id} type="button" className="swastha-live-dashboard__schedule-row" onClick={()=>router.push("/staff/students/"+item.student_id)}>
+     <time className="swastha-live-dashboard__time">{timeLabel(item.scheduled_at)}</time>
+     <span className="swastha-live-dashboard__schedule-symbol" aria-hidden="true">◉</span>
+     <strong>{item.session_type.replace(/_/g," ")}</strong><small>{studentMap.get(item.student_id)?.full_name||"Student"} · {item.status}</small>
+    </button>)}</div>}
+   </article>
+  </div>
+  <small className="swastha-live-dashboard__note">Dashboard totals reflect current records visible to your staff role. Progress is based only on teacher-reviewed scores (0–3 scale); categories are visualization groupings, not clinical diagnoses.</small>
   </>}
  </section>;
 }

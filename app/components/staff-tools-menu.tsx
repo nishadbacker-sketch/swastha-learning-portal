@@ -71,13 +71,7 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
         </div>
       </aside>
       <section aria-label="Staff tools" className="swastha-staff-workspace swastha-staff-workspace--sidebar">
-        <div className="swastha-staff-workspace__heading">
-          <div>
-            <p className="swastha-staff-workspace__eyebrow">SWASTHA LEARNING CLINIC</p>
-            <h1>{name ? `Welcome, ${name}` : "Staff Dashboard"}</h1>
-            <p>Your learning, assessment and clinic coordination workspace.</p>
-          </div>
-        </div>
+        <h1 className="swastha-staff-dashboard__visually-hidden">{name ? `Welcome, ${name}` : "Staff Dashboard"}</h1>
         <StaffLiveDashboard role={role}/>
         {summary.length>0&&<details className="swastha-staff-workspace__operational"><summary>Additional staff metrics</summary><div className="swastha-staff-workspace__summary" aria-label="Dashboard summary">
           {summary.map(item=><div key={item.label} className="swastha-staff-workspace__metric">
