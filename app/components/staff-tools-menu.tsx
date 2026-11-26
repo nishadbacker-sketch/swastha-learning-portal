@@ -49,35 +49,43 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
   const tools = [...COMMON_TOOLS, ...roleTools(role)];
 
   return (
-    <section aria-label="Staff tools" className="swastha-staff-workspace">
-      <div className="swastha-staff-workspace__heading">
-        <div>
-          <p className="swastha-staff-workspace__eyebrow">SWASTHA LEARNING CLINIC</p>
-          <h1>Staff Workspace{name ? ` · ${name}` : ""}</h1>
-          <p>One workspace for clinic services, students, assessments and progress. Access is based on your staff role.</p>
+    <>
+      <aside aria-label="Staff navigation" className="swastha-staff-sidebar">
+        <div className="swastha-staff-sidebar__brand">
+          <img src="/swastha-learning-clinic-logo.png" alt="Swastha Learning Clinic — official logo" width={260} height={87}/>
+          <span className="swastha-staff-sidebar__role">{role === "owner" ? "Owner" : role === "admin" ? "Super Admin" : role === "clinic_admin" ? "Clinic Admin" : "Teacher"} Workspace</span>
         </div>
-        <span className="swastha-staff-workspace__role">{role === "owner" ? "Owner" : role === "admin" ? "Super Admin" : role === "clinic_admin" ? "Clinic Admin" : "Teacher"}</span>
-      </div>
-      {summary.length>0&&<div className="swastha-staff-workspace__summary" aria-label="Dashboard summary">
-        {summary.map(item=><div key={item.label} className="swastha-staff-workspace__metric">
-          {item.onClick?<button type="button" onClick={item.onClick} className="swastha-staff-workspace__metric-button">
-            <span>{item.label}</span><strong>{item.value}</strong>
-          </button>:<><span>{item.label}</span><strong>{item.value}</strong></>}
-        </div>)}
-      </div>}
-      {sections.length>0&&<nav aria-label="Teacher dashboard sections" className="swastha-staff-workspace__sections">
-        {sections.map(item=><button type="button" key={item.id} aria-current={activeSection===item.id?"page":undefined}
-          className={activeSection===item.id?"active":""} onClick={()=>onSectionChange?.(item.id)}>{item.label}</button>)}
-      </nav>}
-      <div className="swastha-staff-workspace__group">
-        <h2>Staff Tools</h2>
-        <nav className="swastha-staff-workspace__grid" aria-label="Role-based staff tools">
-          {tools.map(tool=><button key={tool.href} type="button" className="swastha-staff-workspace__tool" onClick={()=>router.push(tool.href)}>
-            <strong>{tool.label}</strong><span>{tool.description}</span>
-          </button>)}
-        </nav>
-      </div>
-      {children&&<div className="swastha-staff-workspace__extras">{children}</div>}
-    </section>
+        {sections.length>0&&<nav aria-label="Teacher dashboard sections" className="swastha-staff-sidebar__sections">
+          {sections.map(item=><button type="button" key={item.id} aria-current={activeSection===item.id?"page":undefined}
+            className={activeSection===item.id?"active":""} onClick={()=>onSectionChange?.(item.id)}>{item.label}</button>)}
+        </nav>}
+        <div className="swastha-staff-sidebar__tools">
+          <h2>Staff Tools</h2>
+          <nav aria-label="Role-based staff tools">
+            {tools.map(tool=><button key={tool.href} type="button" className="swastha-staff-sidebar__tool" onClick={()=>router.push(tool.href)}>
+              <strong>{tool.label}</strong>
+              <span>{tool.description}</span>
+            </button>)}
+          </nav>
+        </div>
+      </aside>
+      <section aria-label="Staff tools" className="swastha-staff-workspace swastha-staff-workspace--sidebar">
+        <div className="swastha-staff-workspace__heading">
+          <div>
+            <p className="swastha-staff-workspace__eyebrow">SWASTHA LEARNING CLINIC</p>
+            <h1>{name ? `Welcome, ${name}` : "Staff Dashboard"}</h1>
+            <p>Your learning, assessment and clinic coordination workspace.</p>
+          </div>
+        </div>
+        {summary.length>0&&<div className="swastha-staff-workspace__summary" aria-label="Dashboard summary">
+          {summary.map(item=><div key={item.label} className="swastha-staff-workspace__metric">
+            {item.onClick?<button type="button" onClick={item.onClick} className="swastha-staff-workspace__metric-button">
+              <span>{item.label}</span><strong>{item.value}</strong>
+            </button>:<><span>{item.label}</span><strong>{item.value}</strong></>}
+          </div>)}
+        </div>}
+        {children&&<div className="swastha-staff-workspace__extras">{children}</div>}
+      </section>
+    </>
   );
 }
