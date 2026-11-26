@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import type {ReactNode} from "react";
+import StaffRouteFrame from "../components/staff-route-frame";
 
-/** Visual scope only: existing page authorization and Supabase RLS remain unchanged. */
-export default function StaffRouteLayout({ children }: { children: ReactNode }) {
-  return <div className="swastha-staff-route">{children}</div>;
+/** Shared visual scope. Authorization continues in page route handlers and RLS. */
+export default function StaffRouteLayout({children}:{children:ReactNode}){
+ return <StaffRouteFrame>{children}</StaffRouteFrame>;
 }
