@@ -9,7 +9,7 @@ const menu=read("app/components/staff-tools-menu.tsx");
 test("Every staff route uses the same compact visual scope, without wrapping the parent portal",()=>{
  for(const role of ["teacher","admin","clinic-admin","owner","staff"]){
   const layout=read("app/"+role+"/layout.tsx");
-  assert.match(layout,/className="swastha-staff-route"/);
+  assert.match(layout,/StaffRouteFrame/);
   assert.match(layout,/\{children\}/);
  }
  assert.match(css,/\.swastha-staff-route\{/);
@@ -37,4 +37,16 @@ test("Existing in-person assessment route is preserved in staff navigation",()=>
  assert.match(menu,/label: "In-Person Assessments"/);
  assert.match(menu,/href: "\/staff\/in-person-assessments"/);
  assert.match(read("app/staff/in-person-assessments/page.tsx"),/staff_assessment_start/);
+});
+
+test("Every staff subpage reuses canonical role-appropriate navigation with responsive toggle",()=>{
+ const frame=read("app/components/staff-route-frame.tsx");
+ assert.match(frame,/COMMON_TOOLS,roleTools/);
+ assert.match(frame,/supabase\.auth\.getUser\(\)/);
+ assert.match(frame,/from\("user_roles"\)/);
+ assert.match(frame,/swastha-staff-sidebar--subpage/);
+ assert.match(frame,/swastha-staff-subpage__mobile-toggle/);
+ assert.match(frame,/if\(dashboard\)return/);
+ assert.match(css,/swastha-staff-subpage__content\.is-navigation-visible/);
+ assert.match(css,/swastha-staff-sidebar--subpage\.is-open/);
 });
