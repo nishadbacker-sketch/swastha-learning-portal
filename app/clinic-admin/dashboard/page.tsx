@@ -61,6 +61,7 @@ export default function ClinicAdminDashboard(){
  <h1 style={{fontSize:20,margin:"0 0 12px",overflowWrap:"anywhere"}}>Welcome to Staff Tools, {name}!</h1>
  
  <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))"}}>
+ <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/clinic-admin/users")}>User Management</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/courses")}>Courses</button>
  <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/assessment-certificates")}>Assessment Certificates</button>
