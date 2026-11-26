@@ -136,6 +136,10 @@ export default function StaffDashboardInsights({role}:{role:StaffRole}){
     <span><small>{label}</small><strong>{loading?"…":error?"—":value}</strong><em>{icon==="progress"?"Completion of recorded assignments":"Records visible to your staff role"}</em></span>
    </button>)}
   </div>
+  <div className="swastha-staff-dashboard-quick-actions" aria-label="Staff assessment quick actions">
+   <div><strong>In-Person Assessments</strong><span>Start or continue supervised student assessments using your staff access.</span></div>
+   <button type="button" onClick={()=>router.push("/staff/in-person-assessments")}>Open In-Person Assessments</button>
+  </div>
   <div className="swastha-staff-dashboard-chart-grid">
    <article className="swastha-staff-dashboard-panel">
     <div className="swastha-staff-dashboard-panel-heading"><div><h2>Student Learning Progress</h2><p>Current completion of activities assigned in each month — not a clinical score</p></div>
