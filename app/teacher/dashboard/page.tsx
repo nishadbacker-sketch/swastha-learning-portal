@@ -1102,10 +1102,7 @@ export default function TeacherDashboard() {
           activeSection={activeTab}
           onSectionChange={id=>setActiveTab(id as Tab)}
           summary={[
-            {label:"Assigned Students",value:students.length,onClick:()=>setActiveTab("students")},
-            {label:"Learning Activities",value:activities.length,onClick:()=>setActiveTab("activities")},
-            {label:"Assessments",value:assessments.length,onClick:()=>setActiveTab("assessments")},
-            {label:"Pending Reviews",value:assessments.filter(a=>a.status==="submitted").length,onClick:()=>{
+                                    {label:"Pending Reviews",value:assessments.filter(a=>a.status==="submitted").length,onClick:()=>{
               const pending=assessments.find(a=>a.status==="submitted");
               if(pending)router.push("/teacher/assessment-review/"+pending.id);
               else setActiveTab("assessments");
