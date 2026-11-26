@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import StaffDashboardInsights from "./staff-dashboard-insights";
 
 export type StaffRole = "owner" | "admin" | "clinic_admin" | "teacher";
 
@@ -107,6 +108,8 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
             <p>Your learning, assessment and clinic coordination workspace.</p>
           </div>
         </div>
+        <StaffDashboardInsights role={role}/>
+        {summary.length>0&&<h2 className="swastha-staff-dashboard-secondary-heading">Additional Staff Metrics</h2>}
         {summary.length>0&&<div className="swastha-staff-workspace__summary" aria-label="Dashboard summary">
           {summary.map(item=><div key={item.label} className="swastha-staff-workspace__metric">
             {item.onClick?<button type="button" onClick={item.onClick} className="swastha-staff-workspace__metric-button">
