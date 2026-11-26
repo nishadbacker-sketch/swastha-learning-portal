@@ -712,13 +712,6 @@ body .swastha-site-footer__bottom p {
 .swastha-staff-route--subpage .swastha-staff-subpage__content.is-navigation-visible>main>header img[alt^="Swastha Learning Clinic"]{
  display:none!important;
 }
-/* Prominent certificate item belongs inside Staff Tools on every staff role. */
-.swastha-staff-sidebar__tool--certificate{
- background:#e9f7ee;color:#075441;border:1px solid #b6e3c6;
- border-radius:9px;padding:11px 10px;margin:5px 0;font-weight:800;
-}
-.swastha-staff-sidebar__tool--certificate span{color:#275f52;}
-.swastha-staff-sidebar__tool--certificate:hover{background:#d2f0dc!important;}
 .swastha-staff-sidebar__tool.active{background:#c9efda;color:#064c40;}
 .swastha-staff-sidebar__tool.active span{color:#275f52;}
 .swastha-staff-subpage__mobile-toggle{display:none;}
