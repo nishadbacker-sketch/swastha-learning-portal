@@ -18,7 +18,8 @@ test("student ID and teacher goal review filters are present",()=>{
  assert.match(page,/Needs revision/);
  assert.match(page,/Past review date/);
  assert.match(page,/No goals have been created/);
- assert.match(read("app/teacher/dashboard/page.tsx"),/\/teacher\/student-progress/);
+ assert.match(read("app/teacher/dashboard/page.tsx"),/<StaffToolsMenu role="teacher"/);
+ assert.match(read("app/components/staff-tools-menu.tsx"),/\/teacher\/student-progress/);
 });
 test("existing Parent development summary and IDP editor are preserved",()=>{
  assert.match(read("app/components/parent-progress-summary.tsx"),/Child Development Progress Summary/);
