@@ -4,6 +4,7 @@ import {useEffect,useState,type ReactNode} from "react";
 import {usePathname,useRouter} from "next/navigation";
 import {supabase} from "../../lib/supabase";
 import {COMMON_TOOLS,roleTools,type StaffRole} from "./staff-tools-menu";
+import {StaffDashboardIcon,StaffMenuIcon} from "./staff-menu-icon";
 
 const roles:StaffRole[]=["owner","admin","clinic_admin","teacher"];
 const roleHome=(role:StaffRole)=>role==="owner"?"/owner/dashboard":role==="admin"?"/admin/dashboard":role==="clinic_admin"?"/clinic-admin/dashboard":"/teacher/dashboard";
@@ -40,12 +41,12 @@ export default function StaffRouteFrame({children}:{children:ReactNode}){
     <span className="swastha-staff-sidebar__role">{role.replace("_"," ")} Workspace</span>
    </div>
    <nav aria-label="Staff sections" className="swastha-staff-sidebar__sections">
-    <button type="button" onClick={()=>router.push(roleHome(role))}>Dashboard Overview</button>
+    <button type="button" className="swastha-staff-sidebar__home-link" onClick={()=>router.push(roleHome(role))}><StaffDashboardIcon/><span>Dashboard</span></button>
    </nav>
    <div className="swastha-staff-sidebar__tools"><h2>Staff Tools</h2>
     <nav aria-label="Role-based staff tools">{links.map(item=><button key={item.href} type="button" aria-current={pathname===item.href?"page":undefined}
      className={"swastha-staff-sidebar__tool"+(pathname===item.href?" active":"")}
-     onClick={()=>router.push(item.href)}><strong>{item.label}</strong><span>{item.description}</span></button>)}</nav>
+     onClick={()=>router.push(item.href)}><StaffMenuIcon href={item.href}/><span className="swastha-staff-sidebar__tool-copy"><strong>{item.label}</strong><span>{item.description}</span></span></button>)}</nav>
    </div>
   </aside>}
   {role&&<button type="button" className="swastha-staff-subpage__mobile-toggle" aria-expanded={expanded} onClick={()=>setExpanded(v=>!v)}> {expanded?"Hide Staff Navigation":"Show Staff Navigation"} </button>}
