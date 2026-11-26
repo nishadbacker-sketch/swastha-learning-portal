@@ -107,6 +107,8 @@ jobs:
         run: node --test tests/all-staff-regression-coverage.test.mjs
       - name: Verify in-person assessment integration with student history
         run: node --test tests/in-person-integrated-student-history.test.mjs
+      - name: Verify logo sidebar visibility and non-duplicated staff page headers
+        run: node --test tests/staff-sidebar-logo-layering.test.mjs
       - name: Verify compact staff headers across all role pages
         run: node --test tests/compact-all-staff-header.test.mjs
       - name: Verify live staff dashboard panels on all roles
