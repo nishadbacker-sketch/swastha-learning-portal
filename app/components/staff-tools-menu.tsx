@@ -17,7 +17,7 @@ export const COMMON_TOOLS: Tool[] = [
   { label: "Clinic Operations & Analytics", href: "/staff/operations", description: "Calendar, attendance and operational charts" },
   { label: "Courses & Assessments", href: "/staff/courses", description: "Browse published assessments and courses" },
   { label: "In-Person Assessments", href: "/staff/in-person-assessments", description: "Record supervised assessments" },
-  { label: "Assessment Certificates", href: "/staff/assessment-certificates", description: "Review certificates within your permissions" },
+  { label: "Certificates & Verification", href: "/staff/assessment-certificates", description: "Issue, download and verify approved certificates" },
   { label: "Student Coordination", href: "/teacher/coordination", description: "Student activities and team coordination" },
   { label: "Staff Notifications", href: "/staff/notifications", description: "Staff messages and notifications" }
 ];
@@ -55,7 +55,6 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
         <div className="swastha-staff-sidebar__brand">
           <img src="/swastha-learning-clinic-logo.png" alt="Swastha Learning Clinic — official logo" width={260} height={87}/>
           <span className="swastha-staff-sidebar__role">{role === "owner" ? "Owner" : role === "admin" ? "Super Admin" : role === "clinic_admin" ? "Clinic Admin" : "Teacher"} Workspace</span>
-          <button type="button" className="swastha-staff-sidebar__certificate-link" onClick={()=>router.push("/staff/assessment-certificates")}>Certificates &amp; Verification</button>
         </div>
         {sections.length>0&&<nav aria-label="Teacher dashboard sections" className="swastha-staff-sidebar__sections">
           {sections.map(item=><button type="button" key={item.id} aria-current={activeSection===item.id?"page":undefined}
@@ -64,7 +63,7 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
         <div className="swastha-staff-sidebar__tools">
           <h2>Staff Tools</h2>
           <nav aria-label="Role-based staff tools">
-            {tools.map(tool=><button key={tool.href} type="button" className="swastha-staff-sidebar__tool" onClick={()=>router.push(tool.href)}>
+            {tools.map(tool=><button key={tool.href} type="button" className={"swastha-staff-sidebar__tool"+(tool.href==="/staff/assessment-certificates"?" swastha-staff-sidebar__tool--certificate":"")} onClick={()=>router.push(tool.href)}>
               <strong>{tool.label}</strong>
               <span>{tool.description}</span>
             </button>)}
