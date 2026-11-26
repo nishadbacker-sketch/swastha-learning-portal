@@ -42,6 +42,7 @@ export default function StaffInPersonAssessmentPage(){
  const [studentId,setStudentId]=useState("");
  const [kind,setKind]=useState<"standard"|"custom">("standard");
  const [templateId,setTemplateId]=useState("");
+ const [chosenLevel,setChosenLevel]=useState<Level>("LP");
  const [active,setActive]=useState<Session|null>(null);
  const [answers,setAnswers]=useState<Record<string,Answer>>({});
  const [evaluation,setEvaluation]=useState("");
@@ -98,6 +99,7 @@ export default function StaffInPersonAssessmentPage(){
  const selectedStudent=students.find(s=>s.student_id===studentId);
  const selectedLevel=levelForClass(selectedStudent?.current_class||null);
  const availableTemplates=templates.filter(t=>t.level.toLowerCase()==="all"||t.level.toUpperCase()===selectedLevel);
+ const canStart=Boolean(selectedStudent&&selectedLevel&&chosenLevel===selectedLevel&&(kind==="standard"||availableTemplates.some(t=>t.id===templateId)));
  const template=templates.find(t=>t.id===active?.template_id);
  const questions=useMemo(()=>active?(active.assessment_kind==="standard"?standardQuestions(active.assessment_level):customQuestions(template)):[],[active?.id,active?.assessment_kind,active?.assessment_level,template]);
  const groups=[...new Set(questions.map(q=>q.area))];
@@ -139,6 +141,7 @@ export default function StaffInPersonAssessmentPage(){
  }
  async function startSession(){
   if(!supabase||busy||!selectedStudent||!selectedLevel)return;
+  if(chosenLevel!==selectedLevel){setError("Assessment level must match the student\u2019s class. Choose "+selectedLevel+".");return;}
   const t=kind==="custom"?availableTemplates.find(x=>x.id===templateId):undefined;
   if(kind==="custom"&&!t){setError("Choose a published assessment.");return;}
   setBusy(true);setError("");setMessage("");
@@ -216,13 +219,47 @@ export default function StaffInPersonAssessmentPage(){
     </section>
     <section style={card}>
      <h2 style={{fontSize:19,margin:"0 0 12px"}}>2. Start In-Person Assessment</h2>
-     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,240px),1fr))",gap:12}}>
-      <label>Student<select style={field} value={studentId} onChange={e=>{setStudentId(e.target.value);setTemplateId("");}}><option value="">Choose student</option>{students.map(s=><option key={s.student_id} value={s.student_id}>{s.student_name} ({s.student_code}) · {s.current_class}</option>)}</select></label>
-      <label>Assessment type<select style={field} value={kind} onChange={e=>{setKind(e.target.value as "standard"|"custom");setTemplateId("");}}><option value="standard">Standard grade assessment</option><option value="custom">Published custom assessment</option></select></label>
-      {kind==="custom"&&<label>Published assessment<select style={field} value={templateId} onChange={e=>setTemplateId(e.target.value)}><option value="">Choose published assessment</option>{availableTemplates.map(t=><option value={t.id} key={t.id}>{t.title} · {t.level.toUpperCase()}</option>)}</select></label>}
+     <label style={{display:"block",maxWidth:650,marginBottom:18,fontSize:13,fontWeight:700}}>Student
+      <select style={{...field,marginTop:6}} value={studentId} onChange={e=>{const id=e.target.value;setStudentId(id);setTemplateId("");const student=students.find(s=>s.student_id===id);setChosenLevel(levelForClass(student?.current_class||null)||"LP");}}>
+       <option value="">Choose student</option>{students.map(s=><option key={s.student_id} value={s.student_id}>{s.student_name} ({s.student_code}) · {s.current_class}</option>)}
+      </select>
+     </label>
+     <div style={{fontSize:12,fontWeight:800,color:"#526b63",letterSpacing:1,marginBottom:9}}>ASSESSMENT LEVEL · CHOOSE A GRADE</div>
+     <div role="group" aria-label="Select assessment level" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(125px,1fr))",gap:10,marginBottom:12}}>
+      {levels.map(level=>{
+       const labels:Record<Level,[string,string]>={LP:["Lower Primary","Classes 1–4"],UP:["Upper Primary","Classes 5–7"],HS:["High School","Classes 8–10"],HSS:["Higher Secondary","Classes 11–12"]};
+       const eligible=selectedLevel===level;
+       return <button type="button" key={level} onClick={()=>{setChosenLevel(level);setTemplateId("");setKind("standard");setError("");}}
+        aria-pressed={chosenLevel===level}
+        style={{textAlign:"center",padding:"14px 7px",borderRadius:12,cursor:"pointer",background:chosenLevel===level?"#e0f2f1":"white",border:chosenLevel===level?"2px solid #16697a":"1px solid #dce8e1",color:"#183a35",minHeight:94}}>
+        <strong style={{display:"block",fontSize:19}}>{level}</strong>
+        <span style={{display:"block",fontSize:12,marginTop:5}}>{labels[level][0]}</span>
+        <span style={{display:"block",fontSize:11,color:"#64748b",marginTop:3}}>{labels[level][1]}</span>
+        {selectedStudent&&eligible&&<span style={{display:"block",fontSize:10,color:"#176b58",marginTop:4}}>Matches student</span>}
+       </button>;
+      })}
      </div>
-     <p style={{fontSize:13,color:"#667a74",margin:"11px 0"}}>Grade level is selected automatically: <strong>{selectedLevel||"Choose a student in Classes 1–12"}</strong>. Existing students may be selected without creating another profile.</p>
-     <button type="button" disabled={busy||!selectedLevel||(kind==="custom"&&!templateId)} style={{...button,opacity:busy||!selectedLevel?0.55:1}} onClick={()=>void startSession()}>Start Assessment</button>
+     {selectedStudent&&chosenLevel!==selectedLevel&&<p role="alert" style={{color:"#ad4b21",fontSize:13,margin:"4px 0 14px"}}>Selected student is {selectedStudent.current_class}, so only <strong>{selectedLevel||"a supported class"}</strong> assessments can be started. Choose the matching tab.</p>}
+     <p style={{fontSize:13,color:"#667a74",marginBottom:14}}>All four standard grade assessments are visible. Published custom assessments appear below. Start is enabled only when the student's class matches the selected level.</p>
+     <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
+      <button type="button" aria-pressed={kind==="standard"} onClick={()=>{setKind("standard");setTemplateId("");}} style={{...button,background:kind==="standard"?"#0f4c5c":"#eaf4ef",color:kind==="standard"?"white":"#176b58"}}>Standard grade assessment (4)</button>
+      <button type="button" aria-pressed={kind==="custom"} onClick={()=>{setKind("custom");setTemplateId("");}} style={{...button,background:kind==="custom"?"#0f4c5c":"#eaf4ef",color:kind==="custom"?"white":"#176b58"}}>Published custom assessments ({templates.length})</button>
+     </div>
+     {kind==="standard"?<div style={{padding:14,background:"#f1f8f5",border:"1px solid #dce8e1",borderRadius:10,marginBottom:16}}>
+      <strong>{chosenLevel} — {chosenLevel==="LP"?"Lower Primary":chosenLevel==="UP"?"Upper Primary":chosenLevel==="HS"?"High School":"Higher Secondary"} Child Assessment Checklist</strong>
+      <p style={{fontSize:13,color:"#667a74",margin:"6px 0 0"}}>Standard assessment with grade-specific questions, staff ratings and observations.</p>
+     </div>:<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,235px),1fr))",gap:10,marginBottom:16}}>
+      {templates.map(t=>{const eligible=t.level.toLowerCase()==="all"||t.level.toUpperCase()===chosenLevel;return <button key={t.id} type="button" disabled={!eligible} onClick={()=>setTemplateId(t.id)}
+       aria-pressed={templateId===t.id}
+       style={{textAlign:"left",padding:14,borderRadius:10,border:templateId===t.id?"2px solid #176b58":"1px solid #dce8e1",background:templateId===t.id?"#eaf4ef":"white",opacity:eligible?1:0.55,cursor:eligible?"pointer":"not-allowed"}}>
+       <strong style={{display:"block",fontSize:14}}>{t.title}</strong>
+       <span style={{display:"block",fontSize:12,color:"#64748b",marginTop:5}}>{t.level.toUpperCase()==="ALL"?"All grade levels":t.level.toUpperCase()+" only"}</span>
+       {!eligible&&<span style={{fontSize:11,color:"#ad4b21"}}>Not for selected grade</span>}
+      </button>;})}
+      {!templates.length&&<p style={{fontSize:13,color:"#64748b"}}>No published custom assessments are available. Drafts are not selectable.</p>}
+     </div>}
+     <button type="button" disabled={busy||!canStart} style={{...button,opacity:busy||!canStart?0.55:1}} onClick={()=>void startSession()}>Start Assessment</button>
+     <p style={{fontSize:12,color:"#667a74",marginTop:9}}>Available catalogue: 4 standard + {templates.length} published custom assessments. All completed sessions remain in Saved and Submitted Sessions.</p>
     </section>
     <section style={card}>
      <h2 style={{fontSize:19,margin:"0 0 12px"}}>3. Saved and Submitted Sessions</h2>
