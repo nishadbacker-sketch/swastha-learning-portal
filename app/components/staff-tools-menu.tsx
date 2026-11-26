@@ -6,7 +6,37 @@ import type { ReactNode } from "react";
 export type StaffRole = "owner" | "admin" | "clinic_admin" | "teacher";
 
 type Tool = { label: string; href: string; description: string };
-type Summary = {label:string; value:string|number; onClick?:()=>void};
+type Summary = {label:string; value:string|number; onClick?:()=>void; note?:string};
+type MetricKind = "students"|"assessments"|"activities"|"progress"|"teachers"|"sessions"|"notifications";
+function metricKind(label:string):MetricKind{
+ const value=label.toLowerCase();
+ if(/teacher|staff/.test(value))return "teachers";
+ if(/student|child|registr/.test(value))return "students";
+ if(/assessment|review/.test(value))return "assessments";
+ if(/activit|course|learning/.test(value))return "activities";
+ if(/session|appointment|enquir|follow.up|quer/.test(value))return "sessions";
+ if(/notification|alert/.test(value))return "notifications";
+ return "progress";
+}
+function MetricIcon({kind}:{kind:MetricKind}){
+ const common={fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round" as const,strokeLinejoin:"round" as const};
+ return <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" focusable="false" {...common}>
+  {kind==="students"||kind==="teachers"?<>
+   <circle cx="16" cy="9" r="4"/><path d="M8 26v-4c0-5 3.3-8 8-8s8 3 8 8v4H8Z"/>
+   <path d="M7 12a3 3 0 1 1 2-5M5 24H2v-4c0-2.6 1.5-5 4-6M25 12a3 3 0 1 0-2-5m4 17h3v-4c0-2.6-1.5-5-4-6"/>
+  </>:kind==="assessments"?<>
+   <rect x="7" y="6" width="18" height="23" rx="2"/><path d="M12 6V4h8v2M11 17l3 3 7-8M12 24h9"/>
+  </>:kind==="activities"?<>
+   <path d="M16 9C12 6 6 6 3 8v18c4-2 9-1 13 2 4-3 9-4 13-2V8c-3-2-9-2-13 1Zm0 0v19"/>
+  </>:kind==="sessions"?<>
+   <rect x="5" y="7" width="22" height="21" rx="2"/><path d="M10 4v6M22 4v6M5 13h22M10 19h4m4 0h4m-12 5h4"/>
+  </>:kind==="notifications"?<>
+   <path d="M10 25h12M7 22h18l-3-5v-5a6 6 0 0 0-12 0v5l-3 5ZM14 28h4"/>
+  </>:<>
+   <path d="M5 27V17h5v10M14 27V11h5v16M23 27V5h5v22M4 28h25"/>
+  </>}
+ </svg>;
+}
 type Section = {id:string;label:string};
 type Props = { role:StaffRole; name?:string; summary?:Summary[]; sections?:Section[]; activeSection?:string; onSectionChange?:(id:string)=>void; children?:ReactNode };
 
@@ -80,8 +110,12 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
         {summary.length>0&&<div className="swastha-staff-workspace__summary" aria-label="Dashboard summary">
           {summary.map(item=><div key={item.label} className="swastha-staff-workspace__metric">
             {item.onClick?<button type="button" onClick={item.onClick} className="swastha-staff-workspace__metric-button">
-              <span>{item.label}</span><strong>{item.value}</strong>
-            </button>:<><span>{item.label}</span><strong>{item.value}</strong></>}
+              <span className="swastha-staff-workspace__metric-icon"><MetricIcon kind={metricKind(item.label)}/></span>
+              <span className="swastha-staff-workspace__metric-copy"><span className="swastha-staff-workspace__metric-label">{item.label}</span><strong className="swastha-staff-workspace__metric-value">{item.value}</strong>{item.note&&<small>{item.note}</small>}</span>
+            </button>:<div className="swastha-staff-workspace__metric-static">
+              <span className="swastha-staff-workspace__metric-icon"><MetricIcon kind={metricKind(item.label)}/></span>
+              <span className="swastha-staff-workspace__metric-copy"><span className="swastha-staff-workspace__metric-label">{item.label}</span><strong className="swastha-staff-workspace__metric-value">{item.value}</strong>{item.note&&<small>{item.note}</small>}</span>
+            </div>}
           </div>)}
         </div>}
         {children&&<div className="swastha-staff-workspace__extras">{children}</div>}
