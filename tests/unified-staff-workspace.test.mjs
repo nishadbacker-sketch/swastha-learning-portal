@@ -30,8 +30,8 @@ test("Administrative tools are not included in teacher menus", () => {
 
 test("Teacher keeps assessment charts, selected student support and assessment review", () => {
   assert.match(teacher, /import LearningInsightsCharts from/);
-  assert.match(teacher, /<LearningInsightsCharts audience="teacher" students=\{students\} assessments=\{assessments\} activities=\{activityAssignments\}\/>/);
-  assert.match(teacher, /<AssessmentAnalytics assessments=\{assessments\} students=\{students\}/);
+  assert.match(teacher, /<LearningInsightsCharts audience="teacher" students=\{students\} assessments=\{assessments\} activities=\{activityAssignments\} selectedStudentId=\{analyticsStudentId\} onStudentChange=\{setAnalyticsStudentId\}\/>/);
+  assert.match(teacher, /<AssessmentAnalytics assessments=\{assessments\} students=\{students\} studentFilterId=\{analyticsStudentId\}/);
   assert.match(charts, /Choose student for learning insights/);
   assert.match(teacher, /assessment-review/);
 });
