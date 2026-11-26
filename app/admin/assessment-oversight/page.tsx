@@ -56,7 +56,7 @@ export default function AssessmentOversight(){
    const ids=[...new Set(assignments.map(x=>x.student_id))];
    const byId:Record<string,Student>={};
    for(let i=0;i<ids.length;i+=100){
-    const {data:s,error:se}=await db.from("students").select("id,student_code,full_name,current_class").in("id",ids.slice(i,i+100));
+    const {data:s,error:se}=await db.from("students").select("id,student_code,full_name,current_class").in("id",ids.slice(i,i+100)).is("removed_at",null);
     if(se)throw se;
     for(const student of (s||[]) as Student[])byId[student.id]=student;
    }
