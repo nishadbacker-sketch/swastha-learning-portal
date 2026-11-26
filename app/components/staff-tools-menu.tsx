@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import StaffDashboardInsights from "./staff-dashboard-insights";
 
@@ -77,6 +78,7 @@ function roleTools(role: StaffRole): Tool[] {
 /** One navigation definition for all staff dashboards. Individual routes and RLS still enforce permission. */
 export default function StaffToolsMenu({ role, name, summary = [], sections = [], activeSection, onSectionChange, children }: Props) {
   const router = useRouter();
+  const [search,setSearch]=useState("");
   const tools = [...COMMON_TOOLS, ...roleTools(role)];
 
   return (
@@ -107,6 +109,10 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
             <h1>{name ? `Welcome, ${name}` : "Staff Dashboard"}</h1>
             <p>Your learning, assessment and clinic coordination workspace.</p>
           </div>
+          <form className="swastha-staff-dashboard-search" role="search" onSubmit={event=>{event.preventDefault();if(search.trim())router.push("/staff/students?search="+encodeURIComponent(search.trim()));}}>
+            <label htmlFor="staff-dashboard-search">Search students</label>
+            <div><input id="staff-dashboard-search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Student name or permanent ID" autoComplete="off"/><button type="submit" disabled={!search.trim()} aria-label="Search student directory">Search</button></div>
+          </form>
         </div>
         <StaffDashboardInsights role={role}/>
         {summary.length>0&&<h2 className="swastha-staff-dashboard-secondary-heading">Additional Staff Metrics</h2>}
