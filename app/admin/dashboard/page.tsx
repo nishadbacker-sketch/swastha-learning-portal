@@ -73,9 +73,9 @@ export default function AdminDashboard(){
  }
  const available=students.filter(s=>filter==="all"||!assignments.some(a=>a.student_id===s.id));
  if(loading)return <main style={{padding:35}}>Loading Super Admin dashboard...</main>;
- return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
+ return <main className="swastha-staff-dashboard-shell" style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
  <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><div style={{color:"#64748b",fontSize:12,marginTop:5}}>{creatorMode?"CREATOR / OWNER PORTAL":"SUPER ADMIN PORTAL"}</div></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><StaffNotificationsPopup/><button type="button" style={{...action,background:"#176b58",color:"white",margin:0}} onClick={()=>router.push("/teacher/appointments")}>Appointment</button><button style={{...action,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={action} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div></header>
- <div style={{maxWidth:1100,margin:"auto",padding:"30px 16px"}}>
+ <div className="swastha-staff-dashboard-content" style={{maxWidth:1100,margin:"auto",padding:"30px 16px"}}>
  
  <StaffToolsMenu role={creatorMode?"owner":"admin"} name={name}
    summary={[
