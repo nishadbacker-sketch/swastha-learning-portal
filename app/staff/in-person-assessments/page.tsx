@@ -252,9 +252,33 @@ export default function StaffInPersonAssessmentPage(){
      return <section key={q.id} style={{...card,borderLeft:isMissing&&!readOnly?"4px solid #d9a441":"4px solid #176b58"}}>
       <div style={{color:"#64748b",fontSize:12,marginBottom:5}}>{q.area} · {q.group} · {q.id}</div>
       <label style={{display:"block",fontWeight:700,fontSize:14,marginBottom:12}}>{index+1}. {language==="ml"?(q.text_ml||translations[q.id]||LP_MALAYALAM_QUESTIONS[q.id]||q.text):q.text}</label>
-      {q.type==="rating"?<label>Staff rating<select disabled={readOnly} style={field} value={value.score??""} onChange={e=>answer(q.id,{score:e.target.value||null})}>
-       <option value="">Select score</option><option value="0">0 — Not demonstrated</option><option value="1">1 — Needs substantial support</option><option value="2">2 — Developing</option><option value="3">3 — Independent</option><option value="NA">NA — Not assessed</option>
-      </select></label>:q.type==="multiple_choice"?<label>Child response<select disabled={readOnly} style={field} value={value.choice??""} onChange={e=>answer(q.id,{choice:e.target.value||null})}><option value="">Select answer</option>{(q.options||[]).map(o=><option key={o.id} value={o.id}>{language==="ml"&&o.text_ml?o.text_ml:o.text}</option>)}</select></label>:<label>Child's written / spoken answer<textarea disabled={readOnly} style={{...field,minHeight:80}} maxLength={5000} value={value.written_answer||""} onChange={e=>answer(q.id,{written_answer:e.target.value})}/></label>}
+      {q.type==="rating"?<div>
+       <div style={{fontSize:12,fontWeight:700,marginBottom:8}}>Staff rating · Select one answer</div>
+       <div role="group" aria-label={"Score question "+q.id} style={{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}}>
+        {([
+          ["0","Not demonstrated","#ef4444"],
+          ["1","Substantial support","#f97316"],
+          ["2","Developing","#0284c7"],
+          ["3","Independent","#10b981"],
+          ["NA","Not assessed","#64748b"]
+        ] as const).map(([score,label,color])=>{
+         const selected=value.score===score;
+         return <button key={score} type="button" disabled={readOnly} title={score+" — "+label}
+          aria-label={score+" — "+label} aria-pressed={selected}
+          onClick={()=>answer(q.id,{score})}
+          style={{minWidth:44,minHeight:44,padding:"8px 11px",borderRadius:9,
+           background:selected?color:"#fff",border:selected?"2px solid "+color:"1px solid #cbd5e1",
+           color:selected?"#fff":"#334155",boxShadow:selected?"0 2px 7px "+color+"55":"none",
+           fontWeight:800,fontSize:14,cursor:readOnly?"not-allowed":"pointer",
+           opacity:readOnly?0.75:1}}>
+          {score}
+         </button>;
+        })}
+       </div>
+       <p style={{fontSize:12,color:"#64748b",margin:"8px 0 0"}}>
+        {value.score?({ "0":"Not demonstrated","1":"Substantial support","2":"Developing","3":"Independent","NA":"Not assessed" } as Record<string,string>)[value.score]:"Choose 0, 1, 2, 3 or NA"} · NA is excluded from averages.
+       </p>
+      </div>:q.type==="multiple_choice"?<label>Child response<select disabled={readOnly} style={field} value={value.choice??""} onChange={e=>answer(q.id,{choice:e.target.value||null})}><option value="">Select answer</option>{(q.options||[]).map(o=><option key={o.id} value={o.id}>{language==="ml"&&o.text_ml?o.text_ml:o.text}</option>)}</select></label>:<label>Child's written / spoken answer<textarea disabled={readOnly} style={{...field,minHeight:80}} maxLength={5000} value={value.written_answer||""} onChange={e=>answer(q.id,{written_answer:e.target.value})}/></label>}
       <label style={{display:"block",marginTop:10}}>Assessor observation / exact child answer (optional)<textarea disabled={readOnly} style={{...field,minHeight:60}} maxLength={2000} value={value.observation||""} onChange={e=>answer(q.id,{observation:e.target.value})} placeholder="Note what the child said or demonstrated during the session"/></label>
      </section>;
     })}
