@@ -77,6 +77,30 @@ export default function ClinicAdminUsersPage() {
     }
   }
 
+  async function removeParent(account: Account) {
+    if (!supabase || busyId || account.account_role !== "parent") return;
+    const confirmation = window.prompt(
+      "Permanently remove unused Parent account: " + account.full_name +
+      "\\nAccounts with completed courses, child links or registrations cannot be removed. Type REMOVE to confirm."
+    );
+    if (confirmation !== "REMOVE") return;
+    setBusyId(account.user_id);
+    setError("");
+    setNotice("");
+    try {
+      const { error: removeError } = await supabase.rpc("staff_remove_unused_parent_account", {
+        p_user_id: account.user_id
+      });
+      if (removeError) throw removeError;
+      setNotice(account.full_name + " account removed.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Removal blocked.");
+    } finally {
+      setBusyId("");
+    }
+  }
+
   const visible = users.filter(u => {
     if (filter !== "all" && u.account_role !== filter) return false;
     return [u.full_name, u.email || "", u.staff_code || "", u.account_role]
@@ -90,7 +114,7 @@ export default function ClinicAdminUsersPage() {
       </button>
       <h1 style={{ marginTop: 22, marginBottom: 8 }}>User Management</h1>
       <p style={{ fontSize: 13, color: "#667a74" }}>
-        Admin can view Parent and Teacher accounts and promote Parents to Teachers.
+        Admin can view Parent and Teacher accounts, promote Parents to Teachers, and remove unused Parent accounts only.
         Owner, Super Admin and Admin accounts are not listed here.
       </p>
       <div style={{ ...card, display: "flex", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
@@ -128,10 +152,16 @@ export default function ClinicAdminUsersPage() {
                   <td style={{ padding: "12px 14px" }}>{u.account_role === "teacher" ? u.teacher_status || "Not recorded" : "—"}</td>
                   <td style={{ padding: "12px 14px" }}>
                     {u.account_role === "parent" ? (
+                      <>
                       <button type="button" style={{ ...button, opacity: busyId ? 0.65 : 1 }}
                         disabled={Boolean(busyId)} onClick={() => void promote(u)}>
                         {busyId === u.user_id ? "Promoting..." : "Promote to Teacher"}
                       </button>
+                      <button type="button" style={{ ...button, background: "#9f2935", marginLeft: 6 }}
+                        disabled={Boolean(busyId)} onClick={() => void removeParent(u)}>
+                        {busyId === u.user_id ? "Working..." : "Remove Parent Account"}
+                      </button>
+                      </>
                     ) : <span style={{ color: "#667a74" }}>View only</span>}
                   </td>
                 </tr>
