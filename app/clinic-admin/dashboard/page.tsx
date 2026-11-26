@@ -1,3 +1,4 @@
+import StaffToolsMenu from "../../components/staff-tools-menu";
 "use client";
 import BrandLogo from "../../components/brand-logo";
 import StaffNotificationsPopup from "../../components/staff-notifications-popup";
@@ -57,24 +58,7 @@ export default function ClinicAdminDashboard(){
     <section style={{...card,marginBottom:0}}><small>Total enquiries</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.total}</h2></section>
    </div>
 
- <section aria-label="Staff tools" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:16,borderRadius:12,marginBottom:18,minWidth:0}}>
- <h1 style={{fontSize:20,margin:"0 0 12px",overflowWrap:"anywhere"}}>Welcome to Staff Tools, {name}!</h1>
- 
- <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))"}}>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/clinic-admin/users")}>User Management</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/courses")}>Courses</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/in-person-assessments")}>In-Person Assessments</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/assessment-certificates")}>Assessment Certificates</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/clinic-admin/sessions")}>Sessions & Attendance</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/students")}>Student Management</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/teacher/coordination")}>Open Coordination Overview</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/staff/notifications")}>Open Staff Notifications</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/questions")}>Manage Assessment Questions</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/audit")}>Open Audit Timeline</button>
- <button type="button" style={{...action,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal"}} onClick={()=>router.push("/admin/announcements")}>Manage Announcements</button>
- </div></section>
-
+ <StaffToolsMenu role="clinic_admin" name={name}/>
   <TeacherManagement/>
    <AppointmentEscalations/>
   </div>
