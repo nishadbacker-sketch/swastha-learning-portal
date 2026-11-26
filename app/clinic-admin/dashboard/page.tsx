@@ -1,5 +1,6 @@
-import StaffToolsMenu from "../../components/staff-tools-menu";
 "use client";
+import StaffToolsMenu from "../../components/staff-tools-menu";
+
 import BrandLogo from "../../components/brand-logo";
 import StaffNotificationsPopup from "../../components/staff-notifications-popup";
 
