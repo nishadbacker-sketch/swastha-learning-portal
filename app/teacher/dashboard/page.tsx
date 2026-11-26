@@ -461,7 +461,7 @@ export default function TeacherDashboard() {
 
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [analyticsStudentId,setAnalyticsStudentId]=useState("all");
+
 
   const [students, setStudents] = useState<Student[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
