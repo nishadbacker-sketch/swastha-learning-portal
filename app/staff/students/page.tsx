@@ -17,6 +17,7 @@ export default function StaffStudentDirectory(){
  const [role,setRole]=useState<Role|null>(null);
  const [students,setStudents]=useState<Student[]>([]);
  const [search,setSearch]=useState("");
+ useEffect(()=>{setSearch(new URLSearchParams(window.location.search).get("search")||"");},[]);
  const [status,setStatus]=useState("all");
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
