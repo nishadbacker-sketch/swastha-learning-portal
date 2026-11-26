@@ -1,6 +1,7 @@
 "use client";
 
 import BrandLogo from "../../components/brand-logo";
+import StaffMetricCard from "../../components/staff-metric-card";
 import StaffNotificationsPopup from "../../components/staff-notifications-popup";
 
 import { useCallback, useEffect, useState } from "react";
@@ -179,67 +180,6 @@ function StatusBadge({ value }: { value: string }) {
     >
       {value.replace(/_/g, " ")}
     </span>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  color,
-  onClick,
-}: {
-  label: string;
-  value: number;
-  color: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!onClick}
-      style={{
-        ...panel,
-        borderTop: `4px solid ${color}`,
-        textAlign: "left",
-        cursor: onClick ? "pointer" : "default",
-        width: "100%",
-        color: "#183a35",
-      }}
-    >
-      <div
-        style={{
-          color: "#667a74",
-          fontSize: 13,
-          fontWeight: 700,
-        }}
-      >
-        {label}
-      </div>
-
-      <div
-        style={{
-          color,
-          fontSize: 27,
-          fontWeight: 800,
-          marginTop: 8,
-        }}
-      >
-        {value}
-      </div>
-
-      {onClick && (
-        <div
-          style={{
-            fontSize: 12,
-            color: "#667a74",
-            marginTop: 8,
-          }}
-        >
-          Click to view details
-        </div>
-      )}
-    </button>
   );
 }
 
@@ -1133,28 +1073,28 @@ export default function TeacherDashboard() {
             marginBottom: 25,
           }}
         >
-          <Metric
+          <StaffMetricCard
             label="Assigned Students"
             value={students.length}
             color="#176b58"
             onClick={() => setActiveTab("students")}
           />
 
-          <Metric
+          <StaffMetricCard
             label="Learning Activities"
             value={activities.length}
             color="#2563eb"
             onClick={() => setActiveTab("activities")}
           />
 
-          <Metric
+          <StaffMetricCard
             label="Assessments"
             value={assessments.length}
             color="#7c3aed"
             onClick={() => setActiveTab("assessments")}
           />
 
-          <Metric
+          <StaffMetricCard
             label="Pending Reviews"
             value={
               assessments.filter(
