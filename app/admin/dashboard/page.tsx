@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import AppointmentEscalations from "../appointment-escalations";
+import StaffMetricCard from "../../components/staff-metric-card";
 
 type Student = {id:string;student_code:string;full_name:string;current_class:string|null;status:string;created_at:string};
 type Teacher = {id:string;user_id:string;status:string;profiles?:{full_name:string|null;staff_code?:string|null}[]|{full_name:string|null;staff_code?:string|null}|null};
@@ -95,11 +96,11 @@ export default function AdminDashboard(){
  </div></section>
  <AppointmentEscalations/>
 
- <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14}}>
- <section style={box}><small>Registered Students</small><h1>{students.length}</h1></section>
- <section style={box}><small>Awaiting Teacher Assignment</small><h1>{students.filter(s=>!assignments.some(a=>a.student_id===s.id)).length}</h1></section>
- <section style={box}><small>Active Teachers</small><h1>{teachers.length}</h1></section>
- <section style={box}><small>Teacher–Student Links</small><h1>{assignments.length}</h1></section>
+ <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,180px),1fr))",gap:14,marginBottom:25}}>
+ <StaffMetricCard label="Registered Students" value={students.length} color="#176b58" />
+ <StaffMetricCard label="Awaiting Teacher Assignment" value={students.filter(s=>!assignments.some(a=>a.student_id===s.id)).length} color="#d97706" />
+ <StaffMetricCard label="Active Teachers" value={teachers.length} color="#2563eb" />
+ <StaffMetricCard label="Teacher–Student Links" value={assignments.length} color="#7c3aed" />
  </div>
  {error&&<p role="alert" style={{...box,color:"#b42318",background:"#fff1f2"}}>{error}</p>}
  {notice&&<p role="status" style={{...box,color:"#176b58",background:"#e9f7ef"}}>{notice}</p>}
