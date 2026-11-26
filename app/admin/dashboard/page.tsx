@@ -38,7 +38,7 @@ export default function AdminDashboard(){
    const {data:currentProfile}=await db.from("profiles").select("full_name,staff_code").eq("id",auth.user.id).maybeSingle();
    setName((currentProfile?.full_name||auth.user.user_metadata?.full_name||auth.user.email||"Super Admin")+(currentProfile?.staff_code?" · "+currentProfile.staff_code:""));
    const [s,t,a]=await Promise.all([
-    db.from("students").select("id,student_code,full_name,current_class,status,created_at").order("created_at",{ascending:false}),
+    db.from("students").select("id,student_code,full_name,current_class,status,created_at").is("removed_at",null).order("created_at",{ascending:false}),
     db.from("teachers").select("id,user_id,status").eq("status","active"),
     db.from("teacher_assignments").select("id,student_id,teacher_id")
    ]);
@@ -79,7 +79,6 @@ export default function AdminDashboard(){
  
  <StaffToolsMenu role={creatorMode?"owner":"admin"} name={name}
    summary={[
-    {label:"Registered Students",value:students.length,onClick:()=>router.push("/admin/students")},
     {label:"Awaiting Teacher Assignment",value:students.filter(student=>!assignments.some(a=>a.student_id===student.id)).length,onClick:()=>router.push("/admin/students")},
     {label:"Active Teachers",value:teachers.length,onClick:()=>router.push("/admin/users")},
     {label:"Teacher–Student Links",value:assignments.length,onClick:()=>router.push("/admin/students")}

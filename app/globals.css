@@ -598,3 +598,98 @@ body .swastha-site-footer__bottom p {
 .swastha-staff-dashboard-shell>main,.swastha-staff-dashboard-shell>.swastha-staff-dashboard-content{margin-left:0!important;}
 }
 @media(max-width:460px){.swastha-staff-sidebar__tools nav{grid-template-columns:1fr;}.swastha-staff-sidebar__sections button{padding:9px;}}
+
+
+/* Approved dashboard mockup: illustrated white summary cards, genuine staff metrics. */
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__summary{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));
+ gap:12px;margin-top:20px;
+}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric{
+ overflow:hidden;background:#fff;border:1px solid #e5ece6;border-radius:17px;
+ color:#172d26;box-shadow:0 5px 18px #152f2312;
+}
+.swastha-staff-workspace__metric-button,
+.swastha-staff-workspace__metric-static{
+ display:flex!important;align-items:flex-start;justify-content:flex-start;gap:13px;
+ min-height:132px;padding:19px!important;background:transparent;
+}
+.swastha-staff-workspace__metric-button{width:100%;text-align:left;border:0;color:inherit;cursor:pointer;}
+.swastha-staff-workspace__metric-static{cursor:default;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-button:hover{
+ background:#f5fbf7;box-shadow:inset 0 0 0 1px #b2dcc4;
+}
+.swastha-staff-workspace__metric-icon{
+ flex:none;display:grid;place-items:center;width:51px;height:51px;
+ border-radius:50%;background:#eaf7e9;color:#08784c;
+}
+.swastha-staff-workspace__metric-copy{min-width:0;display:flex;flex:1;flex-direction:column;gap:6px;align-items:flex-start;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-label{
+ color:#25382e;font-size:13px;line-height:1.4;font-weight:650;
+}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-value{
+ font-size:clamp(25px,2.2vw,34px);font-weight:790;color:#101e18;line-height:1.05;
+ font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+.swastha-staff-workspace__metric-copy small{color:#177b50;font-size:11px;font-weight:600;line-height:1.4;}
+@media(max-width:560px){
+ .swastha-staff-workspace--sidebar .swastha-staff-workspace__summary{grid-template-columns:repeat(2,minmax(0,1fr));}
+ .swastha-staff-workspace__metric-button,.swastha-staff-workspace__metric-static{
+  min-height:110px;padding:12px!important;gap:8px;
+ }
+ .swastha-staff-workspace__metric-icon{width:35px;height:35px;}
+ .swastha-staff-workspace__metric-icon svg{width:23px;height:23px;}
+ .swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-value{font-size:25px;}
+}
+
+
+/* Approved full dashboard layout — authentic activity trend, status donut, activity feed and schedule. */
+.swastha-staff-dashboard-visual{display:grid;gap:18px;margin:18px 0 22px;}
+.swastha-staff-dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.swastha-staff-dashboard-kpi{display:flex;align-items:flex-start;gap:12px;min-width:0;text-align:left;background:#fff;border:1px solid #e6ebe5;border-radius:17px;padding:18px 14px;box-shadow:0 3px 14px #182f2711;color:#152a20;cursor:pointer;}
+.swastha-staff-dashboard-kpi:hover{background:#f4fbf6;border-color:#b5ddc7;}
+.swastha-staff-dashboard-kpi-icon{display:grid;place-items:center;flex:none;border-radius:50%;background:#eaf7e9;color:#08784f;width:52px;height:52px;}
+.swastha-staff-dashboard-kpi>span:last-child{display:grid;gap:6px;min-width:0;}
+.swastha-staff-dashboard-kpi small{font-size:13px;font-weight:650;color:#33473b;}
+.swastha-staff-dashboard-kpi strong{font-size:clamp(25px,2vw,33px);line-height:1.12;font-weight:790;color:#14271f;font-variant-numeric:tabular-nums;}
+.swastha-staff-dashboard-kpi em{font-size:10px;color:#198552;font-style:normal;line-height:1.5;}
+.swastha-staff-dashboard-chart-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:15px;align-items:stretch;}
+.swastha-staff-dashboard-panel{border:1px solid #e3e9e1;background:#fff;border-radius:17px;padding:19px 21px;min-width:0;box-shadow:0 3px 13px #14291d0d;}
+.swastha-staff-dashboard-panel-heading{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px;}
+.swastha-staff-dashboard-panel-heading h2{font-size:18px;color:#172a22;margin:0 0 4px;font-weight:750;}
+.swastha-staff-dashboard-panel-heading p{font-size:12px;color:#60756a;line-height:1.5;margin:0;}
+.swastha-staff-dashboard-panel-heading select{border:1px solid #ccd8d0;background:#fff;border-radius:8px;padding:8px;font-size:12px;color:#183a35;}
+.swastha-staff-dashboard-panel-heading button{border:none;background:transparent;color:#176b58;font-weight:700;font-size:12px;cursor:pointer;}
+.swastha-staff-dashboard-chart-wrap{width:100%;overflow:hidden;}
+.swastha-staff-dashboard-chart-wrap svg{display:block;width:100%;height:auto;}
+.swastha-staff-dashboard-donut-layout{display:flex;gap:21px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.swastha-staff-dashboard-donut{width:184px;height:184px;border-radius:50%;display:grid;place-items:center;flex:none;}
+.swastha-staff-dashboard-donut>div{width:112px;height:112px;border-radius:50%;display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;background:#fff;color:#182c21;}
+.swastha-staff-dashboard-donut strong{font-size:26px;}
+.swastha-staff-dashboard-donut small{font-size:12px;}
+.swastha-staff-dashboard-legend{display:grid;gap:10px;flex:1 1 140px;}
+.swastha-staff-dashboard-legend>div{display:flex;align-items:center;gap:8px;font-size:12px;color:#304338;}
+.swastha-staff-dashboard-legend>div>span:first-child{width:12px;height:12px;border-radius:3px;flex:none;}
+.swastha-staff-dashboard-legend>div>span:nth-child(2){flex:1;}
+.swastha-staff-dashboard-legend strong{font-variant-numeric:tabular-nums;}
+.swastha-staff-dashboard-feed{display:grid;}
+.swastha-staff-dashboard-feed-row,.swastha-staff-dashboard-session{display:flex;align-items:center;gap:12px;padding:10px 1px;border-bottom:1px solid #e9eee9;}
+.swastha-staff-dashboard-feed-row:last-child,.swastha-staff-dashboard-session:last-child{border-bottom:0;}
+.swastha-staff-dashboard-feed-row>span:last-child,.swastha-staff-dashboard-session>span:last-child{display:grid;gap:4px;min-width:0;}
+.swastha-staff-dashboard-feed strong{font-size:13px;color:#1e3427;}
+.swastha-staff-dashboard-feed small{font-size:11px;color:#60756a;line-height:1.4;}
+.swastha-staff-dashboard-avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#ebf8ec;color:#0b8050;flex:none;}
+.swastha-staff-dashboard-session time{white-space:nowrap;border-radius:8px;padding:7px;background:#eaf7eb;color:#174b35;font-weight:700;font-size:11px;}
+.swastha-staff-dashboard-footnote{font-size:10px;color:#60756a;line-height:1.5;margin:6px 0 0;}
+.swastha-staff-dashboard-warning{padding:12px;border-radius:9px;background:#fff8ed;border:1px solid #eed5a9;color:#8d541c;font-size:12px;}
+.swastha-staff-dashboard-secondary-heading{font-size:15px;margin:17px 0 0;font-weight:700;color:#183a35;}
+.swastha-staff-dashboard-visual button:focus-visible{outline:3px solid #c29434;outline-offset:3px;}
+@media(max-width:1150px){.swastha-staff-dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}.swastha-staff-dashboard-chart-grid{grid-template-columns:1fr;}}
+@media(max-width:580px){.swastha-staff-dashboard-kpi{padding:12px;gap:8px;}.swastha-staff-dashboard-kpi-icon{width:36px;height:36px;}.swastha-staff-dashboard-kpi-icon svg{width:22px;height:22px;}.swastha-staff-dashboard-kpi strong{font-size:24px;}.swastha-staff-dashboard-panel{padding:13px;}.swastha-staff-dashboard-donut{width:148px;height:148px;}.swastha-staff-dashboard-donut>div{width:92px;height:92px;}}
+
+.swastha-staff-dashboard-quick-actions{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:#edf8f2;border:1px solid #c9e7d6;border-radius:15px;padding:16px 20px;}
+.swastha-staff-dashboard-quick-actions>div{display:grid;gap:4px;flex:1 1 210px;}
+.swastha-staff-dashboard-quick-actions strong{color:#123e31;font-size:16px;}
+.swastha-staff-dashboard-quick-actions span{color:#60796d;font-size:12px;}
+.swastha-staff-dashboard-quick-actions button{background:#176b58;color:#fff;border:0;border-radius:9px;padding:11px 16px;font-size:13px;font-weight:700;cursor:pointer;}
+.swastha-staff-dashboard-quick-actions button:hover{background:#0c5444;}
