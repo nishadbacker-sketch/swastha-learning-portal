@@ -980,6 +980,7 @@ export default function TeacherDashboard() {
 
   return (
     <div
+      className="swastha-staff-dashboard-shell"
       style={{
         minHeight: "100vh",
         background: "#f8faf7",
