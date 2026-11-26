@@ -20,8 +20,9 @@ test("Shared Parent/Learner dashboard contains the new data visualisations witho
 
 test("Teacher charts consume already scoped students and assessments and retain existing analytics",()=>{
  assert.match(teacher,/import LearningInsightsCharts from/);
- assert.match(teacher,/<LearningInsightsCharts audience="teacher" students=\{students\} assessments=\{assessments\} activities=\{activityAssignments\}\/>/);
+ assert.match(teacher,/<LearningInsightsCharts audience="teacher" students=\{students\} assessments=\{assessments\} activities=\{activityAssignments\} selectedStudentId=\{analyticsStudentId\} onStudentChange=\{setAnalyticsStudentId\}\/>/);
  assert.match(teacher,/import AssessmentAnalytics from/);
+ assert.match(teacher,/studentFilterId=\{analyticsStudentId\}/);
  assert.match(teacher,/\.from\("teacher_assignments"\)/);
  assert.doesNotMatch(teacher,/<LearningInsightsCharts audience="teacher"[^>]*reviewedResults=/);
 });

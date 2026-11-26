@@ -142,15 +142,15 @@ function RatingDoughnut({counts,total}:{counts:{score:string;count:number}[];tot
  </div>;
 }
 
-export default function AssessmentAnalytics({assessments,students,hideSelector=false,hideDetailedInsights=false,hideDashboardTitle=false,children}:{assessments:InputAssessment[];students:InputStudent[];hideSelector?:boolean;hideDetailedInsights?:boolean;hideDashboardTitle?:boolean;children?:React.ReactNode|((studentId:string|null)=>React.ReactNode)}){
- const available=assessments.filter(a=>["submitted","reviewed"].includes(a.status));
+export default function AssessmentAnalytics({assessments,students,hideSelector=false,hideDetailedInsights=false,hideDashboardTitle=false,studentFilterId="all",children}:{assessments:InputAssessment[];students:InputStudent[];hideSelector?:boolean;hideDetailedInsights?:boolean;hideDashboardTitle?:boolean;studentFilterId?:string;children?:React.ReactNode|((studentId:string|null)=>React.ReactNode)}){
+ const available=assessments.filter(a=>["submitted","reviewed"].includes(a.status)&&(studentFilterId==="all"||a.student_id===studentFilterId));
  const [selected,setSelected]=useState("");
  const [responses,setResponses]=useState<Response[]>([]);
  const [bank,setBank]=useState<(typeof CHECKLIST_DATA)[AssessmentLevel]|null>(null);
  const [loadedAssessmentId,setLoadedAssessmentId]=useState("");
  const [loading,setLoading]=useState(false);
  const [error,setError]=useState("");
- useEffect(()=>{if(!available.some(a=>a.id===selected))setSelected(available[0]?.id||"");},[assessments,selected]);
+ useEffect(()=>{if(!available.some(a=>a.id===selected))setSelected(available[0]?.id||"");},[assessments,selected,studentFilterId]);
  useEffect(()=>{let cancelled=false;async function load(){
   if(!selected){setResponses([]);setLoadedAssessmentId("");setBank(null);return;}
   setLoading(true);setError("");setLoadedAssessmentId("");setResponses([]);setBank(null);

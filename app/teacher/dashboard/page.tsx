@@ -1,4 +1,6 @@
 "use client";
+import StaffToolsMenu from "../../components/staff-tools-menu";
+
 
 import BrandLogo from "../../components/brand-logo";
 import StaffNotificationsPopup from "../../components/staff-notifications-popup";
@@ -7,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import AssessmentAnalytics from "../assessment-analytics";
+import LearningInsightsCharts from "../../components/learning-insights-charts";
 
 type Level = "LP" | "UP" | "HS" | "HSS";
 type Tab = "overview" | "assessments" | "activities" | "students";
@@ -460,6 +463,7 @@ export default function TeacherDashboard() {
 
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [analyticsStudentId,setAnalyticsStudentId]=useState("all");
 
   const [students, setStudents] = useState<Student[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
@@ -1086,10 +1090,7 @@ export default function TeacherDashboard() {
         )}
 
         <div style={{marginBottom:24}}>
-          <section aria-label="Teacher Command Centre" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:16,borderRadius:12,marginBottom:0,minWidth:0,boxSizing:"border-box",overflowWrap:"anywhere"}}>
-              <h1 style={{fontSize:20,margin:"0 0 12px",overflowWrap:"anywhere"}}>Welcome to Staff Tools, {teacherName}!</h1>
-<div aria-label="Staff tools" style={{marginTop:0,paddingTop:0,minWidth:0}}>
-          
+          <StaffToolsMenu role="teacher" name={teacherName}/>
           <nav aria-label="Teacher dashboard sections" style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",marginBottom:12}}>
             {([
               ["overview","Overview",null],
@@ -1099,30 +1100,6 @@ export default function TeacherDashboard() {
             ] as [Tab,string,number|null][]).map(([id,label,count])=><button key={id} type="button" aria-current={activeTab===id?"page":undefined} onClick={()=>setActiveTab(id)} style={{...primaryButton,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal",border:activeTab===id?"2px solid #e6c875":"2px solid transparent"}}>{label}{count!==null?" ("+count+")":""}</button>)}
 
           </nav>
-          <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",alignItems:"stretch"}}>
-          <button type="button" onClick={()=>router.push("/teacher/custom-assessments")}
-            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>
-            + Custom Assessment Builder
-          </button>
-          <button type="button" onClick={()=>router.push("/teacher/coordination")}
-            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>
-            Teacher Coordination
-          </button>
-          
-          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}} onClick={()=>router.push("/staff/operations")}>Clinic Operations & Calendar</button>
-          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}} onClick={()=>router.push("/staff/courses")}>Courses</button>
-           <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}} onClick={()=>router.push("/staff/in-person-assessments")}>In-Person Assessments</button>
-          <button type="button" style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}} onClick={()=>router.push("/teacher/sessions")}>Sessions & Attendance</button>
-          <button type="button" onClick={()=>router.push("/staff/assessment-certificates")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>Assessment Certificates</button>
-          <button type="button" onClick={()=>router.push("/teacher/student-progress")} style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>Student Progress Tracking</button>
-          <button type="button" onClick={()=>router.push("/teacher/idp")}
-            style={{...primaryButton,whiteSpace:"normal",minWidth:0,margin:0,background:"#176b58",color:"white"}}>
-            Individual Development Plan (IDP)
-          </button>
-          </div>
-        </div>
-
-          </section>
         </div>
 
         <section
@@ -1174,9 +1151,10 @@ export default function TeacherDashboard() {
         {activeTab === "overview" && (
           <section>
 
-            <section aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
+            <section id="staff-analytics" aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
               <h2 style={{marginTop:0,color:"#0f4c5c"}}>Analytics Dashboard</h2>
-              <AssessmentAnalytics assessments={assessments} students={students} hideDashboardTitle>
+              <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments} selectedStudentId={analyticsStudentId} onStudentChange={setAnalyticsStudentId}/>
+              <AssessmentAnalytics assessments={assessments} students={students} studentFilterId={analyticsStudentId} hideDashboardTitle>
               {(selectedStudentId)=>(
             <section style={{...panel,marginTop:16}}>
               <h3>Student Development Journey & Progress Overview</h3>
