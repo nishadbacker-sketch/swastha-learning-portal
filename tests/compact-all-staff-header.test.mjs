@@ -53,3 +53,13 @@ test("Every staff subpage reuses canonical role-appropriate navigation with resp
  assert.match(css,/swastha-staff-subpage__content\.is-navigation-visible/);
  assert.match(css,/swastha-staff-sidebar--subpage\.is-open/);
 });
+
+test("Shared top-bar is declared before dashboard returns, so overview logo is never missing",()=>{
+ const frame=read("app/components/staff-route-frame.tsx");
+ const declared=frame.indexOf("const topbar=<header");
+ const dashboard=frame.indexOf('if(dashboard)return <div className="swastha-staff-route">{topbar}{children}</div>');
+ assert.ok(declared>=0,"Shared topbar is declared");
+ assert.ok(dashboard>declared,"Dashboard renders topbar only after declaration");
+ assert.match(frame,/swastha-staff-route--subpage/);
+ assert.match(frame,/\{topbar\}/);
+});
