@@ -64,7 +64,13 @@ export default function StaffInPersonAssessmentPage(){
    supabase.from("custom_assessment_templates").select("id,title,level,description,structure").eq("status","published").order("title")
   ]);
   if(s.error||t.error)throw new Error(s.error?.message||t.error?.message);
-  setStudents((s.data||[]) as Student[]);
+  const available=(s.data||[]) as Student[];
+  setStudents(available);
+  const requestedStudent=new URLSearchParams(window.location.search).get("student");
+  if(requestedStudent&&available.some(item=>item.student_id===requestedStudent)){
+   setStudentId(requestedStudent);
+   setStandardLevel(levelForClass(available.find(item=>item.student_id===requestedStudent)?.current_class||null)||"");
+  }
   setTemplates((t.data||[]) as Template[]);
  },[]);
  useEffect(()=>{
@@ -78,6 +84,8 @@ export default function StaffInPersonAssessmentPage(){
     if(re||!r||!["owner","admin","clinic_admin","teacher"].includes(r.role)){router.replace("/login");return;}
     if(live)setRole(r.role);
     await refresh();
+    const requestedSession=new URLSearchParams(window.location.search).get("session");
+    if(requestedSession)await openSessionDirect(requestedSession);
    }catch(e){if(live)setError(e instanceof Error?e.message:"Unable to load staff assessments.");}
    finally{if(live)setLoading(false);}
   }
