@@ -144,7 +144,7 @@ export default function StaffDashboardInsights({role}:{role:StaffRole}){
     {chartMonths.every(m=>m.rate===null)?<p className="swastha-muted">No learning activities assigned in this period.</p>:
     <div className="swastha-staff-dashboard-chart-wrap"><svg role="img" aria-label={"Learning activity completion by assignment month: "+chartMonths.map(m=>shortMonth(m.key)+" "+(m.rate===null?"no data":m.rate+" percent")).join(", ")} viewBox="0 0 580 190" preserveAspectRatio="xMidYMid meet">
      {[0,25,50,75,100].map(t=><g key={t}><line x1="35" y1={157-t*1.3} x2="575" y2={157-t*1.3} stroke="#e2e8e6"/><text x="1" y={161-t*1.3} fontSize="12" fill="#61756c">{t}%</text></g>)}
-     {segments.map((s,i)=><polyline key={i} points={s.map(p=>(p.x+35)+","+(p.y+25)).join(" ")} fill="none" stroke="#0b8d57" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round"/>)}
+     {segments.map((s,i)=><polyline key={i} points={s.map(p=>(p.x+35)+","+((p.y??0)+25)).join(" ")} fill="none" stroke="#0b8d57" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round"/>)}
      {points.map(p=><g key={p.key}><text x={p.x+35} y="181" textAnchor="middle" fontSize="12" fill="#61756c">{shortMonth(p.key)}</text>{p.y!==null&&<circle cx={p.x+35} cy={p.y+25} r="5" stroke="#08784f" strokeWidth="3" fill="#fff"/>}</g>)}
     </svg></div>}
     <p className="swastha-staff-dashboard-footnote">A month without assignments is shown as missing data, not 0% progress.</p>
