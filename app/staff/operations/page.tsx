@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useMemo,useState} from "react";
 import {useRouter} from "next/navigation";
 import BrandLogo from "../../components/brand-logo";
+import StaffMetricBars from "../../components/staff-metric-bars";
 import {supabase} from "../../../lib/supabase";
 
 type Student={id:string;full_name:string;student_code:string|null};
@@ -63,23 +64,26 @@ export default function ClinicOperations(){
    const ss:Student[]=[];const aa:Assessment[]=[];
    for(const chunk of chunks(ids)){
     const [s,a]=await Promise.all([
-     db.from("students").select("id,full_name,student_code").in("id",chunk),
+     db.from("students").select("id,full_name,student_code").in("id",chunk).is("removed_at",null),
      db.from("assessment_assignments").select("id,student_id").in("student_id",chunk).eq("status","reviewed")
     ]);
     if(s.error||a.error)throw Error("Authorised students or assessments could not be loaded.");
     ss.push(...(s.data||[]) as Student[]);aa.push(...(a.data||[]) as Assessment[]);
    }
+   const allowedStudentIds=ss.map(student=>student.id);
+   const allowedSet=new Set(allowedStudentIds);
+   const approvedAssessments=aa.filter(item=>allowedSet.has(item.student_id));
    const from=new Date();from.setUTCFullYear(from.getUTCFullYear()-1);
    const until=new Date();until.setUTCFullYear(until.getUTCFullYear()+2);
    const allSessions:Session[]=[];
-   for(const chunk of chunks(ids)){
+   for(const chunk of chunks(allowedStudentIds)){
     const r=await db.from("clinic_sessions").select("id,student_id,teacher_user_id,scheduled_at,duration_minutes,session_type,status")
       .in("student_id",chunk).gte("scheduled_at",from.toISOString()).lte("scheduled_at",until.toISOString()).order("scheduled_at").limit(1000);
     if(r.error)throw Error("Session information could not be loaded.");
     allSessions.push(...(r.data||[]) as Session[]);
     if(r.data?.length===1000)throw Error("Too many sessions for a complete report. Narrow the reporting period.");
    }
-   const reviewIds=aa.map(a=>a.id);
+   const reviewIds=approvedAssessments.map(a=>a.id);
    const gg:Goal[]=[];
    for(const chunk of chunks(reviewIds)){
     const g=await db.from("student_development_goals").select("id,assignment_id,title,target_date,status,current_percent").in("assignment_id",chunk).limit(1000);
@@ -100,7 +104,7 @@ export default function ClinicOperations(){
     pending.push(...(e.data||[]) as Enquiry[]);
    }
    ss.sort((a,b)=>a.full_name.localeCompare(b.full_name));
-   setStudents(ss);setTeachers(staffTeachers);setSessions(allSessions);setSummaries(summaryRows);setGoals(gg);setAssessments(aa);setEnquiries(pending);
+   setStudents(ss);setTeachers(staffTeachers);setSessions(allSessions);setSummaries(summaryRows);setGoals(gg);setAssessments(approvedAssessments);setEnquiries(pending);
   }catch(e){setError(e instanceof Error?e.message:"Unable to load clinic operations.");}
   finally{setLoading(false);}
  },[router]);
@@ -201,14 +205,14 @@ export default function ClinicOperations(){
     </div>}
     {tab==="analytics"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:12}}>
      <section style={card}><h2>Attendance Distribution</h2>
-      {Object.entries(statusCounts).length===0?<p>No attendance records yet.</p>:Object.entries(statusCounts).map(([name,num])=><p key={name} style={{fontSize:13}}>{name.replace(/_/g," ")}: <strong>{num}</strong></p>)}
+      <StaffMetricBars items={Object.entries(statusCounts).map(([name,num])=>({label:name.replace(/_/g," "),value:num}))} emptyMessage="No attendance records yet."/>
       <p style={{fontSize:12,color:"#64748b"}}>Attendance rate uses attended and absent sessions only, excluding cancelled and future scheduled sessions.</p>
      </section>
      <section style={card}><h2>Development Goal Status</h2>
-      {Object.entries(countBy(ownGoals,g=>g.status)).length===0?<p>No approved IDP goals yet.</p>:Object.entries(countBy(ownGoals,g=>g.status)).map(([name,num])=><p key={name} style={{fontSize:13}}>{name.replace(/_/g," ")}: <strong>{num}</strong></p>)}
+      <StaffMetricBars items={Object.entries(countBy(ownGoals,g=>g.status)).map(([name,num])=>({label:name.replace(/_/g," "),value:num}))} emptyMessage="No approved IDP goals yet."/>
      </section>
      <section style={card}><h2>Teacher Session Workload</h2>
-      {!teachers.length?<p>No assigned Teachers found.</p>:teachers.map(t=><p key={t.id} style={{fontSize:13}}>Teacher {t.user_id.slice(0,8)}: <strong>{visible.filter(s=>s.teacher_user_id===t.user_id).length}</strong> session(s)</p>)}
+      <StaffMetricBars items={teachers.map(t=>({label:"Teacher "+t.user_id.slice(0,8),value:visible.filter(s=>s.teacher_user_id===t.user_id).length}))} emptyMessage="No assigned Teacher sessions in this view."/>
      </section>
     </div>}
     <p style={{fontSize:12,color:"#64748b",marginTop:15}}>Operational report only. Counts are based on accessible data and the loaded reporting horizon. No clinical diagnosis or comparative standardisation is implied.</p>

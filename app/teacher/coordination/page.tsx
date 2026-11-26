@@ -50,7 +50,7 @@ export default function TeacherCoordination(){
  const refresh=useCallback(async()=>{
   if(!supabase)throw new Error("Supabase is not configured");
   const [a,b,c,d,e,codes]=await Promise.all([
-   supabase.from("students").select("id,student_code,full_name,current_class,status").order("full_name"),
+   supabase.from("students").select("id,student_code,full_name,current_class,status").is("removed_at",null).order("full_name"),
    supabase.from("student_coordination_tasks").select("id,student_id,title,description,category,status,priority,due_date,assigned_to,created_by,created_at").order("created_at",{ascending:false}).limit(1500),
    supabase.from("student_coordination_notes").select("id,student_id,task_id,category,body,author_id,created_at").order("created_at",{ascending:false}).limit(1500),
    supabase.rpc("coordination_staff_directory"),
@@ -172,6 +172,7 @@ export default function TeacherCoordination(){
       <section style={sheet}>
        <h2 style={{fontSize:21,margin:"0 0 4px"}}>{student.full_name} · {student.student_code}</h2>
        <p style={caption}>Student ID: {student.student_code} · Class: {student.current_class||"Not recorded"} · Student status: {student.status}</p>
+       <div style={{marginTop:12}}><button type="button" style={btn} onClick={()=>router.push("/staff/students/"+encodeURIComponent(student.id))}>Open Complete Student Record</button></div>
        <h3 style={{fontSize:15,margin:"17px 0 9px"}}>Learning pipeline</h3>
        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:9}}>
         {[

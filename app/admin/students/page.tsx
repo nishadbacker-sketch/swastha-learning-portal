@@ -229,6 +229,7 @@ export default function StudentManagementPage(){
        <p style={{fontSize:12,color:"#64748b",margin:0}}>ID: {s.student_code||"Not assigned"} · Class: {s.current_class||"Not recorded"} · Status: {s.status}</p>
       </div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+       <button type="button" style={{...button,background:"#0f4c5c"}} onClick={()=>router.push("/staff/students/"+encodeURIComponent(s.id))}>Open Complete Student Record</button>
        <button type="button" aria-expanded={expandedStudent===s.id} aria-controls={"student-details-"+s.id} style={button} onClick={()=>toggleDetails(s.id)}>{expandedStudent===s.id?"Close details":"View student"}</button>
        <button type="button" style={{...button,background:"#fff1f2",color:"#9f1239",border:"1px solid #fecdd3"}} disabled={!!busy} onClick={()=>void removeStudent(s)}>{busy===s.id?"Removing...":"Remove student"}</button>
       </div>

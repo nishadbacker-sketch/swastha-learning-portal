@@ -8,6 +8,8 @@ type Tool = { label: string; href: string; description: string };
 type Props = { role: StaffRole; name?: string };
 
 const COMMON_TOOLS: Tool[] = [
+  { label: "Students & Progress", href: "/staff/students", description: "One authorized record for each student, charts and reports" },
+  { label: "Staff Action Center", href: "/staff/actions", description: "Reviews, upcoming sessions and coordination priorities" },
   { label: "Clinic Operations & Analytics", href: "/staff/operations", description: "Calendar, attendance and operational charts" },
   { label: "Courses & Assessments", href: "/staff/courses", description: "Browse published assessments and courses" },
   { label: "In-Person Assessments", href: "/staff/in-person-assessments", description: "Record supervised assessments" },

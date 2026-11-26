@@ -559,7 +559,8 @@ export default function TeacherDashboard() {
         .select(
           "id, full_name, current_class, date_of_birth, student_code, preferred_language, status"
         )
-        .in("id", ids),
+        .in("id", ids)
+        .is("removed_at", null),
 
       supabase.rpc("get_assigned_student_guardians"),
 
@@ -586,18 +587,19 @@ export default function TeacherDashboard() {
     if (assignmentResult.error) throw assignmentResult.error;
     if (assessmentResult.error) throw assessmentResult.error;
 
+    const activeStudentIds = new Set((studentResult.data || []).map(student => student.id));
     setStudents(studentResult.data || []);
 
     setGuardians(
       ((guardianResult.data || []) as Guardian[]).filter(
-        (guardian) => ids.includes(guardian.student_id)
+        (guardian) => activeStudentIds.has(guardian.student_id)
       )
     );
 
-    setActivityAssignments(assignmentResult.data || []);
+    setActivityAssignments((assignmentResult.data || []).filter(item => activeStudentIds.has(item.student_id)));
 
     setAssessments(
-      (assessmentResult.data || []) as Assessment[]
+      ((assessmentResult.data || []) as Assessment[]).filter(item => activeStudentIds.has(item.student_id))
     );
   }, []);
 

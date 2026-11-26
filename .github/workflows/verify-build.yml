@@ -95,6 +95,8 @@ jobs:
         run: node --test tests/holistic-radar-skill-markers.test.mjs
       - name: Verify unified main-website-style footer layout and Parent preservation
         run: node --test tests/main-site-footer-layout.test.mjs
+      - name: Verify unified student workspace and staff action security (read-only)
+        run: node --test tests/staff-workspace-integrity.test.mjs
       - name: Verify common staff workspace, permissions and synchronized charts
         run: node --test tests/unified-staff-workspace.test.mjs
       - name: Verify role-based learning diagrams, reviewed results and empty-state privacy
