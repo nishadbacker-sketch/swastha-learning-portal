@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import StaffLiveDashboard from "./staff-live-dashboard";
 
 export type StaffRole = "owner" | "admin" | "clinic_admin" | "teacher";
 
@@ -77,13 +78,14 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
             <p>Your learning, assessment and clinic coordination workspace.</p>
           </div>
         </div>
-        {summary.length>0&&<div className="swastha-staff-workspace__summary" aria-label="Dashboard summary">
+        <StaffLiveDashboard role={role}/>
+        {summary.length>0&&<details className="swastha-staff-workspace__operational"><summary>Additional staff metrics</summary><div className="swastha-staff-workspace__summary" aria-label="Dashboard summary">
           {summary.map(item=><div key={item.label} className="swastha-staff-workspace__metric">
             {item.onClick?<button type="button" onClick={item.onClick} className="swastha-staff-workspace__metric-button">
               <span>{item.label}</span><strong>{item.value}</strong>
             </button>:<><span>{item.label}</span><strong>{item.value}</strong></>}
           </div>)}
-        </div>}
+        </div></details>}
         {children&&<div className="swastha-staff-workspace__extras">{children}</div>}
       </section>
     </>
