@@ -784,3 +784,73 @@ body .swastha-site-footer__bottom p {
 .swastha-staff-workspace__operational .swastha-staff-workspace__summary{margin-top:12px;}
 @media(max-width:1200px){.swastha-live-dashboard__stats{grid-template-columns:repeat(2,minmax(0,1fr));}.swastha-live-dashboard__charts{grid-template-columns:1fr;}}
 @media(max-width:600px){.swastha-live-dashboard__stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}.swastha-live-dashboard__stats>div{padding:12px!important;gap:7px;}.swastha-live-stat__icon{min-width:35px;width:35px;height:35px;font-size:20px;}.swastha-live-dashboard__donut-row{grid-template-columns:1fr 1fr;gap:8px;}.swastha-live-dashboard__donut strong{font-size:19px;}.swastha-live-dashboard__legend>div{gap:5px;font-size:11px;}}
+
+
+/* 2026-11-26: One official logo, always in staff navigation.
+   Desktop sidebar reaches the viewport top and paints over page toolbars;
+   dashboard content and actions remain to its right. Scoped to staff routes. */
+@media (min-width:901px) {
+  .swastha-staff-route .swastha-staff-sidebar {
+    position:fixed!important;
+    top:0!important;
+    bottom:0!important;
+    left:0!important;
+    height:100dvh!important;
+    z-index:120!important;
+    overflow-y:auto!important;
+  }
+  .swastha-staff-route .swastha-staff-dashboard-shell>header {
+    position:relative;
+    z-index:1!important;
+  }
+  .swastha-staff-route--subpage .swastha-staff-subpage__content.is-navigation-visible {
+    margin-left:294px!important;
+  }
+}
+/* A copy of the official logo in each page header creates the reported
+   duplication. Keep only the image in the shared sidebar on staff routes. */
+.swastha-staff-route .swastha-staff-dashboard-shell>header img[src="/swastha-learning-clinic-logo.png"],
+.swastha-staff-route .swastha-staff-subpage__content img[src="/swastha-learning-clinic-logo.png"],
+.swastha-staff-route .swastha-workspace-header img[src="/swastha-learning-clinic-logo.png"] {
+  display:none!important;
+}
+/* Admin/teacher/clinic overview headers must retain their action buttons but
+   not reserve a blank area for the old inline logo and portal caption. */
+.swastha-staff-route .swastha-staff-dashboard-shell>header>div:first-child:not(:last-child),
+.swastha-staff-route .swastha-staff-dashboard-shell>header>div>div:first-child:not(:last-child) {
+  display:none!important;
+}
+.swastha-staff-route .swastha-staff-sidebar__brand img[src="/swastha-learning-clinic-logo.png"] {
+  display:block!important;
+  width:min(224px,100%)!important;
+  height:auto!important;
+  object-fit:contain;
+}
+/* On smaller screens show the sidebar brand as well. Keep the staff-subpage
+   navigation collapsed behind its existing accessible Show/Hide toggle. */
+@media(max-width:900px) {
+  .swastha-staff-route .swastha-staff-sidebar {
+    z-index:20!important;
+    top:auto!important;
+  }
+  .swastha-staff-route .swastha-staff-sidebar__brand img[src="/swastha-learning-clinic-logo.png"] {
+    display:block!important;
+    max-width:210px!important;
+  }
+  .swastha-staff-route--subpage .swastha-staff-sidebar--subpage {
+    display:block!important;
+    max-height:none!important;
+    margin:8px 12px;
+  }
+  .swastha-staff-route--subpage .swastha-staff-sidebar--subpage:not(.is-open) .swastha-staff-sidebar__sections,
+  .swastha-staff-route--subpage .swastha-staff-sidebar--subpage:not(.is-open) .swastha-staff-sidebar__tools {
+    display:none!important;
+  }
+  .swastha-staff-route--subpage .swastha-staff-sidebar--subpage.is-open .swastha-staff-sidebar__sections,
+  .swastha-staff-route--subpage .swastha-staff-sidebar--subpage.is-open .swastha-staff-sidebar__tools {
+    display:block;
+  }
+  .swastha-staff-route--subpage .swastha-staff-subpage__content.is-navigation-visible {
+    margin-left:0!important;
+  }
+}
