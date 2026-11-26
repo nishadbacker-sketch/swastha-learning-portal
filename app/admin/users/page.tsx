@@ -17,7 +17,8 @@ export default function Users(){
   if (!supabase || busy || u.role !== "parent") return;
   const confirmation=window.prompt(
     "Permanently remove unused Parent account: "+u.name+
-    "\\nOnly accounts without child links, registrations or completed courses are eligible. "+
+    "\\nStudent profiles will be preserved, but their link to this Parent will be removed. "+
+    "Accounts with completed courses or registrations cannot be deleted. "+
     "Type REMOVE to confirm."
   );
   if (confirmation !== "REMOVE") return;
