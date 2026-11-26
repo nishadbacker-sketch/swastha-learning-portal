@@ -15,10 +15,13 @@ test("Every staff route uses the same compact visual scope, without wrapping the
  assert.match(css,/\.swastha-staff-route\{/);
  assert.doesNotMatch(css,/\.swastha-parent-route/);
 });
-test("Official Swastha logo stays in left staff sidebar with responsive header fallback",()=>{
+test("Official Swastha logo sits at the left of shared staff top bar",()=>{
  assert.match(menu,/swastha-staff-sidebar__brand/);
- assert.match(menu,/swastha-learning-clinic-logo\.png/);
- assert.match(css,/\.swastha-staff-route \.swastha-staff-sidebar__brand img/);
+ const frame=read("app/components/staff-route-frame.tsx");
+ assert.match(frame,/swastha-staff-global-topbar__logo/);
+ assert.match(frame,/swastha-learning-clinic-logo\.png/);
+ assert.doesNotMatch(menu,/<img src="\/swastha-learning-clinic-logo\.png"/);
+ assert.match(css,/\.swastha-staff-global-topbar__logo img/);
  assert.match(css,/@media\(max-width:900px\)/);
  assert.match(css,/display:block!important/);
 });
