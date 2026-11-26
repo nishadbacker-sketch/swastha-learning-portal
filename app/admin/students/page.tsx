@@ -228,12 +228,14 @@ export default function StudentManagementPage(){
       <div><h2 style={{fontSize:19,margin:"0 0 5px"}}>{s.full_name} · {s.student_code}</h2>
        <p style={{fontSize:12,color:"#64748b",margin:0}}>ID: {s.student_code||"Not assigned"} · Class: {s.current_class||"Not recorded"} · Status: {s.status}</p>
       </div>
-      <button type="button" aria-expanded={expandedStudent===s.id} aria-controls={"student-details-"+s.id} style={button} onClick={()=>toggleDetails(s.id)}>{expandedStudent===s.id?"Close details":"View student"}</button>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+       <button type="button" aria-expanded={expandedStudent===s.id} aria-controls={"student-details-"+s.id} style={button} onClick={()=>toggleDetails(s.id)}>{expandedStudent===s.id?"Close details":"View student"}</button>
+       <button type="button" style={{...button,background:"#fff1f2",color:"#9f1239",border:"1px solid #fecdd3"}} disabled={!!busy} onClick={()=>void removeStudent(s)}>{busy===s.id?"Removing...":"Remove student"}</button>
+      </div>
      </div>
      {expandedStudent===s.id&&<div id={"student-details-"+s.id} style={{marginTop:14,paddingTop:14,borderTop:"1px solid #dce8e1"}}>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
        <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>{setEditingChild(editingChild?.id===s.id?null:{...s});setEditingContactId(null);setHistoryStudent(null);}}>Edit student profile</button>
-       <button type="button" style={{...button,background:"#fff1f2",color:"#9f1239",border:"1px solid #fecdd3"}} disabled={!!busy} onClick={()=>void removeStudent(s)}>{busy===s.id?"Removing...":"Remove student"}</button>
        <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58"}} onClick={()=>{setEditingChild(null);setHistoryStudent(null);void openContactDetails(s.id);}}>{editingContactId===s.id?"Close contacts":"School & emergency contacts"}</button>
        <button type="button" style={{...button,background:"#edf2f5",color:"#183a35"}} onClick={()=>{setEditingChild(null);setEditingContactId(null);void toggleHistory(s.id);}}>{historyStudent===s.id?"Close history":"Profile change history"}</button>
       </div>
