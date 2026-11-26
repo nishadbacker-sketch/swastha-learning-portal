@@ -12,8 +12,9 @@ type Session={id:string;student_id:string;scheduled_at:string;session_type:strin
 type Status={label:string;value:number;color:string};
 type Data={students:Student[];assessments:Assessment[];activities:Activity[];sessions:Session[];warnings:string[];limits:string[]};
 const empty:Data={students:[],assessments:[],activities:[],sessions:[],warnings:[],limits:[]};
-const dateKey=(v:string)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(v));
-const monthKey=(v:string)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit"}).format(new Date(v));
+const keyParts=(v:string)=>{const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(v));const value=(type:string)=>parts.find(p=>p.type===type)?.value||"";return [value("year"),value("month"),value("day")];};
+const dateKey=(v:string)=>keyParts(v).join("-");
+const monthKey=(v:string)=>keyParts(v).slice(0,2).join("-");
 const readableDate=(v:string)=>new Intl.DateTimeFormat("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",year:"numeric"}).format(new Date(v));
 const readableTime=(v:string)=>new Intl.DateTimeFormat("en-IN",{timeZone:"Asia/Kolkata",hour:"numeric",minute:"2-digit"}).format(new Date(v));
 const complete=(s:string)=>s==="completed"||s==="reviewed";
@@ -92,7 +93,7 @@ export default function StaffDashboardInsights({role}:{role:StaffRole}){
  },[role,router]);
  const stats=useMemo(()=>{
   const today=new Date();
-  const month=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit"}).format(today);
+  const month=monthKey(today.toISOString());
   const months=Array.from({length:6},(_,i)=>{
    const d=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7))-1-(5-i),1,12));
    return d.toISOString().slice(0,7);
