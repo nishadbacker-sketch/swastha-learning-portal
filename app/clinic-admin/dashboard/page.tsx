@@ -9,6 +9,7 @@ import {supabase} from "../../../lib/supabase";
 import AppointmentEscalations from "../../admin/appointment-escalations";
 
 import TeacherManagement from "../../components/teacher-management";
+import StaffMetricCard from "../../components/staff-metric-card";
 
 const action:React.CSSProperties={border:0,borderRadius:8,padding:"10px 14px",background:"#176b58",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"};
 const card:React.CSSProperties={background:"#fff",border:"1px solid #dce8e1",padding:16,borderRadius:13,marginBottom:14};
@@ -51,10 +52,10 @@ export default function ClinicAdminDashboard(){
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"22px 16px 65px"}}>
    {error&&<section style={{...card,color:"#b42318"}} role="alert">{error}</section>}
-   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,170px),1fr))",gap:12,marginBottom:14}}>
-    <section style={{...card,marginBottom:0}}><small>New queries</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.new}</h2></section>
-    <section style={{...card,marginBottom:0}}><small>Open follow-ups</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.open}</h2></section>
-    <section style={{...card,marginBottom:0}}><small>Total enquiries</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.total}</h2></section>
+   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,180px),1fr))",gap:14,marginBottom:25,alignItems:"stretch"}}>
+    <StaffMetricCard label="New queries" value={counts.new} color="#176b58" />
+    <StaffMetricCard label="Open follow-ups" value={counts.open} color="#d97706" />
+    <StaffMetricCard label="Total enquiries" value={counts.total} color="#2563eb" />
    </div>
 
  <section aria-label="Staff tools" style={{background:"linear-gradient(120deg,#132838,#0f4c5c)",color:"#fff",padding:16,borderRadius:12,marginBottom:18,minWidth:0}}>
