@@ -77,18 +77,17 @@ export default function AdminDashboard(){
  <header style={{background:"white",padding:"20px 5%",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><div><strong><BrandLogo /></strong><div style={{color:"#64748b",fontSize:12,marginTop:5}}>{creatorMode?"CREATOR / OWNER PORTAL":"SUPER ADMIN PORTAL"}</div></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><StaffNotificationsPopup/><button type="button" style={{...action,background:"#176b58",color:"white",margin:0}} onClick={()=>router.push("/teacher/appointments")}>Appointment</button><button style={{...action,background:"#eaf4ef",color:"#176b58"}} onClick={()=>router.push("/my-profile")}>My Profile</button><button style={action} onClick={async()=>{if(supabase)await supabase.auth.signOut();router.replace("/login");}}>Sign out</button></div></header>
  <div style={{maxWidth:1100,margin:"auto",padding:"30px 16px"}}>
  
- <StaffToolsMenu role={creatorMode?"owner":"admin"} name={name}/>
- <AppointmentEscalations/>
-
- <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14}}>
- <section style={box}><small>Registered Students</small><h1>{students.length}</h1></section>
- <section style={box}><small>Awaiting Teacher Assignment</small><h1>{students.filter(s=>!assignments.some(a=>a.student_id===s.id)).length}</h1></section>
- <section style={box}><small>Active Teachers</small><h1>{teachers.length}</h1></section>
- <section style={box}><small>Teacher–Student Links</small><h1>{assignments.length}</h1></section>
- </div>
+ <StaffToolsMenu role={creatorMode?"owner":"admin"} name={name}
+   summary={[
+    {label:"Registered Students",value:students.length,onClick:()=>router.push("/admin/students")},
+    {label:"Awaiting Teacher Assignment",value:students.filter(student=>!assignments.some(a=>a.student_id===student.id)).length,onClick:()=>router.push("/admin/students")},
+    {label:"Active Teachers",value:teachers.length,onClick:()=>router.push("/admin/users")},
+    {label:"Teacher–Student Links",value:assignments.length,onClick:()=>router.push("/admin/students")}
+   ]}>
+   <AppointmentEscalations/>
+ </StaffToolsMenu>
  {error&&<p role="alert" style={{...box,color:"#b42318",background:"#fff1f2"}}>{error}</p>}
  {notice&&<p role="status" style={{...box,color:"#176b58",background:"#e9f7ef"}}>{notice}</p>}
- <section style={box}><h2>Student Management</h2><p>Student records, progress and teacher assignments are managed in one place.</p><button style={action} onClick={()=>router.push("/admin/students")}>Student Management</button></section>
- <p style={{color:"#64748b",fontSize:13}}>Super Admin and Admin can assign teachers to students. Only Super Admin can change account roles. Parents cannot remove registered children. A student may have more than one assigned teacher.</p>
+ <p style={{color:"#64748b",fontSize:13}}>Staff permissions and student assignments are managed through the tools above. Parents cannot remove registered children.</p>
  </div></main>;
 }
