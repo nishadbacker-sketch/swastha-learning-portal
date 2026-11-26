@@ -31,13 +31,13 @@ export default function StaffRouteFrame({children}:{children:ReactNode}){
   void verify();
   return()=>{mounted=false;};
  },[pathname,dashboard]);
- if(dashboard)return <div className="swastha-staff-route">{topbar}{children}</div>;
  const topbar=<header className="swastha-staff-global-topbar">
-  <a href={role?roleHome(role):"/teacher/dashboard"} className="swastha-staff-global-topbar__logo" aria-label="Swastha Learning Clinic staff dashboard">
+  <a href={role?roleHome(role):pathname.startsWith("/admin")?"/admin/dashboard":pathname.startsWith("/clinic-admin")?"/clinic-admin/dashboard":pathname.startsWith("/owner")?"/owner/dashboard":"/teacher/dashboard"} className="swastha-staff-global-topbar__logo" aria-label="Swastha Learning Clinic staff dashboard">
    <img src="/swastha-learning-clinic-logo.png" alt="Swastha Learning Clinic" width={205} height={68}/>
   </a>
   <span className="swastha-staff-global-topbar__label">Staff Portal</span>
  </header>;
+ if(dashboard)return <div className="swastha-staff-route">{topbar}{children}</div>;
  const links=role?[...COMMON_TOOLS,...roleTools(role)]:[];
  return <div className="swastha-staff-route swastha-staff-route--subpage">
   {topbar}
