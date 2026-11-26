@@ -101,6 +101,8 @@ jobs:
         run: node --test tests/staff-workspace-no-duplicates.test.mjs
       - name: Verify common staff workspace, permissions and synchronized charts
         run: node --test tests/unified-staff-workspace.test.mjs
+      - name: Verify one teacher analytics student selector
+        run: node --test tests/teacher-analytics-single-student-selector.test.mjs
       - name: Verify role-based learning diagrams, reviewed results and empty-state privacy
         run: node --test tests/role-based-learning-insights-charts.test.mjs
       - name: Verify secured issued-course certificates, PDF and QR route
