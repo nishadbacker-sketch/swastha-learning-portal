@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Malayalam:wght@400;500;600;700&display=swap");
 
 :root {
   --ink: #183a35;
@@ -280,7 +280,7 @@ footer {
 /* Swastha Learning Clinic shared typography.
    Matches the Inter interface type used across the main-site design.
    Applies to all portal routes, including components with legacy inline Arial/Georgia. */
-:root { --swastha-font: "Inter", Arial, Helvetica, sans-serif; }
+:root { --swastha-font: "Inter", "Noto Sans Malayalam", Arial, Helvetica, sans-serif; }
 
 html,
 body,
