@@ -55,6 +55,7 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
         <div className="swastha-staff-sidebar__brand">
           <img src="/swastha-learning-clinic-logo.png" alt="Swastha Learning Clinic — official logo" width={260} height={87}/>
           <span className="swastha-staff-sidebar__role">{role === "owner" ? "Owner" : role === "admin" ? "Super Admin" : role === "clinic_admin" ? "Clinic Admin" : "Teacher"} Workspace</span>
+          <button type="button" className="swastha-staff-sidebar__certificate-link" onClick={()=>router.push("/staff/assessment-certificates")}>Certificates &amp; Verification</button>
         </div>
         {sections.length>0&&<nav aria-label="Teacher dashboard sections" className="swastha-staff-sidebar__sections">
           {sections.map(item=><button type="button" key={item.id} aria-current={activeSection===item.id?"page":undefined}
