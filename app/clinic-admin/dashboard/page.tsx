@@ -53,15 +53,15 @@ export default function ClinicAdminDashboard(){
   </header>
   <div style={{maxWidth:1100,margin:"auto",padding:"22px 16px 65px"}}>
    {error&&<section style={{...card,color:"#b42318"}} role="alert">{error}</section>}
-   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,170px),1fr))",gap:12,marginBottom:14}}>
-    <section style={{...card,marginBottom:0}}><small>New queries</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.new}</h2></section>
-    <section style={{...card,marginBottom:0}}><small>Open follow-ups</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.open}</h2></section>
-    <section style={{...card,marginBottom:0}}><small>Total enquiries</small><h2 style={{fontSize:27,margin:"6px 0 0"}}>{counts.total}</h2></section>
-   </div>
-
- <StaffToolsMenu role="clinic_admin" name={name}/>
-  <TeacherManagement/>
-   <AppointmentEscalations/>
+   <StaffToolsMenu role="clinic_admin" name={name}
+     summary={[
+       {label:"New queries",value:counts.new,onClick:()=>router.push("/teacher/appointments")},
+       {label:"Open follow-ups",value:counts.open,onClick:()=>router.push("/teacher/appointments")},
+       {label:"Total enquiries",value:counts.total,onClick:()=>router.push("/teacher/appointments")}
+     ]}>
+     <TeacherManagement/>
+     <AppointmentEscalations/>
+   </StaffToolsMenu>
   </div>
  </main>;
 }
