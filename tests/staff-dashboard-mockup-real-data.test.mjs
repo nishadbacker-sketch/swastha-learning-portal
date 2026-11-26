@@ -33,6 +33,13 @@ test("All approved overview panels are backed by scoped data; no placeholder KPI
  assert.match(visual,/Records visible to your staff role/);
 });
 
+test("In-person assessment entry is immediately visible in all four staff dashboards",()=>{
+ assert.match(visual,/className="swastha-staff-dashboard-quick-actions"/);
+ assert.match(visual,/Open In-Person Assessments/);
+ assert.match(visual,/router.push\("\/staff\/in-person-assessments"\)/);
+ assert.match(menu,/href: "\/staff\/in-person-assessments"/);
+});
+
 test("Chart labels reflect workflow and current activity completion, not unvalidated clinical scores",()=>{
  assert.match(visual,/not a clinical score/);
  assert.match(visual,/Current completion of activities assigned in each month/);
