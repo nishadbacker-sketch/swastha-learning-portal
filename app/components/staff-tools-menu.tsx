@@ -63,7 +63,7 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
         <div className="swastha-staff-sidebar__tools">
           <h2>Staff Tools</h2>
           <nav aria-label="Role-based staff tools">
-            {tools.map(tool=><button key={tool.href} type="button" className={"swastha-staff-sidebar__tool"+(tool.href==="/staff/assessment-certificates"?" swastha-staff-sidebar__tool--certificate":"")} onClick={()=>router.push(tool.href)}>
+            {tools.map(tool=><button key={tool.href} type="button" className="swastha-staff-sidebar__tool" onClick={()=>router.push(tool.href)}>
               <strong>{tool.label}</strong>
               <span>{tool.description}</span>
             </button>)}
