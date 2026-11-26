@@ -101,6 +101,8 @@ jobs:
         run: node --test tests/staff-workspace-no-duplicates.test.mjs
       - name: Verify common staff workspace, permissions and synchronized charts
         run: node --test tests/unified-staff-workspace.test.mjs
+      - name: Verify exact Swastha logo and responsive left staff sidebar
+        run: node --test tests/staff-sidebar-official-logo.test.mjs
       - name: Verify common fixes across all staff roles
         run: node --test tests/all-staff-regression-coverage.test.mjs
       - name: Verify one teacher analytics student selector
