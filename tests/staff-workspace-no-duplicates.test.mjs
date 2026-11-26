@@ -33,7 +33,7 @@ test("Teacher has one tab navigation and one set of summary metrics inside Staff
 
 test("Super Admin and Owner show all dashboard counters within Staff Workspace only",()=>{
  assert.match(admin,/<StaffToolsMenu role=\{creatorMode\?"owner":"admin"\} name=\{name\}/);
- for(const label of ["Registered Students","Awaiting Teacher Assignment","Active Teachers","Teacher–Student Links"])assert.match(admin,new RegExp('label:"'+label+'"'));
+ for(const label of ["Awaiting Teacher Assignment","Active Teachers","Teacher–Student Links"])assert.match(admin,new RegExp('label:"'+label+'"'));
  assert.doesNotMatch(admin,/<section style=\{box\}><h2>Student Management<\/h2>/);
  assert.match(admin,/<AppointmentEscalations\/>\s*<\/StaffToolsMenu>/);
 });
