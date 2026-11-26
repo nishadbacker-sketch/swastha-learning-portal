@@ -544,3 +544,20 @@ body .swastha-site-footer__bottom p {
 .swastha-secondary-button {padding:9px 12px;border:1px solid #cce3d5;background:#eaf4ef;color:#176b58;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;}
 .swastha-workspace-page button:focus-visible {outline:3px solid #b45309;outline-offset:2px;}
 @media(max-width:600px) {.swastha-workspace-content {padding:16px 12px 55px;}.swastha-workspace-header {padding:12px;}.swastha-workspace-tabs button {flex:1 1 110px;}.swastha-workspace-metrics {grid-template-columns:repeat(2,minmax(0,1fr));}.swastha-workspace-three {grid-template-columns:minmax(0,1fr);}}
+
+
+/* Compact Staff Workspace: summary, teacher tabs and actions in one visual hierarchy. */
+.swastha-staff-workspace__summary {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin-top:18px;}
+.swastha-staff-workspace__metric {background:#ffffff16;border:1px solid #ffffff3c;border-radius:10px;color:#fff;min-width:0;}
+.swastha-staff-workspace__metric>span,.swastha-staff-workspace__metric-button>span {font-size:12px;color:#e2f3ee;line-height:1.35;}
+.swastha-staff-workspace__metric>strong,.swastha-staff-workspace__metric-button>strong {font-size:26px;line-height:1.2;font-weight:750;font-variant-numeric:tabular-nums;}
+.swastha-staff-workspace__metric:not(:has(button)) {display:grid;gap:7px;padding:12px;}
+.swastha-staff-workspace__metric-button {display:grid;gap:7px;padding:12px;width:100%;height:100%;text-align:left;color:inherit;border:0;border-radius:10px;background:transparent;cursor:pointer;}
+.swastha-staff-workspace__metric-button:hover,.swastha-staff-workspace__metric-button:focus-visible {background:#ffffff20;outline-offset:2px;}
+.swastha-staff-workspace__sections {display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;}
+.swastha-staff-workspace__sections button {flex:1 1 130px;border:1px solid #ffffff44;border-radius:9px;background:#ffffff17;color:#fff;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;}
+.swastha-staff-workspace__sections button.active {background:#eaf4ef;border-color:#eaf4ef;color:#176b58;}
+.swastha-staff-workspace__sections button:focus-visible,.swastha-staff-workspace__tool:focus-visible {outline:3px solid #f7df9b;outline-offset:2px;}
+.swastha-staff-workspace__extras {margin-top:18px;color:#183a35;}
+.swastha-staff-workspace__extras>section {background:#fff;}
+@media(max-width:600px) {.swastha-staff-workspace__summary {grid-template-columns:repeat(2,minmax(0,1fr));}.swastha-staff-workspace__sections {gap:6px;}.swastha-staff-workspace__sections button {flex:1 1 calc(50% - 6px);}}
