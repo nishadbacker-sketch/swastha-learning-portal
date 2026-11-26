@@ -598,3 +598,46 @@ body .swastha-site-footer__bottom p {
 .swastha-staff-dashboard-shell>main,.swastha-staff-dashboard-shell>.swastha-staff-dashboard-content{margin-left:0!important;}
 }
 @media(max-width:460px){.swastha-staff-sidebar__tools nav{grid-template-columns:1fr;}.swastha-staff-sidebar__sections button{padding:9px;}}
+
+
+/* Approved dashboard mockup: illustrated white summary cards, genuine staff metrics. */
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__summary{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));
+ gap:12px;margin-top:20px;
+}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric{
+ overflow:hidden;background:#fff;border:1px solid #e5ece6;border-radius:17px;
+ color:#172d26;box-shadow:0 5px 18px #152f2312;
+}
+.swastha-staff-workspace__metric-button,
+.swastha-staff-workspace__metric-static{
+ display:flex!important;align-items:flex-start;justify-content:flex-start;gap:13px;
+ min-height:132px;padding:19px!important;background:transparent;
+}
+.swastha-staff-workspace__metric-button{width:100%;text-align:left;border:0;color:inherit;cursor:pointer;}
+.swastha-staff-workspace__metric-static{cursor:default;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-button:hover{
+ background:#f5fbf7;box-shadow:inset 0 0 0 1px #b2dcc4;
+}
+.swastha-staff-workspace__metric-icon{
+ flex:none;display:grid;place-items:center;width:51px;height:51px;
+ border-radius:50%;background:#eaf7e9;color:#08784c;
+}
+.swastha-staff-workspace__metric-copy{min-width:0;display:flex;flex:1;flex-direction:column;gap:6px;align-items:flex-start;}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-label{
+ color:#25382e;font-size:13px;line-height:1.4;font-weight:650;
+}
+.swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-value{
+ font-size:clamp(25px,2.2vw,34px);font-weight:790;color:#101e18;line-height:1.05;
+ font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+.swastha-staff-workspace__metric-copy small{color:#177b50;font-size:11px;font-weight:600;line-height:1.4;}
+@media(max-width:560px){
+ .swastha-staff-workspace--sidebar .swastha-staff-workspace__summary{grid-template-columns:repeat(2,minmax(0,1fr));}
+ .swastha-staff-workspace__metric-button,.swastha-staff-workspace__metric-static{
+  min-height:110px;padding:12px!important;gap:8px;
+ }
+ .swastha-staff-workspace__metric-icon{width:35px;height:35px;}
+ .swastha-staff-workspace__metric-icon svg{width:23px;height:23px;}
+ .swastha-staff-workspace--sidebar .swastha-staff-workspace__metric-value{font-size:25px;}
+}
