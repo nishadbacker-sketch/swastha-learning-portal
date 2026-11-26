@@ -9,17 +9,19 @@ const admin=read("app/admin/dashboard/page.tsx");
 const clinic=read("app/clinic-admin/dashboard/page.tsx");
 const css=read("app/globals.css");
 
-test("One Staff Workspace contains role-scoped tools, summary metrics, and teacher section tabs",()=>{
+test("One Staff Workspace contains role-scoped tools and navigation without legacy metric blocks",()=>{
  assert.match(menu,/summary\?:Summary\[\]/);
  assert.match(menu,/sections\?:Section\[\]/);
- assert.match(menu,/aria-label="Dashboard summary"/);
+ assert.doesNotMatch(menu,/aria-label="Dashboard summary"/);
+ assert.doesNotMatch(menu,/Additional staff metrics|<ClinicOperationsPanel/);
+ assert.match(menu,/<StaffLiveDashboard role=\{role\}/);
  assert.match(menu,/aria-label="Teacher dashboard sections"/);
  assert.match(menu,/aria-label="Role-based staff tools"/);
  assert.match(menu,/const tools = \[\.\.\.COMMON_TOOLS, \.\.\.roleTools\(role\)\]/);
  assert.doesNotMatch(menu,/groups\.map/);
 });
 
-test("Teacher has one tab navigation and one set of summary metrics inside Staff Workspace",()=>{
+test("Teacher preserves working tabs but removes duplicate analytics and summary metrics",()=>{
  assert.match(teacher,/<StaffToolsMenu role="teacher" name=\{teacherName\}/);
  assert.match(teacher,/activeSection=\{activeTab\}/);
  assert.match(teacher,/onSectionChange=\{id=>setActiveTab\(id as Tab\)\}/);
@@ -30,9 +32,10 @@ test("Teacher has one tab navigation and one set of summary metrics inside Staff
  for(const tab of ["students","assessments","activities"])assert.match(teacher,new RegExp('activeTab === "'+tab+'"'));
  assert.doesNotMatch(teacher,/<nav aria-label="Teacher dashboard sections"/);
  assert.doesNotMatch(teacher,/<Metric\s+label=/);
- assert.match(teacher,/assessments\.filter\(a=>a\.status==="submitted"\)/);
- assert.match(teacher,/setActiveTab\("students"\)/);
- assert.match(teacher,/setActiveTab\("activities"\)/);
+ assert.doesNotMatch(teacher,/<AssessmentAnalytics|<LearningInsightsCharts|Student Development Journey & Progress Overview/);
+
+
+
 });
 
 test("Super Admin and Owner show all dashboard counters within Staff Workspace only",()=>{
