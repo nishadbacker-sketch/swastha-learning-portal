@@ -2,6 +2,7 @@
 import {useEffect,useState} from "react";
 import {useParams} from "next/navigation";
 import {supabase} from "../../../../lib/supabase";
+import BrandLogo from "../../../components/brand-logo";
 
 type Verification={reference_code:string;course_title?:string;assessment_title?:string;student_initials:string;completion_date:string;issued_at:string;valid:boolean};
 export default function VerifyCertificate(){
@@ -28,7 +29,7 @@ export default function VerifyCertificate(){
  return <main style={{minHeight:"80vh",display:"grid",placeItems:"center",padding:20,background:"#f8faf7",color:"#183a35",fontFamily:"Arial,sans-serif"}}>
   <article style={{background:"#fff",padding:28,maxWidth:600,width:"100%",border:"1px solid #dce8e1",borderRadius:16}}>
    <header style={{textAlign:"center"}}>
-    <strong style={{fontSize:21,color:"#176b58"}}>SWASTHA LEARNING CLINIC</strong>
+    <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><BrandLogo/></div>
     <h1 style={{margin:"20px 0 5px"}}>Digital Certificate Verification</h1>
    </header>
    {loading?<p>Checking the certificate reference...</p>:error?<p role="alert" style={{color:"#b42318"}}>{error}</p>:
