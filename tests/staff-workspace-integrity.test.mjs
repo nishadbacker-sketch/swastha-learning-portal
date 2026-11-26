@@ -68,3 +68,17 @@ test("Existing Student Management and coordination lead to the shared record",()
  assert.match(styles,/swastha-workspace-tabs/);
  assert.match(styles,/swastha-workspace-metrics/);
 });
+
+test("Removed students are filtered out of older teacher and administrative worklists",()=>{
+ const teacher=source("app/teacher/dashboard/page.tsx");
+ const coordination=source("app/teacher/coordination/page.tsx");
+ const operations=source("app/staff/operations/page.tsx");
+ const certificates=source("app/staff/assessment-certificates/page.tsx");
+ const oversight=source("app/admin/assessment-oversight/page.tsx");
+ assert.match(teacher,/\.is\("removed_at", null\)/);
+ assert.match(teacher,/activeStudentIds\.has\(item\.student_id\)/);
+ assert.match(coordination,/\.is\("removed_at",null\)/);
+ assert.match(operations,/approvedAssessments=aa\.filter\(item=>allowedSet\.has\(item\.student_id\)\)/);
+ assert.match(certificates,/\.is\("removed_at",null\)/);
+ assert.match(oversight,/\.is\("removed_at",null\)/);
+});
