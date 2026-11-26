@@ -486,3 +486,82 @@ body .swastha-site-footer__bottom p {
   body .swastha-site-footer__about { grid-column: auto; }
   body .swastha-site-footer__bottom { margin-top: 28px; }
 }
+
+
+/* Responsive density and table layout refinement (2026-11-26).
+   Shared portal defaults: no changes to records, permissions or workflows. */
+:root {
+  --portal-layout-max: 1280px;
+  --portal-reading-max: 920px;
+  --portal-control-max: 540px;
+}
+
+/* A wide label, identifier or address must not make the whole page scroll. */
+body { overflow-x: clip; }
+body :is(main, section, article) { min-width: 0; }
+body :is(main, section, article) :is(p, td, th, label, a, span) {
+  overflow-wrap: anywhere;
+}
+
+/* Dense, readable data tables instead of oversized columns.
+   Let the table remain horizontally scrollable on small viewports rather
+   than clipping text or compressing the controls to unusable sizes. */
+body main table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.45;
+}
+body main table :is(th, td) {
+  padding: 9px 12px;
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+body main table th {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: normal;
+}
+body main table :is(button, select, input) {
+  font-size: 12px;
+  min-height: 32px;
+}
+/* Existing table wrappers can scroll without pushing other dashboard cards. */
+body main :is(.table-container, .table-wrapper, .table-responsive, .overflow-x-auto) {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Don't allow large form widgets to stretch beyond their actual column.
+   Preserve deliberate full-width controls inside smaller form containers. */
+body main :is(input, select, textarea) {
+  box-sizing: border-box;
+  min-width: 0;
+}
+body main textarea { max-width: 100%; }
+body main :is(img, canvas, svg) { max-width: 100%; }
+
+/* Reduce giant blank areas between dashboard controls and cards. */
+body main :is(.dashboard-grid, .stats-grid, .cards-grid) {
+  gap: clamp(10px, 1.2vw, 18px);
+}
+body main :is(.dashboard-grid, .stats-grid, .cards-grid) > * {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  body main table { font-size: 12px; }
+  body main table :is(th, td) { padding: 8px 9px; }
+  body main :is(.dashboard-grid, .stats-grid, .cards-grid) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  }
+}
+@media (max-width: 480px) {
+  body main table :is(th, td) { padding: 7px 8px; }
+  body main :is(.dashboard-grid, .stats-grid, .cards-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
