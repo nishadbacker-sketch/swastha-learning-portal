@@ -730,3 +730,63 @@ body .swastha-site-footer__bottom p {
   text-align:left;padding:10px 12px;border-radius:8px;font-weight:700;cursor:pointer;
  }
 }
+
+
+/* Official clinic logo lives in one consistent top bar, not the left sidebar.
+   All staff routes share this wrapper; parent/child-facing routes are unaffected. */
+.swastha-staff-route .swastha-staff-global-topbar{
+ position:relative;z-index:45;display:flex;align-items:center;gap:16px;
+ width:100%;min-height:74px;padding:7px 20px;box-sizing:border-box;
+ background:#fff;border-bottom:1px solid #dce8e1;
+}
+.swastha-staff-global-topbar__logo{display:flex;align-items:center;flex:0 0 auto;text-decoration:none;}
+.swastha-staff-global-topbar__logo img{
+ width:min(205px,42vw);height:auto;max-height:59px;object-fit:contain;
+ padding:3px 6px;border-radius:6px;background:#fff;
+}
+.swastha-staff-global-topbar__label{
+ font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+ color:#637b71;font-weight:700;
+}
+.swastha-staff-route .swastha-staff-sidebar{
+ top:74px;height:calc(100dvh - 74px);
+}
+.swastha-staff-route .swastha-staff-sidebar__brand{
+ padding:5px 8px 10px;gap:0;
+}
+.swastha-staff-route .swastha-staff-dashboard-shell>header{
+ min-height:56px!important;padding-top:7px!important;padding-bottom:7px!important;
+}
+/* Existing dashboard toolbars retain notifications, appointments, profile and sign-out.
+   Remove only their duplicate logo blocks. */
+.swastha-staff-route .swastha-staff-dashboard-shell>header>div:first-child:not(:last-child),
+.swastha-staff-route .swastha-staff-dashboard-shell>header>div>div:first-child:not(:last-child){
+ display:none!important;
+}
+.swastha-staff-route .swastha-staff-subpage__content>main>header img[alt^="Swastha Learning Clinic"],
+.swastha-staff-route .swastha-staff-subpage__content>main>header img[alt^="SWASTHA"],
+.swastha-staff-route .swastha-workspace-header img[alt^="Swastha Learning Clinic"]{
+ display:none!important;
+}
+@media(max-width:900px){
+ .swastha-staff-route .swastha-staff-global-topbar{
+  min-height:62px;padding:6px 12px;
+ }
+ .swastha-staff-global-topbar__logo img{
+  width:min(170px,48vw);max-height:48px;
+ }
+ .swastha-staff-route .swastha-staff-sidebar{
+  top:auto;height:auto;
+ }
+ .swastha-staff-route .swastha-staff-sidebar--subpage{
+  top:auto;height:auto;
+ }
+ .swastha-staff-route .swastha-staff-dashboard-shell>header>div:first-child:not(:last-child),
+ .swastha-staff-route .swastha-staff-dashboard-shell>header>div>div:first-child:not(:last-child){
+  display:none!important;
+ }
+ .swastha-staff-route .swastha-staff-subpage__content>main>header img[alt^="Swastha Learning Clinic"],
+ .swastha-staff-route .swastha-staff-subpage__content>main>header img[alt^="SWASTHA"]{
+  display:none!important;
+ }
+}
