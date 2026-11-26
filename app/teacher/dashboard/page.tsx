@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import AssessmentAnalytics from "../assessment-analytics";
+import LearningInsightsCharts from "../../components/learning-insights-charts";
 
 type Level = "LP" | "UP" | "HS" | "HSS";
 type Tab = "overview" | "assessments" | "activities" | "students";
@@ -1148,8 +1149,9 @@ export default function TeacherDashboard() {
         {activeTab === "overview" && (
           <section>
 
-            <section aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
+            <section id="staff-analytics" aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
               <h2 style={{marginTop:0,color:"#0f4c5c"}}>Analytics Dashboard</h2>
+              <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments}/>
               <AssessmentAnalytics assessments={assessments} students={students} hideDashboardTitle>
               {(selectedStudentId)=>(
             <section style={{...panel,marginTop:16}}>
