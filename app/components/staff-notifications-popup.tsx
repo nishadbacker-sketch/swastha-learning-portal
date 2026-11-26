@@ -126,7 +126,7 @@ export default function StaffNotificationsPopup(){
  }
  return <>
   <button type="button" style={{...button,background:"#eaf4ef",color:"#176b58",border:"1px solid #cce3d5"}} aria-label={"Notifications"+(attentionCount?" ("+(attentionCount)+" attention items)":"")} onClick={()=>{setOpen(true);void refresh();}}>
-   Notifications {attentionCount>0?"("+attentionCount)+")":""}
+   Notifications {attentionCount>0?"("+attentionCount+")":""}
   </button>
   {open&&<div role="presentation" style={{position:"fixed",inset:0,background:"rgba(15,23,42,.63)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:12}}>
    <section role="dialog" aria-modal="true" aria-labelledby="staff-notification-title" style={panel}>
