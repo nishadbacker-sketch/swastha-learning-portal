@@ -486,3 +486,31 @@ body .swastha-site-footer__bottom p {
   body .swastha-site-footer__about { grid-column: auto; }
   body .swastha-site-footer__bottom { margin-top: 28px; }
 }
+
+/* Shared staff workspace design tokens — uses existing Swastha palette. */
+.swastha-staff-workspace {
+  background: linear-gradient(120deg, #132838, #0f4c5c);
+  color: #fff;
+  padding: clamp(16px, 2vw, 24px);
+  border-radius: 14px;
+  margin-bottom: 22px;
+}
+.swastha-staff-workspace__heading { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; flex-wrap:wrap; }
+.swastha-staff-workspace__heading h1 { color:#fff; font-size:clamp(20px,2.2vw,27px); margin:4px 0 9px; }
+.swastha-staff-workspace__heading p { margin-bottom:0; color:#e3f4ee; font-size:13px; max-width:680px; }
+.swastha-staff-workspace__eyebrow { font-size:11px !important; letter-spacing:.1em; font-weight:700; }
+.swastha-staff-workspace__role { padding:7px 12px; background:#ffffff24; border-radius:999px; font-size:12px; font-weight:700; }
+.swastha-staff-workspace__group { margin-top:21px; }
+.swastha-staff-workspace__group h2 { color:#fff; font-size:16px; margin:0 0 10px; }
+.swastha-staff-workspace__grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr)); gap:10px; }
+.swastha-staff-workspace__tool {
+  display:flex; flex-direction:column; text-align:left; align-items:flex-start; gap:5px;
+  min-height:75px; width:100%; padding:12px 14px;
+  border:1px solid #ffffff44; border-radius:9px;
+  background:#ffffff14; color:#fff; cursor:pointer;
+}
+.swastha-staff-workspace__tool:hover { background:#ffffff29; border-color:#c8efe0; }
+.swastha-staff-workspace__tool:focus-visible { outline:3px solid #f7df9b; outline-offset:2px; }
+.swastha-staff-workspace__tool strong { font-size:13px; line-height:1.3; }
+.swastha-staff-workspace__tool span { font-size:11px; line-height:1.45; color:#d7eee7; }
+@media(max-width:480px) { .swastha-staff-workspace__grid {grid-template-columns:1fr 1fr;} .swastha-staff-workspace__tool {padding:10px; min-height:85px;} }
