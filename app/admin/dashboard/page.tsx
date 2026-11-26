@@ -83,9 +83,6 @@ export default function AdminDashboard(){
  
  <StaffToolsMenu role={creatorMode?"owner":"admin"} name={name}
    summary={[
-    {label:"Total Students",value:students.length,onClick:()=>router.push("/admin/students")},
-    {label:"Assessments",value:learningCounts.assessments??"—",onClick:()=>router.push("/admin/assessment-oversight"),note:learningCounts.assessments===null?"Data unavailable":"All permitted assignments"},
-    {label:"Learning Activities",value:learningCounts.activities??"—",onClick:()=>router.push("/staff/courses"),note:learningCounts.activities===null?"Data unavailable":"Assigned learning activities"},
     {label:"Awaiting Teacher Assignment",value:students.filter(student=>!assignments.some(a=>a.student_id===student.id)).length,onClick:()=>router.push("/admin/students")},
     {label:"Active Teachers",value:teachers.length,onClick:()=>router.push("/admin/users")},
     {label:"Teacher–Student Links",value:assignments.length,onClick:()=>router.push("/admin/students")}
