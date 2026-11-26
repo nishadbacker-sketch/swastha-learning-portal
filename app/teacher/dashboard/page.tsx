@@ -1117,7 +1117,14 @@ export default function TeacherDashboard() {
 
             <section id="staff-analytics" aria-label="Analytics Dashboard" style={{...panel,marginTop:24,minWidth:0}}>
               <h2 style={{marginTop:0,color:"#0f4c5c"}}>Analytics Dashboard</h2>
-              <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments} selectedStudentId={analyticsStudentId} onStudentChange={setAnalyticsStudentId}/>
+              <label htmlFor="teacher-analytics-student" style={{display:"grid",gap:6,fontWeight:700,fontSize:13,maxWidth:520,margin:"12px 0 18px"}}>
+                Select Student
+                <select id="teacher-analytics-student" aria-label="Select student for all analytics" value={students.some(student=>student.id===analyticsStudentId)?analyticsStudentId:"all"} onChange={event=>setAnalyticsStudentId(event.target.value)} style={{padding:11,borderRadius:9,border:"1px solid #a9bfb5",background:"white",color:"#183a35"}}>
+                  <option value="all">All assigned students</option>
+                  {students.map(student=><option key={student.id} value={student.id}>{student.full_name} ({student.student_code||"ID pending"})</option>)}
+                </select>
+              </label>
+              <LearningInsightsCharts audience="teacher" students={students} assessments={assessments} activities={activityAssignments} selectedStudentId={analyticsStudentId} onStudentChange={setAnalyticsStudentId} hideStudentSelector/>
               <AssessmentAnalytics assessments={assessments} students={students} studentFilterId={analyticsStudentId} hideDashboardTitle>
               {(selectedStudentId)=>(
             <section style={{...panel,marginTop:16}}>
