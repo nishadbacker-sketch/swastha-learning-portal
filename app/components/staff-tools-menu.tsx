@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import StaffLiveDashboard from "./staff-live-dashboard";
+import {StaffDashboardIcon,StaffMenuIcon} from "./staff-menu-icon";
 
 export type StaffRole = "owner" | "admin" | "clinic_admin" | "teacher";
 
@@ -48,6 +49,7 @@ export function roleTools(role: StaffRole): Tool[] {
 export default function StaffToolsMenu({ role, name, summary = [], sections = [], activeSection, onSectionChange, children }: Props) {
   const router = useRouter();
   const tools = [...COMMON_TOOLS, ...roleTools(role)];
+  const home=role==="owner"?"/owner/dashboard":role==="admin"?"/admin/dashboard":role==="clinic_admin"?"/clinic-admin/dashboard":"/teacher/dashboard";
 
   return (
     <>
@@ -56,6 +58,7 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
           <img src="/swastha-learning-clinic-logo.png" alt="Swastha Learning Clinic — official logo" width={260} height={87}/>
           <span className="swastha-staff-sidebar__role">{role === "owner" ? "Owner" : role === "admin" ? "Super Admin" : role === "clinic_admin" ? "Clinic Admin" : "Teacher"} Workspace</span>
         </div>
+        <nav aria-label="Staff dashboard home" className="swastha-staff-sidebar__home"><button type="button" className="swastha-staff-sidebar__home-link" aria-current="page" onClick={()=>router.push(home)}><StaffDashboardIcon/><span>Dashboard</span></button></nav>
         {sections.length>0&&<nav aria-label="Teacher dashboard sections" className="swastha-staff-sidebar__sections">
           {sections.map(item=><button type="button" key={item.id} aria-current={activeSection===item.id?"page":undefined}
             className={activeSection===item.id?"active":""} onClick={()=>onSectionChange?.(item.id)}>{item.label}</button>)}
@@ -64,10 +67,15 @@ export default function StaffToolsMenu({ role, name, summary = [], sections = []
           <h2>Staff Tools</h2>
           <nav aria-label="Role-based staff tools">
             {tools.map(tool=><button key={tool.href} type="button" className="swastha-staff-sidebar__tool" onClick={()=>router.push(tool.href)}>
-              <strong>{tool.label}</strong>
-              <span>{tool.description}</span>
+              <StaffMenuIcon href={tool.href}/><span className="swastha-staff-sidebar__tool-copy"><strong>{tool.label}</strong><span>{tool.description}</span></span>
             </button>)}
           </nav>
+          <div className="swastha-staff-sidebar__quick"><h3>Quick Actions</h3>
+           <button type="button" onClick={()=>router.push(role==="teacher"?"/teacher/custom-assessments":"/staff/courses")}>Assign Assessment</button>
+           <button type="button" onClick={()=>router.push(role==="teacher"?"/teacher/dashboard":"/staff/students")}>Learning Activities</button>
+           <button type="button" onClick={()=>router.push(role==="teacher"?"/teacher/idp":"/staff/students")}>Development Plan</button>
+           <button type="button" onClick={()=>router.push("/staff/assessment-certificates")}>Certificates</button>
+          </div>
         </div>
       </aside>
       <section aria-label="Staff tools" className="swastha-staff-workspace swastha-staff-workspace--sidebar">

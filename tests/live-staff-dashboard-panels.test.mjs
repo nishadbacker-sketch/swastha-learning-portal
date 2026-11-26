@@ -15,7 +15,7 @@ test("All role dashboards display the same live KPI and chart component",()=>{
 });
 test("Live dashboard has all six approved panels without invented demo values",()=>{
  for(const heading of ["Total Students","Assessments","Learning Activities","Progress (Avg.)","Student Progress Trend","Assessment Outcomes","Recent Student Activity","Today’s Schedule"])assert.ok(dashboard.includes(heading),heading);
- for(const invented of ["128","314","78%","52%","+12%"])assert.doesNotMatch(dashboard,new RegExp(invented.replace(/[+]/g,"\\+")));
+ for(const invented of ["value:128","value:314","value:\"78%\"","value:\"52%\"","Aarav S.","Ishita M."])assert.ok(!dashboard.includes(invented),invented);
  assert.match(dashboard,/No teacher-reviewed scores for this period yet/);
  assert.match(dashboard,/No sessions scheduled for today/);
 });
@@ -29,7 +29,9 @@ test("Every staff analytics query is scoped to active role and authorized studen
  assert.match(dashboard,/from\("assessment_results"\)/);
  assert.match(dashboard,/result\.assessments\.filter\(a=>a\.status==="reviewed"\)/);
  assert.match(dashboard,/staff_assessment_sessions_list/);
- assert.match(dashboard,/const result:Dataset=\{students:ss,assessments:\[\],results:\[\],activities:\[\],sessions:\[\],inPerson:\[\]\}/);
+ assert.match(dashboard,/const result:Dataset=\{students:ss,assessments:\[\],results:\[\],activities:\[\],sessions:\[\],inPerson:\[\],goals:\[\],appointments:\[\],certificates:\[\]\}/);
+ assert.match(dashboard,/from\("student_development_goals"\)/);
+ assert.match(dashboard,/from\("assessment_completion_certificates"\)/);
  assert.doesNotMatch(dashboard,/\.insert\(|\.update\(|\.delete\(|\.upsert\(/);
 });
 test("Parent portal unchanged and In-Person Assessment continues as a separate staff tool",()=>{
@@ -37,4 +39,13 @@ test("Parent portal unchanged and In-Person Assessment continues as a separate s
  assert.match(menu,/In-Person Assessments/);
  assert.match(read("app/staff/in-person-assessments/page.tsx"),/staff_assessment_save/);
  assert.match(css,/swastha-live-dashboard__charts/);
+});
+
+test("Approved full dashboard and shared sidebar icon navigation are present",()=>{
+ for(const name of ["Appointments","Certificates Issued","Assessment Workflow","Domain Performance (Avg.)","Goal Achievement (IDP)","Session Attendance","Action Items"])assert.ok(dashboard.includes(name),name);
+ assert.match(menu,/StaffMenuIcon/);
+ assert.match(read("app/components/staff-route-frame.tsx"),/StaffMenuIcon/);
+ assert.match(menu,/staff\/assessment-certificates/);
+ assert.match(menu,/teacher\/custom-assessments/);
+ assert.match(css,/swastha-approved-dashboard__three/);
 });

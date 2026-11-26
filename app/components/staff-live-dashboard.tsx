@@ -7,13 +7,16 @@ import type {StaffRole} from "./staff-tools-menu";
 
 type Student={id:string;full_name:string;student_code:string|null;created_at:string};
 type Assessment={id:string;student_id:string;status:string;assigned_at:string;assessment_level:string};
-type Result={assignment_id:string;overall_score:number|null;reviewed_at:string|null};
+type Result={assignment_id:string;overall_score:number|null;reviewed_at:string|null;domain_scores:Record<string,unknown>|null};
+type Goal={id:string;assignment_id:string;status:string;target_date:string|null};
+type Appointment={id:string;created_at:string;status:string};
+type Certificate={id:string;student_id:string;issued_at:string;revoked_at:string|null};
 type Activity={id:string;student_id:string;status:string;assigned_at:string};
 type Session={id:string;student_id:string;session_type:string;status:string;scheduled_at:string};
 type InPerson={id:string;student_id:string;assessment_level:string;status:string;created_at:string};
 type Feed={id:string;student_id:string;title:string;detail:string;at:string;href:string};
-type Dataset={students:Student[];assessments:Assessment[];results:Result[];activities:Activity[];sessions:Session[];inPerson:InPerson[]};
-const empty:Dataset={students:[],assessments:[],results:[],activities:[],sessions:[],inPerson:[]};
+type Dataset={students:Student[];assessments:Assessment[];results:Result[];activities:Activity[];sessions:Session[];inPerson:InPerson[];goals:Goal[];appointments:Appointment[];certificates:Certificate[]};
+const empty:Dataset={students:[],assessments:[],results:[],activities:[],sessions:[],inPerson:[],goals:[],appointments:[],certificates:[]};
 const good=(s:string)=>["reviewed","completed"].includes(s);
 const monthLabel=(d:Date)=>d.toLocaleDateString("en-IN",{month:"short",timeZone:"Asia/Kolkata"});
 const timeLabel=(s:string)=>new Date(s).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true,timeZone:"Asia/Kolkata"});
@@ -31,6 +34,7 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
  const [period,setPeriod]=useState<"6"|"3">("6");
+ const [selection,setSelection]=useState("all");
  useEffect(()=>{
   let live=true;
   async function fetchData(){
@@ -55,7 +59,7 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
     if(se)throw se;
     const ss=(students||[]) as Student[];
     if(!ss.length){if(live)setData(empty);return;}
-    const result:Dataset={students:ss,assessments:[],results:[],activities:[],sessions:[],inPerson:[]};
+    const result:Dataset={students:ss,assessments:[],results:[],activities:[],sessions:[],inPerson:[],goals:[],appointments:[],certificates:[]};
     // Batch every foreign-key list to avoid PostgREST URL and in() limits.
     for(let start=0;start<ss.length;start+=80){
      const chunk=ss.slice(start,start+80).map(s=>s.id);
@@ -72,8 +76,27 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
     // A failure to read optional score and in-person details never exposes them or invents values.
     const reviewed=result.assessments.filter(a=>a.status==="reviewed").map(a=>a.id);
     for(let start=0;start<reviewed.length;start+=80){
-     const {data:scored,error:re}=await supabase.from("assessment_results").select("assignment_id,overall_score,reviewed_at").in("assignment_id",reviewed.slice(start,start+80)).limit(2000);
+     const {data:scored,error:re}=await supabase.from("assessment_results").select("assignment_id,overall_score,reviewed_at,domain_scores").in("assignment_id",reviewed.slice(start,start+80)).limit(2000);
      if(!re)result.results.push(...(scored||[]) as Result[]);
+    }
+    // Optional dashboard sources are loaded under the staff member's existing RLS permissions.
+    // Missing permissions result in an unavailable metric, never a widened access policy.
+    const relevantAssignments=result.assessments.map(a=>a.id);
+    for(let start=0;start<relevantAssignments.length;start+=80){
+     const {data:goals,error:goalError}=await supabase.from("student_development_goals")
+      .select("id,assignment_id,status,target_date").in("assignment_id",relevantAssignments.slice(start,start+80)).limit(2000);
+     if(!goalError)result.goals.push(...(goals||[]) as Goal[]);
+    }
+    for(let start=0;start<ss.length;start+=80){
+     const {data:certs,error:certError}=await supabase.from("assessment_completion_certificates")
+      .select("id,student_id,issued_at,revoked_at").in("student_id",ss.slice(start,start+80).map(x=>x.id)).limit(2000);
+     if(!certError)result.certificates.push(...(certs||[]) as Certificate[]);
+    }
+    // Appointments are clinic-level data; teachers must not receive unrelated enquiry records.
+    if(role!=="teacher"){
+     const {data:appointments,error:appointmentError}=await supabase.from("appointment_enquiries")
+      .select("id,created_at,status").order("created_at",{ascending:false}).limit(2000);
+     if(!appointmentError)result.appointments=(appointments||[]) as Appointment[];
     }
     const ip=await supabase.rpc("staff_assessment_sessions_list");
     if(!ip.error){
@@ -88,12 +111,16 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
   return()=>{live=false;};
  },[role]);
 
- const studentIds=new Set(data.students.map(student=>student.id));
+ const studentIds=new Set(data.students.filter(student=>selection==="all"||student.id===selection).map(student=>student.id));
  const assessments=data.assessments.filter(item=>studentIds.has(item.student_id));
  const activities=data.activities.filter(item=>studentIds.has(item.student_id));
  const sessions=data.sessions.filter(item=>studentIds.has(item.student_id));
  const inPerson=data.inPerson.filter(item=>studentIds.has(item.student_id));
  const studentMap=new Map(data.students.map(student=>[student.id,student]));
+ const scopedStudents=data.students.filter(item=>studentIds.has(item.id));
+ const goals=data.goals.filter(item=>assessments.some(a=>a.id===item.assignment_id));
+ const certificates=data.certificates.filter(item=>studentIds.has(item.student_id)&&!item.revoked_at);
+ const appointments=data.appointments;
  const resultsById=new Map(data.results.filter(x=>typeof x.overall_score==="number"&&x.overall_score>=0&&x.overall_score<=3)
   .map(x=>[x.assignment_id,x]));
  const reviewedAssessments=assessments.filter(x=>x.status==="reviewed"&&resultsById.has(x.id));
@@ -147,19 +174,45 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
  const growth=(delta:number|null,suffix="%")=>
   delta===null?"No prior-month comparison":(delta>=0?"↑ +":"↓ ")+delta+suffix+" vs. last month";
  const growthClass=(delta:number|null)=>delta===null?"neutral":delta>=0?"positive":"negative";
- const pictogram=(type:"students"|"assessments"|"activities"|"progress")=>{
+ const pictogram=(type:"students"|"assessments"|"activities"|"progress"|"appointments"|"certificates")=>{
   const common={width:34,height:34,viewBox:"0 0 32 32",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round" as const,strokeLinejoin:"round" as const};
   if(type==="students")return <svg {...common} aria-hidden="true"><circle cx="16" cy="8" r="4" fill="currentColor" stroke="none"/><circle cx="5.8" cy="11" r="3.2" fill="currentColor" stroke="none"/><circle cx="26.2" cy="11" r="3.2" fill="currentColor" stroke="none"/><path d="M8 25v-3c0-4.8 3-7.5 8-7.5s8 2.7 8 7.5v3H8Z" fill="currentColor" stroke="none"/><path d="M1.2 24v-3c0-3.3 1.8-5.4 5.3-5.4M30.8 24v-3c0-3.3-1.8-5.4-5.3-5.4"/></svg>;
   if(type==="assessments")return <svg {...common} aria-hidden="true"><rect x="6" y="5" width="20" height="24" rx="2"/><path d="M12 5V3h8v2M10 18l4 4 8-9"/></svg>;
   if(type==="activities")return <svg {...common} aria-hidden="true"><path d="M16 29c-3.5-2.8-7.3-3.7-13-3.5V5c5.9-.5 9.5.3 13 3.5 3.5-3.2 7.1-4 13-3.5v20.5c-5.7-.2-9.5.7-13 3.5ZM16 8.5V29"/></svg>;
+  if(type==="appointments")return <svg {...common} aria-hidden="true"><rect x="4" y="6" width="24" height="22" rx="2"/><path d="M9 3v7M23 3v7M4 12h24m-18 5h3m5 0h3"/></svg>;
+  if(type==="certificates")return <svg {...common} aria-hidden="true"><circle cx="16" cy="12" r="8"/><path d="m11 19-2 11 7-4 7 4-2-11m-9-7 3 3 5-6"/></svg>;
   return <svg {...common} aria-hidden="true"><rect x="5" y="17" width="4.6" height="10" rx="2" fill="currentColor" stroke="none"/><rect x="14" y="10" width="4.6" height="17" rx="2" fill="currentColor" stroke="none"/><rect x="23" y="3" width="4.6" height="24" rx="2" fill="currentColor" stroke="none"/></svg>;
  };
  const statItems=[
-  {kind:"students" as const,title:"Total Students",value:data.students.length,delta:studentGrowth,suffix:"%"},
-  {kind:"assessments" as const,title:"Assessments",value:assessments.length,delta:assessmentGrowth,suffix:"%"},
-  {kind:"activities" as const,title:"Learning Activities",value:activities.length,delta:activityGrowth,suffix:"%"},
-  {kind:"progress" as const,title:"Progress (Avg.)",value:avg===null?"—":avg+"%",delta:avgGrowth,suffix:" pp"}
+  {kind:"students" as const,title:"Total Students",value:scopedStudents.length,delta:selection==="all"?studentGrowth:null,suffix:"%"},
+  {kind:"assessments" as const,title:"Assessments",value:assessments.length,delta:selection==="all"?assessmentGrowth:null,suffix:"%"},
+  {kind:"activities" as const,title:"Learning Activities",value:activities.length,delta:selection==="all"?activityGrowth:null,suffix:"%"},
+  {kind:"progress" as const,title:"Progress (Avg.)",value:avg===null?"—":avg+"%",delta:avgGrowth,suffix:" pp"},
+  {kind:"appointments" as const,title:"Appointments",value:role==="teacher"?"—":appointments.length,delta:null,suffix:"%"},
+  {kind:"certificates" as const,title:"Certificates Issued",value:certificates.length,delta:null,suffix:"%"}
  ];
+
+ const sessionOutcomes=[
+  {label:"Attended",count:sessions.filter(s=>["completed","attended"].includes(s.status)).length},
+  {label:"Cancelled",count:sessions.filter(s=>["cancelled","canceled"].includes(s.status)).length},
+  {label:"Rescheduled",count:sessions.filter(s=>s.status==="rescheduled").length},
+  {label:"Missed / Other",count:sessions.filter(s=>!["completed","attended","cancelled","canceled","rescheduled"].includes(s.status)).length}
+ ];
+ let attendanceRunning=0;
+ const attendanceArcs=sessionOutcomes.map((o,i)=>{const from=attendanceRunning;attendanceRunning+=sessions.length?o.count/sessions.length*100:0;return colors[i]+" "+from+"% "+attendanceRunning+"%";});
+ const domainMap=new Map<string,{sum:number;count:number}>();
+ for(const assessment of reviewedAssessments){
+  const domains=resultsById.get(assessment.id)?.domain_scores;
+  if(!domains||typeof domains!=="object"||Array.isArray(domains))continue;
+  for(const [key,value] of Object.entries(domains)){
+   const score=typeof value==="number"?value:typeof value==="object"&&value!==null&&"score" in value?Number((value as {score:unknown}).score):NaN;
+   if(!Number.isFinite(score)||score<0||score>3)continue;
+   const existing=domainMap.get(key)||{sum:0,count:0};
+   domainMap.set(key,{sum:existing.sum+score,count:existing.count+1});
+  }
+ }
+ const domainResults=[...domainMap.entries()].slice(0,7).map(([name,d])=>({name,value:Math.round(d.sum/d.count/3*100)}));
+ const radarPoint=(index:number,total:number,radius:number)=>[(180+100*radius*Math.cos(-Math.PI/2+index*2*Math.PI/total)).toFixed(1),(128+100*radius*Math.sin(-Math.PI/2+index*2*Math.PI/total)).toFixed(1)].join(",");
  const axisBottom=196,axisTop=22,left=56,right=626;
  const chartX=(index:number)=>left+(right-left)*index/Math.max(1,trend.length-1);
  const chartY=(value:number)=>axisBottom-(value-50)/50*(axisBottom-axisTop);
@@ -176,6 +229,7 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
  return <section aria-label="Live staff dashboard" className="swastha-live-dashboard swastha-live-dashboard--reference">
   {loading?<div className="swastha-dashboard-loading" role="status">Loading current student and assessment data…</div>:
   error?<div className="swastha-dashboard-loading" role="alert">{error}</div>:<>
+  <div className="swastha-approved-dashboard__toolbar"><div><h2>Dashboard – Clinic Overview (Staff)</h2><p>Student progress, assessments, learning activities and clinic operations at a glance.</p></div><div className="swastha-approved-dashboard__filters"><label><span className="sr-only">Select student</span><select aria-label="Filter dashboard by student" value={selection} onChange={e=>setSelection(e.target.value)}><option value="all">All Students</option>{data.students.map(item=><option key={item.id} value={item.id}>{item.full_name} ({item.student_code||"ID pending"})</option>)}</select></label><label><span className="sr-only">Select period</span><select aria-label="Dashboard time period" value={period} onChange={e=>setPeriod(e.target.value as "3"|"6")}><option value="6">Last 6 Months</option><option value="3">Last 3 Months</option></select></label></div></div>
   <div className="swastha-live-dashboard__stats">
    {statItems.map(item=><article key={item.kind} className="swastha-live-stat">
     <div className="swastha-live-stat__icon">{pictogram(item.kind)}</div>
@@ -185,7 +239,8 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
     </div>
    </article>)}
   </div>
-  <div className="swastha-live-dashboard__charts swastha-live-dashboard__charts--top">
+
+  <div className="swastha-live-dashboard__charts swastha-live-dashboard__charts--top swastha-approved-dashboard__three">
    <article className="swastha-live-panel">
     <div className="swastha-live-dashboard__panel-heading">
      <div><h3>Student Progress Trend</h3><p>Average learning progress across all students</p></div>
@@ -202,6 +257,30 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
      {trend.map((item,index)=><text key={index} x={chartX(index)} y="227" textAnchor="middle" fontSize="14" fill="#29313a">{item.name}</text>)}
     </svg>}
    </article>
+
+   <article className="swastha-live-panel">
+    <h3>Assessment Workflow</h3><p>Assessment status and completion flow</p>
+    <div className="swastha-approved-dashboard__funnel">{[
+      {label:"Assigned",count:assessments.length},
+      {label:"In Progress",count:assessments.filter(x=>x.status!=="assigned").length},
+      {label:"Submitted",count:assessments.filter(x=>["submitted","reviewed"].includes(x.status)).length},
+      {label:"Reviewed",count:assessments.filter(x=>x.status==="reviewed").length},
+      {label:"Approved",count:assessments.filter(x=>x.status==="reviewed").length}
+     ].map((item,index)=><div className="swastha-approved-dashboard__funnel-step" key={item.label} style={{["--funnel-step" as string]:String(index)}}><span>{item.label} <strong>{item.count}</strong></span><small>{assessments.length?Math.round(item.count/assessments.length*100):0}%</small></div>)}</div>
+    <small>Reviewed is the final approval stage for standard assessments.</small>
+   </article>
+   <article className="swastha-live-panel">
+    <h3>Domain Performance (Avg.)</h3><p>Teacher-reviewed scores by learning domain</p>
+    {domainResults.length<3?<div className="swastha-live-dashboard__empty">Insufficient reviewed domain scores to display a valid comparison.</div>:
+     <div className="swastha-approved-dashboard__radar"><svg role="img" viewBox="0 0 360 260" aria-label={domainResults.map(d=>d.name+" "+d.value+"%").join("; ")}>
+      {[.25,.5,.75,1].map(r=><polygon key={r} points={domainResults.map((d,i)=>radarPoint(i,domainResults.length,r)).join(" ")} fill="none" stroke="#d9e6dd" strokeWidth="1.2"/>)}
+      {domainResults.map((d,i)=><line key={d.name} x1="180" y1="128" x2={radarPoint(i,domainResults.length,1).split(",")[0]} y2={radarPoint(i,domainResults.length,1).split(",")[1]} stroke="#d9e6dd"/>)}
+      <polygon points={domainResults.map((d,i)=>radarPoint(i,domainResults.length,d.value/100)).join(" ")} fill="#6ad48f" fillOpacity=".27" stroke="#00934c" strokeWidth="2.5"/>
+      {domainResults.map((d,i)=><g key={d.name}><circle cx={Number(radarPoint(i,domainResults.length,d.value/100).split(",")[0])} cy={Number(radarPoint(i,domainResults.length,d.value/100).split(",")[1])} r="3.5" fill="#fff" stroke="#008d4e" strokeWidth="2"/><text x={Number(radarPoint(i,domainResults.length,1.19).split(",")[0])} y={Number(radarPoint(i,domainResults.length,1.19).split(",")[1])} fontSize="10.5" fontWeight="600" textAnchor="middle" fill="#144435">{d.name.slice(0,16)}</text></g>)}
+     </svg></div>}
+   </article>
+  </div>
+  <div className="swastha-live-dashboard__charts swastha-approved-dashboard__three swastha-approved-dashboard__middle">
    <article className="swastha-live-panel">
     <div><h3>Assessment Outcomes</h3><p>Latest completed assessments</p></div>
     {outcomeTotal?<div className="swastha-live-dashboard__donut-row">
@@ -211,8 +290,21 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
      <div className="swastha-live-dashboard__legend">{outcomes.map((item,index)=><div key={item.label}><i style={{background:colors[index]}}/><span>{item.label}</span><strong>{Math.round(item.count/outcomeTotal*100)}%</strong></div>)}</div>
     </div>:<div className="swastha-live-dashboard__empty">No assessments have been assigned yet.</div>}
    </article>
+
+   <article className="swastha-live-panel"><h3>Goal Achievement (IDP)</h3><p>Individual development plan goal status</p>
+    <div className="swastha-approved-dashboard__goals">{[
+      {label:"Achieved",count:goals.filter(g=>["completed","achieved","met"].includes(g.status)).length,kind:"achieved"},
+      {label:"In Progress",count:goals.filter(g=>["in_progress","ongoing","active"].includes(g.status)).length,kind:"progress"},
+      {label:"Needs Review",count:goals.filter(g=>!["completed","achieved","met","in_progress","ongoing","active"].includes(g.status)).length,kind:"review"}
+    ].map(item=><div className={"swastha-approved-dashboard__goal "+item.kind} key={item.label}><span aria-hidden="true">{item.kind==="achieved"?"◎":item.kind==="progress"?"↻":"⚑"}</span><strong>{item.count}</strong><small>{item.label}</small><em>{goals.length?Math.round(item.count/goals.length*100):0}%</em></div>)}</div>
+    {!goals.length&&<small>No IDP goals in accessible records yet.</small>}
+   </article>
+   <article className="swastha-live-panel"><h3>Session Attendance</h3><p>Therapy / learning session attendance</p>
+    {sessions.length===0?<div className="swastha-live-dashboard__empty">No sessions recorded yet.</div>:
+     <div className="swastha-live-dashboard__donut-row"><div className="swastha-live-dashboard__donut" role="img" aria-label={sessionOutcomes.map(x=>x.label+" "+x.count).join(", ")} style={{background:"conic-gradient("+attendanceArcs.join(",")+")"}}><div><strong>{Math.round(sessionOutcomes[0].count/sessions.length*100)}%</strong><small>Attendance</small></div></div><div className="swastha-live-dashboard__legend">{sessionOutcomes.map((o,i)=><div key={o.label}><i style={{background:colors[i]}}/><span>{o.label}</span><strong>{Math.round(o.count/sessions.length*100)}%</strong></div>)}</div></div>}
+   </article>
   </div>
-  <div className="swastha-live-dashboard__charts swastha-live-dashboard__charts--bottom">
+  <div className="swastha-live-dashboard__charts swastha-live-dashboard__charts--bottom swastha-approved-dashboard__three">
    <article className="swastha-live-panel">
     <div className="swastha-live-dashboard__panel-heading">
      <div><h3>Recent Student Activity</h3><p>Latest learning and assessment updates</p></div>
@@ -236,6 +328,15 @@ export default function StaffLiveDashboard({role}:{role:StaffRole}){
      <span className="swastha-live-dashboard__schedule-symbol" aria-hidden="true">◉</span>
      <strong>{item.session_type.replace(/_/g," ")}</strong><small>{studentMap.get(item.student_id)?.full_name||"Student"} · {item.status}</small>
     </button>)}</div>}
+   </article>
+
+   <article className="swastha-live-panel"><h3>Action Items</h3><p>Pending tasks and important follow-ups</p>
+    <div className="swastha-approved-dashboard__actions">{[
+     {label:"Assessments to Review",count:assessments.filter(a=>a.status==="submitted").length,href:role==="teacher"?"/teacher/dashboard":"/staff/actions"},
+     {label:"IDP Goals Due for Update",count:goals.filter(g=>g.target_date&&g.target_date<today&&!["completed","achieved","met"].includes(g.status)).length,href:role==="teacher"?"/teacher/idp":"/staff/actions"},
+     {label:"Follow-up Appointments",count:role==="teacher"?null:appointments.filter(a=>a.status==="new").length,href:"/staff/operations"},
+     {label:"Certificates Ready to Issue",count:assessments.filter(a=>a.status==="reviewed"&&!certificates.some(c=>c.student_id===a.student_id)).length,href:"/staff/assessment-certificates"}
+    ].map((item,i)=><button type="button" key={item.label} onClick={()=>router.push(item.href)} className="swastha-approved-dashboard__action"><span className={"swastha-approved-dashboard__count n"+i}>{item.count===null?"—":item.count}</span><span>{item.label}</span><strong aria-hidden="true">›</strong></button>)}</div>
    </article>
   </div>
   <small className="swastha-live-dashboard__note">Dashboard totals reflect current records visible to your staff role. Progress is based only on teacher-reviewed scores (0–3 scale); categories are visualization groupings, not clinical diagnoses.</small>
