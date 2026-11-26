@@ -107,6 +107,8 @@ jobs:
         run: node --test tests/all-staff-regression-coverage.test.mjs
       - name: Verify in-person assessment integration with student history
         run: node --test tests/in-person-integrated-student-history.test.mjs
+      - name: Verify compact staff headers across all role pages
+        run: node --test tests/compact-all-staff-header.test.mjs
       - name: Verify one teacher analytics student selector
         run: node --test tests/teacher-analytics-single-student-selector.test.mjs
       - name: Verify role-based learning diagrams, reviewed results and empty-state privacy
