@@ -1,11 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 
 export type StaffRole = "owner" | "admin" | "clinic_admin" | "teacher";
 
 type Tool = { label: string; href: string; description: string };
-type Props = { role: StaffRole; name?: string };
+type Summary = {label:string; value:string|number; onClick?:()=>void};
+type Section = {id:string;label:string};
+type Props = { role:StaffRole; name?:string; summary?:Summary[]; sections?:Section[]; activeSection?:string; onSectionChange?:(id:string)=>void; children?:ReactNode };
 
 const COMMON_TOOLS: Tool[] = [
   { label: "Students & Progress", href: "/staff/students", description: "One authorized record for each student, charts and reports" },
@@ -20,8 +23,7 @@ const COMMON_TOOLS: Tool[] = [
 
 function roleTools(role: StaffRole): Tool[] {
   if (role === "teacher") return [
-    { label: "My Students & Analytics", href: "/teacher/dashboard#staff-analytics", description: "Assigned students and learning insights" },
-    { label: "Student Progress", href: "/teacher/student-progress", description: "Approved progress and activity tracking" },
+    { label: "Approved Progress Reports", href: "/teacher/student-progress", description: "Reviewed progress and activity tracking" },
     { label: "Development Plans (IDP)", href: "/teacher/idp", description: "Individual development plans" },
     { label: "Assessment Builder", href: "/teacher/custom-assessments", description: "Create and assign custom assessments" },
     { label: "Sessions & Attendance", href: "/teacher/sessions", description: "Your permitted sessions" }
@@ -42,12 +44,9 @@ function roleTools(role: StaffRole): Tool[] {
 }
 
 /** One navigation definition for all staff dashboards. Individual routes and RLS still enforce permission. */
-export default function StaffToolsMenu({ role, name }: Props) {
+export default function StaffToolsMenu({ role, name, summary = [], sections = [], activeSection, onSectionChange, children }: Props) {
   const router = useRouter();
-  const groups = [
-    { title: "Common Staff Tools", tools: COMMON_TOOLS },
-    { title: role === "teacher" ? "Teaching & Student Development" : "Administration & Student Records", tools: roleTools(role) }
-  ];
+  const tools = [...COMMON_TOOLS, ...roleTools(role)];
 
   return (
     <section aria-label="Staff tools" className="swastha-staff-workspace">
@@ -59,19 +58,26 @@ export default function StaffToolsMenu({ role, name }: Props) {
         </div>
         <span className="swastha-staff-workspace__role">{role === "owner" ? "Owner" : role === "admin" ? "Super Admin" : role === "clinic_admin" ? "Clinic Admin" : "Teacher"}</span>
       </div>
-      {groups.map(group => (
-        <div className="swastha-staff-workspace__group" key={group.title}>
-          <h2>{group.title}</h2>
-          <nav className="swastha-staff-workspace__grid" aria-label={group.title}>
-            {group.tools.map(tool => (
-              <button key={tool.href} type="button" className="swastha-staff-workspace__tool" onClick={() => router.push(tool.href)}>
-                <strong>{tool.label}</strong>
-                <span>{tool.description}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      ))}
+      {summary.length>0&&<div className="swastha-staff-workspace__summary" aria-label="Dashboard summary">
+        {summary.map(item=><div key={item.label} className="swastha-staff-workspace__metric">
+          {item.onClick?<button type="button" onClick={item.onClick} className="swastha-staff-workspace__metric-button">
+            <span>{item.label}</span><strong>{item.value}</strong>
+          </button>:<><span>{item.label}</span><strong>{item.value}</strong></>}
+        </div>)}
+      </div>}
+      {sections.length>0&&<nav aria-label="Teacher dashboard sections" className="swastha-staff-workspace__sections">
+        {sections.map(item=><button type="button" key={item.id} aria-current={activeSection===item.id?"page":undefined}
+          className={activeSection===item.id?"active":""} onClick={()=>onSectionChange?.(item.id)}>{item.label}</button>)}
+      </nav>}
+      <div className="swastha-staff-workspace__group">
+        <h2>Staff Tools</h2>
+        <nav className="swastha-staff-workspace__grid" aria-label="Role-based staff tools">
+          {tools.map(tool=><button key={tool.href} type="button" className="swastha-staff-workspace__tool" onClick={()=>router.push(tool.href)}>
+            <strong>{tool.label}</strong><span>{tool.description}</span>
+          </button>)}
+        </nav>
+      </div>
+      {children&&<div className="swastha-staff-workspace__extras">{children}</div>}
     </section>
   );
 }
