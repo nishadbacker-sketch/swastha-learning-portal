@@ -15,6 +15,7 @@ type Props={
  hideStudentOverview?:boolean;
  selectedStudentId?:string;
  onStudentChange?:(id:string)=>void;
+ hideStudentSelector?:boolean;
 };
 const green="#176b58",navy="#0f4c5c",blue="#0284c7",orange="#b45309",grey="#64748b";
 const shell:React.CSSProperties={border:"1px solid #dce8e1",background:"#fff",borderRadius:13,padding:16,minWidth:0};
@@ -29,7 +30,7 @@ function Bar({value,max=100,color,label}:{value:number;max?:number;color:string;
  </div>;
 }
 /** Presentation only: callers supply records already limited by Supabase RLS and their selected children/assigned students. */
-export default function LearningInsightsCharts({students,assessments,activities,reviewedResults=[],audience,hideStudentOverview=false,selectedStudentId,onStudentChange}:Props){
+export default function LearningInsightsCharts({students,assessments,activities,reviewedResults=[],audience,hideStudentOverview=false,selectedStudentId,onStudentChange,hideStudentSelector=false}:Props){
  const [internalSelected,setInternalSelected]=useState("all");
  const selected=selectedStudentId??internalSelected;
  const changeSelection=(id:string)=>{if(onStudentChange)onStudentChange(id);else setInternalSelected(id);};
@@ -62,7 +63,7 @@ export default function LearningInsightsCharts({students,assessments,activities,
      <h2 style={{fontSize:19,margin:"0 0 5px"}}>{audience==="teacher"?"Assigned Students — Learning Insights":"My Learning Journey — Visual Progress"}</h2>
      <p style={{fontSize:12,color:grey,margin:0}}>Based on saved activities and assessment workflow. Scores are shown only after Teacher approval.</p>
     </div>
-    {students.length>1&&<label style={{fontSize:12,fontWeight:700}}>Student
+    {!hideStudentSelector&&students.length>1&&<label style={{fontSize:12,fontWeight:700}}>Student
      <select aria-label="Choose student for learning insights" value={scoped} onChange={e=>changeSelection(e.target.value)}
       style={{display:"block",padding:9,marginTop:5,border:"1px solid #bcd3c6",borderRadius:7,background:"#fff",maxWidth:260}}>
       <option value="all">All permitted students</option>
