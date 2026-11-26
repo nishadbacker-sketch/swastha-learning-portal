@@ -1091,64 +1091,26 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-        <div style={{marginBottom:24}}>
-          <StaffToolsMenu role="teacher" name={teacherName}/>
-          <nav aria-label="Teacher dashboard sections" style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",marginBottom:12}}>
-            {([
-              ["overview","Overview",null],
-              ["students","My Students",null],
-              ["assessments","Assessments",null],
-              ["activities","Learning Activities",null]
-            ] as [Tab,string,number|null][]).map(([id,label,count])=><button key={id} type="button" aria-current={activeTab===id?"page":undefined} onClick={()=>setActiveTab(id)} style={{...primaryButton,background:"#176b58",color:"white",margin:0,minWidth:0,whiteSpace:"normal",border:activeTab===id?"2px solid #e6c875":"2px solid transparent"}}>{label}{count!==null?" ("+count+")":""}</button>)}
-
-          </nav>
-        </div>
-
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: 14,
-            marginBottom: 25,
-          }}
-        >
-          <Metric
-            label="Assigned Students"
-            value={students.length}
-            color="#176b58"
-            onClick={() => setActiveTab("students")}
-          />
-
-          <Metric
-            label="Learning Activities"
-            value={activities.length}
-            color="#2563eb"
-            onClick={() => setActiveTab("activities")}
-          />
-
-          <Metric
-            label="Assessments"
-            value={assessments.length}
-            color="#7c3aed"
-            onClick={() => setActiveTab("assessments")}
-          />
-
-          <Metric
-            label="Pending Reviews"
-            value={
-              assessments.filter(
-                (a) => a.status === "submitted"
-              ).length
-            }
-            color="#d97706"
-            onClick={() => {
-              const pending = assessments.find((a) => a.status === "submitted");
-              if (pending) router.push("/teacher/assessment-review/" + pending.id);
+        <StaffToolsMenu role="teacher" name={teacherName}
+          sections={[
+            {id:"overview",label:"Overview"},
+            {id:"students",label:"My Students"},
+            {id:"assessments",label:"Assessments"},
+            {id:"activities",label:"Learning Activities"}
+          ]}
+          activeSection={activeTab}
+          onSectionChange={id=>setActiveTab(id as Tab)}
+          summary={[
+            {label:"Assigned Students",value:students.length,onClick:()=>setActiveTab("students")},
+            {label:"Learning Activities",value:activities.length,onClick:()=>setActiveTab("activities")},
+            {label:"Assessments",value:assessments.length,onClick:()=>setActiveTab("assessments")},
+            {label:"Pending Reviews",value:assessments.filter(a=>a.status==="submitted").length,onClick:()=>{
+              const pending=assessments.find(a=>a.status==="submitted");
+              if(pending)router.push("/teacher/assessment-review/"+pending.id);
               else setActiveTab("assessments");
             }}
-          />
-        </section>
+          ]}
+        />
 
         {activeTab === "overview" && (
           <section>
