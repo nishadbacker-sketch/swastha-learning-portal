@@ -50,7 +50,6 @@ export default function StaffInPersonAssessmentPage(){
  const [recommendations,setRecommendations]=useState("");
  const [language,setLanguage]=useState<"en"|"ml">("en");
  const [translations,setTranslations]=useState<Record<string,string>>({});
- const [section,setSection]=useState("all");
  const [newStudent,setNewStudent]=useState({name:"",dob:"",grade:"",language:"en",guardian:"",phone:"",consent:false});
  const [loading,setLoading]=useState(true);
  const [busy,setBusy]=useState(false);
@@ -98,8 +97,6 @@ export default function StaffInPersonAssessmentPage(){
  const availableTemplates=templates.filter(t=>t.level.toLowerCase()==="all"||t.level.toUpperCase()===selectedLevel);
  const template=templates.find(t=>t.id===active?.template_id);
  const questions=useMemo(()=>active?(active.assessment_kind==="standard"?standardQuestions(active.assessment_level):customQuestions(template)):[],[active?.id,active?.assessment_kind,active?.assessment_level,template]);
- const groups=[...new Set(questions.map(q=>q.area))];
- const shown=questions.filter(q=>section==="all"||q.area===section);
  const missing=questions.filter(q=>q.type==="written"?!answers[q.id]?.written_answer?.trim():q.type==="multiple_choice"?!answers[q.id]?.choice:!["0","1","2","3","NA"].includes(answers[q.id]?.score||""));
  const completed=questions.length-missing.length;
  const readOnly=active?.status==="submitted";
@@ -146,14 +143,14 @@ export default function StaffInPersonAssessmentPage(){
   const result=(data as Session[])?.[0];
   if(!result)throw new Error("Session was created but could not be loaded.");
   setActive(result);setAnswers(result.answers||{});setEvaluation(result.evaluation||"");
-  setStrengths(result.strengths||"");setSupportNeeds(result.support_needs||"");setRecommendations(result.recommendations||"");setSection("all");
+  setStrengths(result.strengths||"");setSupportNeeds(result.support_needs||"");setRecommendations(result.recommendations||"");
  }
  function answer(id:string,patch:Partial<Answer>){
   setAnswers(old=>({...old,[id]:{score:old[id]?.score??null,choice:old[id]?.choice??null,written_answer:old[id]?.written_answer??"",observation:old[id]?.observation||"",...patch}}));
  }
  async function save(submit:boolean){
   if(!supabase||!active||busy||readOnly)return;
-  if(submit&&missing.length){setError("Complete every question or select NA. "+missing.length+" unanswered.");setSection("all");return;}
+  if(submit&&missing.length){setError("Complete every question or select NA. "+missing.length+" unanswered.");return;}
   if(submit&&evaluation.trim().length<10){setError("Enter your professional evaluation (at least 10 characters).");return;}
   if(submit&&!window.confirm("Submit and lock all answers and the staff evaluation for "+active.student_name+"?"))return;
   setBusy(true);setError("");setMessage("");
@@ -220,10 +217,7 @@ export default function StaffInPersonAssessmentPage(){
      <div style={{background:"#e2e8f0",height:8,borderRadius:8,overflow:"hidden"}}><div style={{width:(questions.length?completed/questions.length*100:0)+"%",height:"100%",background:"#176b58"}}/></div>
      <p style={{fontSize:12,color:"#667a74",marginTop:10,marginBottom:0}}>Select NA for questions that could not be assessed. Record direct observations and the child's spoken or written responses.</p>
     </section>
-    <section style={card}>
-     <label>Assessment section<select style={field} value={section} onChange={e=>setSection(e.target.value)}><option value="all">All sections</option>{groups.map(g=><option key={g} value={g}>{g}</option>)}</select></label>
-    </section>
-    {shown.map((q,index)=>{
+    {questions.map((q,index)=>{
      const value=answers[q.id]||{observation:""};const isMissing=missing.some(x=>x.id===q.id);
      return <section key={q.id} style={{...card,borderLeft:isMissing&&!readOnly?"4px solid #d9a441":"4px solid #176b58"}}>
       <div style={{color:"#64748b",fontSize:12,marginBottom:5}}>{q.area} · {q.group} · {q.id}</div>
