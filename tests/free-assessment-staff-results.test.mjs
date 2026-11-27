@@ -41,3 +41,11 @@ test("live local staff screening API rejects unauthenticated requests without ex
  assert.equal(typeof data.error,"string");
  assert.equal(Object.hasOwn(data,"results"),false,"Anonymous clients must not receive screening records");
 });
+
+test("staff screening results automatically show the latest permitted report and distinguish errors",()=>{
+ assert.match(ui,/items\[0\]\?\.id\|\|null/);
+ assert.match(ui,/Results could not be loaded/);
+ assert.match(ui,/Try loading results again/);
+ assert.match(ui,/No results match your search/);
+ assert.match(ui,/No saved Free Assessments are visible to this account/);
+});
