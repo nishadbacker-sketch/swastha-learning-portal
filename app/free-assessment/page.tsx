@@ -77,10 +77,11 @@ export default function FreeChildDevelopmentAssessment(){
     consent:d.consent===true
    };
    if(d.language==="ml"||d.language==="en")setLanguage(d.language);
-   if(next.guardian.length<2||next.child.length<2||!/^[+\\d\\s()-]{8,20}$/.test(next.phone)||
-     !/^\\d{4}-\\d{2}-\\d{2}$/.test(next.dob)||!next.grade||!next.consent)return;
+   if(next.guardian.length<2||next.child.length<2||!/^[+\d\s()-]{8,20}$/.test(next.phone)||
+     !/^\d{4}-\d{2}-\d{2}$/.test(next.dob)||!next.grade||!next.consent)return;
    setDetails(next);
    setStep("questions");
+   (event.source as WindowProxy).postMessage({type:"swastha:free-assessment:accepted"} ,event.origin);
   };
   window.addEventListener("message",onMessage);
   sender.postMessage({type:"swastha:free-assessment:ready"},"https://swasthalearning.com");
