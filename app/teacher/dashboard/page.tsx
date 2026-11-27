@@ -1091,11 +1091,6 @@ export default function TeacherDashboard() {
         )}
 
         <StaffToolsMenu role="teacher" name={teacherName}
-          sections={[
-            {id:"overview",label:"Overview"}
-          ]}
-          activeSection={activeTab}
-          onSectionChange={id=>setActiveTab(id as Tab)}
         />
 
         {activeTab === "assessments" && (
