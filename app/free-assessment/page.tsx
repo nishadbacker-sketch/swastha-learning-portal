@@ -46,6 +46,7 @@ export default function FreeChildDevelopmentAssessment(){
  const [step,setStep]=useState<"details"|"questions"|"results">("details");
  const [saving,setSaving]=useState(false);
  const [sent,setSent]=useState(false);
+ const [studentCode,setStudentCode]=useState("");
  const [error,setError]=useState("");
  const [website,setWebsite]=useState("");
  const key=useRef<string|null>(null);
@@ -72,11 +73,13 @@ export default function FreeChildDevelopmentAssessment(){
     submission_key:key.current,guardian_name:details.guardian,whatsapp_number:details.phone,
     child_name:details.child,date_of_birth:details.dob,current_class:details.grade,
     preferred_date:details.preferred_date||null,preferred_time:details.preferred_time||null,
-    reason,consent:true,website:website
+    reason,consent:true,website:website,screening_answers:answers
    })});
    const body=await response.json().catch(()=>null);
    if(!response.ok)throw new Error(body?.error||"The clinic could not receive your request.");
    setSent(true);
+   setStudentCode(typeof body?.student_code==="string"?body.student_code:"");
+   setStep("results");
   }catch(e){setError(e instanceof Error?e.message:"Unable to submit the request. Please try again.");}
   finally{setSaving(false);}
  }
@@ -104,6 +107,7 @@ export default function FreeChildDevelopmentAssessment(){
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,280px),1fr))",gap:16}}>
       {([["guardian","Parent / guardian name","text"],["phone","Contact number","tel"],["child","Child's name","text"],["dob","Date of birth","date"],["grade","Current class","text"]] as const).map(([name,label,type])=><label key={name} style={{display:"grid",gap:7,fontWeight:700,fontSize:13}}>{label} *<input required type={type} style={field} max={type==="date"?new Date().toISOString().slice(0,10):undefined} value={details[name]} onChange={e=>update(name,e.target.value)}/></label>)}
      </div>
+     <label style={{display:"flex",alignItems:"flex-start",gap:9,marginTop:18,fontSize:12,lineHeight:1.6}}><input type="checkbox" required checked={details.consent} onChange={e=>update("consent",e.target.checked)}/> I consent to saving my child\'s answers under a Swastha student ID and allow the clinic to contact me about this free screening. *</label>
      <p style={{marginTop:18,fontSize:12,color:"#667a74"}}>This is an educational parent-report screening, not a medical diagnosis or a standardized clinical assessment.</p>
      <button type="submit" style={primary}>Start Free Screening →</button>
     </form>
@@ -119,7 +123,8 @@ export default function FreeChildDevelopmentAssessment(){
      </fieldset>)}
     </section>)}
     <section style={panel}><label style={{fontWeight:700,fontSize:14,display:"grid",gap:9}}>Additional parent observations<textarea rows={3} maxLength={700} value={details.notes} onChange={e=>update("notes",e.target.value)} style={{...field,fontFamily:"inherit"}} placeholder="What do you consider your child's strongest ability?"/></label>
-     <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>setStep("details")}>Back</button><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25} onClick={()=>setStep("results")}>View My Child's Summary →</button></div>
+     {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
+     <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>setStep("details")}>Back</button><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>void requestGuidance()}>{saving?"Saving assessment…":"Submit Assessment & View Summary →"}</button></div>
     </section>
    </div>}
    {step==="results"&&<div style={{display:"grid",gap:16}}>
@@ -141,15 +146,13 @@ export default function FreeChildDevelopmentAssessment(){
     </div></section>
     <section style={panel}><h3 style={{fontSize:20,marginTop:0}}>Your next step: free guidance discussion</h3>
      <p style={{lineHeight:1.65,fontSize:14}}>You may request a conversation with a Swastha educator. The clinic can review the screening with you, suggest home activities and discuss whether a suitable support course or an in-person assessment would be useful. No purchase is required.</p>
-     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12}}>
-      <label style={{display:"grid",gap:6,fontWeight:700,fontSize:13}}>Preferred date (optional)<input type="date" style={field} value={details.preferred_date} onChange={e=>update("preferred_date",e.target.value)}/></label>
-      <label style={{display:"grid",gap:6,fontWeight:700,fontSize:13}}>Preferred time (optional)<select style={field} value={details.preferred_time} onChange={e=>update("preferred_time",e.target.value)}><option value="">Flexible</option><option>Morning</option><option>Afternoon</option><option>Evening</option></select></label>
+     <div role="status" style={{padding:16,background:"#eaf4ef",borderRadius:10,color:"#176b58",fontWeight:700}}>
+      Your free assessment and all 25 answers have been submitted for clinic follow-up.
+      {studentCode&&<div style={{marginTop:6}}>Student ID: <strong>{studentCode}</strong></div>}
+      <div style={{fontSize:12,fontWeight:400,marginTop:6}}>The clinic will contact you using your registered number. This is not a confirmed appointment.</div>
      </div>
-     <div style={{position:"absolute",left:"-9999px"}} aria-hidden="true"><label>Leave blank<input tabIndex={-1} autoComplete="off" value={website} onChange={e=>setWebsite(e.target.value)}/></label></div>
-     <label style={{display:"flex",alignItems:"flex-start",gap:9,fontSize:12,margin:"18px 0",lineHeight:1.6}}><input type="checkbox" checked={details.consent} onChange={e=>update("consent",e.target.checked)}/> I agree to share the contact information and a brief screening summary with Swastha Learning Clinic so their team may contact me about guidance. *</label>
-     {sent?<div role="status" style={{padding:16,background:"#eaf4ef",borderRadius:10,color:"#176b58",fontWeight:700}}>Your guidance request was received by the clinic. A team member will contact you. This is a request, not a confirmed appointment.</div>:<button type="button" disabled={saving||!details.consent} style={{...primary,opacity:(saving||!details.consent)?0.5:1}} onClick={()=>void requestGuidance()}>{saving?"Submitting…":"Send Free Guidance Request"}</button>}
      {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:15}}><button type="button" style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>window.print()}>Print / Save Screening Summary</button><button type="button" style={{...primary,background:"#fff",color:"#176b58",border:"1px solid #cbded5"}} onClick={()=>setStep("questions")}>Edit responses</button></div>
+     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:15}}><button type="button" style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>window.print()}>Print / Save Screening Summary</button></div>
     </section>
    </div>}
   </div>
