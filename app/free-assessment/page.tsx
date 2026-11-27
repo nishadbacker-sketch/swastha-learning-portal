@@ -38,8 +38,8 @@ const choices:[Response,string][]=[["yes","Yes"],["sometimes","Sometimes"],["no"
 const field:React.CSSProperties={width:"100%",padding:"12px",border:"1px solid #cadfd6",borderRadius:9,background:"#fff",fontSize:15,color:"#183a35",boxSizing:"border-box"};
 const panel:React.CSSProperties={background:"#fff",padding:22,borderRadius:16,border:"1px solid #dce8e1",boxShadow:"0 4px 24px #153b2810"};
 const primary:React.CSSProperties={border:0,borderRadius:9,background:"#176b58",color:"#fff",padding:"13px 20px",fontSize:14,fontWeight:750,cursor:"pointer"};
-type Details={guardian:string;phone:string;contact_differs:boolean;contact_number:string;child:string;dob:string;grade:string;notes:string;preferred_date:string;preferred_time:string;consent:boolean};
-const initial:Details={guardian:"",phone:"",contact_differs:false,contact_number:"",child:"",dob:"",grade:"",notes:"",preferred_date:"",preferred_time:"",consent:false};
+type Details={guardian:string;phone:string;contact_differs:boolean;contact_number:string;child:string;gender:string;dob:string;grade:string;notes:string;preferred_date:string;preferred_time:string;consent:boolean};
+const initial:Details={guardian:"",phone:"",contact_differs:false,contact_number:"",child:"",gender:"",dob:"",grade:"",notes:"",preferred_date:"",preferred_time:"",consent:false};
 export default function FreeChildDevelopmentAssessment(){
  const [details,setDetails]=useState<Details>(initial);
  const [answers,setAnswers]=useState<AnswerKey>({});
@@ -67,13 +67,13 @@ export default function FreeChildDevelopmentAssessment(){
    if(!d||typeof d!=="object")return;
    const get=(name:string)=>typeof d[name]==="string"?d[name].trim():"";
    const next:Details={
-    guardian:get("guardian"),phone:get("phone"),contact_differs:d.contact_differs===true,contact_number:get("contact_number"),child:get("child"),
+    guardian:get("guardian"),phone:get("phone"),contact_differs:d.contact_differs===true,contact_number:get("contact_number"),child:get("child"),gender:get("gender"),
     dob:get("dob"),grade:get("grade"),notes:get("notes"),
     preferred_date:get("preferred_date"),preferred_time:get("preferred_time"),
     consent:d.consent===true
    };
    if(next.guardian.length<2||next.child.length<2||!/^[+\\d\\s()-]{8,20}$/.test(next.phone)||
-     !/^\\d{4}-\\d{2}-\\d{2}$/.test(next.dob)||!next.grade||!next.consent)return;
+     !/^\\d{4}-\\d{2}-\\d{2}$/.test(next.dob)||!next.grade||!["male","female"].includes(next.gender)||!next.consent)return;
    setDetails(next);
    setStep("questions");
   };
@@ -99,7 +99,7 @@ export default function FreeChildDevelopmentAssessment(){
   setSaving(true);
   if(!key.current)key.current=crypto.randomUUID();
   const brief=discuss.length?discuss.map(x=>x.area).join(", "):"No specific areas flagged";
-  const reason=("Online Child Development Screening (25 parent responses). Areas for discussion: "+brief+". Parent notes: "+details.notes).slice(0,1450);
+  const reason=("Online Child Development Screening (25 parent responses). Child gender: "+(details.gender==="male"?"Male":details.gender==="female"?"Female":"Not specified")+". Areas for discussion: "+brief+". Parent notes: "+details.notes).slice(0,1450);
   try{
    const response=await fetch("/api/appointment-intake",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
     submission_key:key.current,guardian_name:details.guardian,whatsapp_number:details.phone,contact_differs:details.contact_differs,contact_number:details.contact_differs?details.contact_number:null,
@@ -140,6 +140,7 @@ export default function FreeChildDevelopmentAssessment(){
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,280px),1fr))",gap:16}}>
       {([["guardian","Parent / guardian name","text"],["phone","Contact number","tel"],["child","Child's name","text"],["dob","Date of birth","date"],["grade","Current class","text"]] as const).map(([name,label,type])=><label key={name} style={{display:"grid",gap:7,fontWeight:700,fontSize:13}}>{label} *<input required type={type} style={field} max={type==="date"?new Date().toISOString().slice(0,10):undefined} value={details[name]} onChange={e=>update(name,e.target.value)}/></label>)}
      </div>
+     <label style={{display:"grid",gap:7,fontWeight:700,fontSize:13,marginTop:14,maxWidth:300}}>Gender *<select required style={field} value={details.gender} onChange={e=>update("gender",e.target.value)}><option value="">Select gender</option><option value="male">Male</option><option value="female">Female</option></select></label>
      <label style={{display:"flex",alignItems:"flex-start",gap:9,marginTop:18,fontSize:12,lineHeight:1.6}}><input type="checkbox" required checked={details.consent} onChange={e=>update("consent",e.target.checked)}/> I consent to saving my child\'s answers under a Swastha student ID and allow the clinic to contact me about this free screening. *</label>
      <p style={{marginTop:18,fontSize:12,color:"#667a74"}}>This is an educational parent-report screening, not a medical diagnosis or a standardized clinical assessment.</p>
      <button type="submit" style={primary}>Start Free Screening →</button>
