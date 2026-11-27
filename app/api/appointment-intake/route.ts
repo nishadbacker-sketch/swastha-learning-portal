@@ -76,8 +76,19 @@ export async function POST(request: NextRequest) {
   const support = text(raw.support, 350);
   const note = text(raw.message ?? raw.reason, 1500);
   const reason = [support, note].filter(Boolean).join(" — ").slice(0, 2000);
+  // Optional public child-development screening: require a complete, fixed 25-answer set.
+  const hasScreening = raw.screening_answers !== undefined;
+  const answers = raw.screening_answers;
+  if (hasScreening) {
+    if (!answers || typeof answers !== "object" || Array.isArray(answers)) return fail("Invalid screening responses.", 400, origin);
+    const entries = Object.entries(answers as Record<string,unknown>);
+    if (entries.length !== 25 || entries.some(([k,v]) => !/^(?:[1-9]|1[0-9]|2[0-5])$/.test(k) || !["yes","sometimes","no"].includes(String(v)))) {
+      return fail("Please answer all 25 screening questions.", 400, origin);
+    }
+  }
   const consent = raw.consent === true;
   const submissionKey = typeof raw.submission_key === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw.submission_key) ? raw.submission_key : null;
+  if (hasScreening && !submissionKey) return fail("A valid assessment submission reference is required.", 400, origin);
   const phonePattern = /^[+\d\s()-]{8,20}$/;
   const validDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(new Date(d + "T00:00:00Z").getTime()) && new Date(d + "T00:00:00Z").toISOString().slice(0,10) === d;
   if (guardian_name.length < 2 || child_name.length < 2 || !phonePattern.test(whatsapp_number) || (contact_differs && !phonePattern.test(contact_number || "")) || !consent ||
@@ -98,6 +109,13 @@ export async function POST(request: NextRequest) {
       .from("appointment_enquiries").select("id").eq("submission_key", submissionKey).maybeSingle();
     if (replayError) return fail("Appointment intake is unavailable.", 503, origin);
     if (existing) {
+      if (hasScreening) {
+        const {data:saved,error:lookupError}=await db.from("child_screening_submissions").select("student_id").eq("appointment_enquiry_id",existing.id).maybeSingle();
+        if(lookupError||!saved) return fail("We could not verify the saved assessment.",503,origin);
+        const {data:student,error:studentError}=await db.from("students").select("student_code").eq("id",saved.student_id).maybeSingle();
+        if(studentError||!student) return fail("We could not verify the student ID.",503,origin);
+        return NextResponse.json({ok:true,message:"Assessment already received.",student_code:student.student_code},{status:200,headers:cors(origin)});
+      }
       return NextResponse.json({ ok: true, message: "Appointment request already received." }, { status: 200, headers: cors(origin) });
     }
   }
@@ -122,6 +140,25 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  if (hasScreening) {
+    // The database RPC saves the appointment, a new permanent pending student ID,
+    // and all 25 responses atomically. A phone number is only a matching hint,
+    // never proof of access to an existing child's record.
+    const {data:stored,error:screenError}=await db.rpc("swastha_record_public_screening",{p_request:{
+      submission_key:submissionKey,guardian_name,whatsapp_number,
+      contact_differs,contact_number,child_name,date_of_birth,age_range,current_class,
+      preferred_date,preferred_time,reason,source:"website_free_screening",screening_answers:answers
+    }});
+    if(screenError){
+      if(submissionKey && screenError.code==="23505"){
+        const {data:duplicate}=await db.from("appointment_enquiries").select("id").eq("submission_key",submissionKey).maybeSingle();
+        if(duplicate)return NextResponse.json({ok:true,message:"Assessment already received."},{status:200,headers:cors(origin)});
+      }
+      console.error("Screening intake failed:",screenError.code);
+      return fail("We could not save the assessment. Please try again.",503,origin);
+    }
+    return NextResponse.json({ok:true,message:"Free assessment saved.",student_code:stored?.student_code||null},{status:201,headers:cors(origin)});
+  }
   const { error } = await db.from("appointment_enquiries").insert({
     submission_key: submissionKey, guardian_name, whatsapp_number, contact_differs, contact_number, child_name, date_of_birth, age_range, current_class,
     preferred_date, preferred_time, reason, consent: true, source: origin === "https://portal.swasthalearning.com" ? "portal_appointment" : "website_appointment"
