@@ -77,9 +77,11 @@ export default function FreeAssessmentResultsStaff(){
    const response=await fetch("/api/staff/free-assessment-results",{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
    const payload=(await response.json()) as Payload;
    if(!response.ok)throw Error(payload.error||"Unable to load free assessment results.");
-   setResults(payload.results||[]);setRole(payload.role||"");
-   setSelectedId(previous=>previous&&payload.results?.some(row=>row.id===previous)?previous:null);
-  }catch(e){setError(e instanceof Error?e.message:"Unable to load free assessment results.");}
+   const items=Array.isArray(payload.results)?payload.results:[];
+   setResults(items);setRole(payload.role||"");
+   // Show the most recent saved screening immediately; staff should not have to guess that a row must be selected.
+   setSelectedId(previous=>previous&&items.some(row=>row.id===previous)?previous:(items[0]?.id||null));
+  }catch(e){setResults([]);setSelectedId(null);setError(e instanceof Error?e.message:"Unable to load free assessment results.");}
   finally{setLoading(false);}
  },[router]);
  useEffect(()=>{void load();},[load]);
@@ -110,14 +112,14 @@ export default function FreeAssessmentResultsStaff(){
      <button type="button" style={button} onClick={()=>void load()} disabled={loading}>Refresh results</button>
     </div>
    </section>
-   {error&&<section role="alert" style={{...panel,color:"#a42623"}}>{error}</section>}
+   {error&&<section role="alert" style={{...panel,color:"#a42623"}}><strong>Results could not be loaded.</strong><p style={{margin:"6px 0 12px",fontSize:13}}>{error}</p><button type="button" style={button} onClick={()=>void load()} disabled={loading}>Try loading results again</button></section>}
    <section style={panel}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
      <h2 style={{margin:0,fontSize:19}}>Submitted screenings</h2>
-     <span style={{fontSize:12,color:"#5a6f68"}}>{loading?"Loading…":visible.length+" shown · "+results.length+" recent records"}</span>
+     <span role="status" style={{fontSize:12,color:"#5a6f68"}}>{loading?"Loading…":error?"Load failed":visible.length+" shown · "+results.length+" recent records"}</span>
     </div>
     {role==="teacher"&&<p style={{fontSize:12,color:"#566c65"}}>Only assessments for students assigned to your active teacher profile are shown.</p>}
-    {loading?<p>Loading authorized assessment results…</p>:!visible.length?<p style={{color:"#586c66"}}>No screening results found for this search.</p>:
+    {loading?<p>Loading authorized assessment results…</p>:error?<p style={{color:"#a42623"}}>Unable to retrieve saved screenings. See the error and retry above.</p>:!visible.length?<p style={{color:"#586c66"}}>{results.length?("No results match your search. Clear the search field to see all "+results.length+" saved screenings."):("No saved Free Assessments are visible to this account. Use Refresh results; teachers can only see assigned students.")}</p>:
      <div style={{display:"grid",gap:9,marginTop:14}}>
       {visible.map(row=><button key={row.id} type="button" aria-pressed={selectedId===row.id} onClick={()=>setSelectedId(row.id)}
        style={{textAlign:"left",display:"grid",gridTemplateColumns:"minmax(0,1fr) auto",gap:12,alignItems:"center",padding:14,borderRadius:10,border:selectedId===row.id?"2px solid #08734b":"1px solid #dbe8e1",background:selectedId===row.id?"#edf9f2":"white",cursor:"pointer"}}>
