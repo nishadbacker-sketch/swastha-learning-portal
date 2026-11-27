@@ -19,6 +19,7 @@ export const COMMON_TOOLS: Tool[] = [
   { label: "Staff Action Center", href: "/staff/actions", description: "Reviews, upcoming sessions and coordination priorities" },
   { label: "Session Calendar & Reports", href: "/staff/operations", description: "Calendar, approvals, workload and CSV export" },
   { label: "Courses & Assessments", href: "/staff/courses", description: "Browse published assessments and courses" },
+  { label: "Free Assessment Results", href: "/staff/free-assessment-results", description: "Review submitted 25-question screenings and SWA Student IDs" },
   { label: "In-Person Assessments", href: "/staff/in-person-assessments", description: "Record supervised assessments" },
   { label: "Certificates & Verification", href: "/staff/assessment-certificates", description: "Issue, download and verify approved certificates" },
   { label: "Student Coordination", href: "/teacher/coordination", description: "Student activities and team coordination" },

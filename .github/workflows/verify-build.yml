@@ -51,6 +51,8 @@ jobs:
           SWASTHA_SMOKE_BASE_URL: http://127.0.0.1:3100
       - name: Run parent portal source-regression checks (no user data writes)
         run: node --test tests/parent-portal-regression.test.mjs
+      - name: Verify protected free assessment staff results and navigation
+        run: node --test tests/free-assessment-staff-results.test.mjs
       - name: Verify assessment workflow source guards (no user data writes)
         run: node --test tests/assessment-workflow-regression.test.mjs
       - name: Verify email authentication and recovery UI safeguards
