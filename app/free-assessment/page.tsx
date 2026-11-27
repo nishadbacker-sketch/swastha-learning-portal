@@ -138,6 +138,17 @@ export default function FreeChildDevelopmentAssessment(){
   finally{setSaving(false);}
  }
  return <main style={{minHeight:"100vh",background:"#f8faf7",color:"#183a35",fontFamily:"Arial,Helvetica,sans-serif"}}>
+  <style>{`@media print {
+    @page { size: A4; margin: 12mm; }
+    body { background: white !important; }
+    body * { visibility: hidden !important; }
+    #screening-dashboard, #screening-dashboard * { visibility: visible !important; }
+    #screening-dashboard { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; max-width: none !important; display: block !important; padding: 0 !important; margin: 0 !important; }
+    #screening-dashboard > section, #screening-dashboard > div { margin-bottom: 12px !important; }
+    #screening-report-actions, #screening-report-actions * { display: none !important; visibility: hidden !important; }
+    #screening-dashboard section { break-inside: avoid-page; page-break-inside: avoid; }
+    #screening-dashboard { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }`}</style>
   <header style={{background:"#fff",borderBottom:"1px solid #dce8e1",padding:"14px 5%"}}>
    <div style={{maxWidth:1040,margin:"auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}>
     <a href="https://swasthalearning.com/" aria-label="Swastha Learning Clinic home"><BrandLogo/></a>
@@ -273,7 +284,7 @@ export default function FreeChildDevelopmentAssessment(){
         <strong style={{display:"block",fontSize:16,marginTop:5}}>{malayalam?"വിദ്യാർത്ഥി ഐഡി: ":"Student ID: "}{studentCode}</strong>
         <span>{malayalam?"ഞങ്ങളുടെ ടീം രജിസ്റ്റർ ചെയ്ത നമ്പറിൽ ബന്ധപ്പെടും. ഇത് സ്ഥിരീകരിച്ച അപ്പോയിന്റ്മെന്റല്ല.":"Our team can follow up using the registered contact number. This does not confirm an appointment."}</span>
       </div>
-      <div style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:14}}>
+      <div id="screening-report-actions" style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:14}}>
         <button type="button" style={primary} onClick={()=>window.print()}>{malayalam?"റിപ്പോർട്ട് പ്രിന്റ് / PDF ആയി സംരക്ഷിക്കുക":"Download / Print Report (PDF)"}</button>
         <a href="https://swasthalearning.com/#appointment" style={{...primary,background:"#e9f4ee",color:"#075d47",textDecoration:"none",display:"inline-flex",alignItems:"center"}}>{malayalam?"ക്ലിനിക്കുമായി ബന്ധപ്പെടുക":"Contact Swastha Clinic"}</a>
       </div>
