@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
   const digest = (value: string) => createHmac("sha256", key).update(value).digest("hex");
   const { data: allowed, error: limitError } = await db.rpc("swastha_limit_appointment_request", {
     p_ip_key: digest("ip:" + ip),
-    p_phone_key: digest("phone:" + whatsapp_number.replace(/\\D/g, "")),
+    p_phone_key: digest("phone:" + whatsapp_number.replace(/\D/g, "")),
   });
   if (limitError) {
     console.error("Appointment rate limiter failed:", limitError.code);
