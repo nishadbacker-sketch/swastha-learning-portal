@@ -138,7 +138,7 @@ export default function FreeChildDevelopmentAssessment(){
     <span style={{fontSize:12,color:"#f4f6eb"}}>About 5–10 minutes · 25 questions · No payment</span>
    </section>
    <nav aria-label="Assessment steps" style={{display:"flex",flexWrap:"wrap",gap:8,margin:"18px 0"}}>
-    {(embedded?["questions","results"] as const:["questions","details","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="details"?"Child details & consent":x==="questions"?"Questionnaire":"Summary & guidance"}</span>)}
+    {(["questions","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="questions"?"Questionnaire":"Summary & guidance"}</span>)}
    </nav>
    {!embedded&&step==="details"&&<section style={panel}>
     <h2 style={{fontSize:23,margin:"0 0 8px"}}>Save your completed screening</h2>
@@ -166,7 +166,7 @@ export default function FreeChildDevelopmentAssessment(){
     </section>)}
     <section style={panel}><label style={{fontWeight:700,fontSize:14,display:"grid",gap:9}}>Additional parent observations<textarea rows={3} maxLength={700} value={details.notes} onChange={e=>update("notes",e.target.value)} style={{...field,fontFamily:"inherit"}} placeholder="What do you consider your child's strongest ability?"/></label>
      {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-     <div style={{display:"flex",justifyContent:"flex-end",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>{if(details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent){void requestGuidance();}else if(embedded){setError("Your child details were not transferred from the main website. Close this assessment, return to the main website, and click Go to Free Assessment again.");}else{setError("");setStep("details");window.scrollTo({top:0,behavior:"smooth"});}}}>{saving?"Saving assessment…":details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent?"Submit Assessment & View Summary →":(embedded?"Complete form handoff to submit":"Continue to Child Details →")}</button></div>
+     <div style={{display:"flex",justifyContent:"flex-end",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>{if(details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent){void requestGuidance();}else if(embedded){setError("Your child details were not transferred from the main website. Close this assessment, return to the main website, and click Go to Free Assessment again.");}else{setError("");setStep("details");window.scrollTo({top:0,behavior:"smooth"});}}}>{saving?"Saving assessment…":details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent?"Submit Assessment & View Summary →":(embedded?"Complete form handoff to submit":"Continue to save screening →")}</button></div>
     </section>
    </div>}
    {step==="results"&&<div style={{display:"grid",gap:16}}>
