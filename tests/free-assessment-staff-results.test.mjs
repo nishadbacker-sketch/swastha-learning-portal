@@ -31,3 +31,13 @@ test("screening staff result shows 25 responses, student ID and dashboard PDF ac
  assert.match(ui,/Download \/ Print Dashboard \(PDF\)/);
  assert.match(ui,/window\.print\(\)/);
 });
+
+test("live local staff screening API rejects unauthenticated requests without exposing records", {skip:!process.env.SWASTHA_SMOKE_BASE_URL},async()=>{
+ const base=process.env.SWASTHA_SMOKE_BASE_URL;
+ const response=await fetch(new URL("/api/staff/free-assessment-results",base),{redirect:"manual"});
+ assert.equal(response.status,401,"Anonymous access must be denied with HTTP 401");
+ assert.equal(response.headers.get("cache-control"),"private, no-store, max-age=0");
+ const data=await response.json();
+ assert.equal(typeof data.error,"string");
+ assert.equal(Object.hasOwn(data,"results"),false,"Anonymous clients must not receive screening records");
+});
