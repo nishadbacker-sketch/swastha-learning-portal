@@ -124,8 +124,12 @@ export default function FreeChildDevelopmentAssessment(){
    })});
    const body=await response.json().catch(()=>null);
    if(!response.ok)throw new Error(body?.error||"The clinic could not receive your request.");
+   const returnedCode=typeof body?.student_code==="string"?body.student_code.trim():"";
+   if(!/^SWA-[0-9]{4}-[0-9]{6,}$/.test(returnedCode)){
+     throw new Error("Your answers may have been saved, but the student ID could not be confirmed. Please retry without changing the answers.");
+   }
+   setStudentCode(returnedCode);
    setSent(true);
-   setStudentCode(typeof body?.student_code==="string"?body.student_code:"");
    setStep("results");
   }catch(e){setError(e instanceof Error?e.message:"Unable to submit the request. Please try again.");}
   finally{setSaving(false);}
@@ -181,33 +185,110 @@ export default function FreeChildDevelopmentAssessment(){
      <div style={{display:"flex",justifyContent:"flex-end",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>void requestGuidance()}>{saving?(malayalam?"സംരക്ഷിക്കുന്നു…":"Saving assessment…"):(malayalam?"വിലയിരുത്തൽ സമർപ്പിച്ച് ഫലം കാണുക →":"Submit Assessment & View Summary →")}</button></div>
     </section>
    </div>}
-   {step==="results"&&<div style={{display:"grid",gap:16}}>
+   {step==="results"&&sent&&studentCode&&<div style={{display:"grid",gap:16}} id="screening-dashboard">
+    <section style={{...panel,background:"linear-gradient(125deg,#07553f,#086b51)",color:"#fff"}}>
+      <div style={{fontSize:11,fontWeight:800,letterSpacing:1.6,color:"#baf2d6"}}>{malayalam?"കുട്ടികളുടെ പഠന-വികസന റിപ്പോർട്ട്":"CHILD LEARNING & DEVELOPMENT REPORT"}</div>
+      <h2 style={{margin:"9px 0 5px",fontSize:"clamp(22px,4vw,30px)",color:"white"}}>{malayalam?details.child+" – വിലയിരുത്തൽ ഡാഷ്‌ബോർഡ്":details.child+"'s Screening Dashboard"}</h2>
+      <p style={{margin:"5px 0 14px",fontSize:13,color:"#d9f4e9"}}>{malayalam?"നിങ്ങൾ നൽകിയ 25 ഉത്തരങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള റിപ്പോർട്ട്":"Your personalized parent-reported screening summary, based on all 25 answers"}</p>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:10}}>
+        <div style={{border:"1px solid #ffffff55",background:"#ffffff18",padding:16,borderRadius:12}}>
+          <div style={{fontSize:12,color:"#d4f4e3",marginBottom:7}}>{malayalam?"സ്ഥിരം വിദ്യാർത്ഥി ഐഡി":"PERMANENT STUDENT ID"}</div>
+          <strong style={{fontSize:22,letterSpacing:.6,color:"#fff",overflowWrap:"anywhere"}} data-student-id={studentCode}>{studentCode}</strong>
+        </div>
+        <div style={{border:"1px solid #ffffff55",background:"#ffffff18",padding:16,borderRadius:12}}>
+          <div style={{fontSize:12,color:"#d4f4e3",marginBottom:7}}>{malayalam?"ക്ലാസ്":"CURRENT CLASS"}</div>
+          <strong style={{fontSize:21,color:"#fff"}}>{details.grade}</strong>
+        </div>
+      </div>
+    </section>
+    <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12}}>
+      {([
+        ["✓", "25 / 25",malayalam?"പൂർത്തിയായ ചോദ്യങ്ങൾ":"Questions completed","#e9f8ef"],
+        ["☆",String(strengths.filter(r=>r.yes>0).length)+" / 5",malayalam?"കണ്ടെത്തിയ മികവിന്റെ മേഖലകൾ":"Strength areas observed","#eaf3ff"],
+        ["▥",String(discuss.length)+" / 10",malayalam?"കൂടുതൽ ചർച്ച ചെയ്യാവുന്ന മേഖലകൾ":"Areas to discuss","#fff1e5"],
+        ["♧",malayalam?"സൗജന്യം":"Free",malayalam?"മാർഗനിർദേശ ചർച്ച":"Guidance discussion","#f2eafa"],
+        ["▤",malayalam?"സംരക്ഷിച്ചു":"Saved",malayalam?"വിദ്യാർത്ഥി ഐഡിയുമായി ബന്ധിപ്പിച്ചു":"Linked to student ID","#e8f8f1"]
+      ] as const).map(([symbol,value,label,bg])=><div key={label} style={{...panel,background:bg,padding:16,boxShadow:"none"}}>
+         <div aria-hidden="true" style={{fontSize:26,color:"#087e50"}}>{symbol}</div>
+         <strong style={{display:"block",fontSize:23,margin:"9px 0 5px",color:"#0b3056"}}>{value}</strong>
+         <div style={{fontSize:12,fontWeight:700,color:"#405e61"}}>{label}</div>
+      </div>)}
+    </section>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,410px),1fr))",gap:14}}>
+      <section style={panel}>
+        <h3 style={{margin:"0 0 7px",fontSize:20,color:"#0b3056"}}>{malayalam?"▥ കുട്ടിയുടെ വികസന മേഖലകൾ":"▥ How your child is doing"}</h3>
+        <p style={{margin:"0 0 15px",color:"#667a74",fontSize:12}}>{malayalam?"ഓരോ മേഖലയിലും രക്ഷിതാവ് തിരഞ്ഞെടുത്ത ഉത്തരങ്ങളുടെ എണ്ണം. ഇത് രോഗനിർണ്ണയമല്ല.":"The bars represent counts of the parent's Yes / Sometimes / No responses, not clinical scores."}</p>
+        {development.map(r=><div key={r.area} style={{marginBottom:15}}>
+          <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"baseline",fontSize:12,fontWeight:700,marginBottom:6}}>
+            <span>{malayalam?ML_AREAS[r.area]:r.area}</span><span style={{whiteSpace:"nowrap"}}>{r.yes}/{r.total} {malayalam?"അതെ":"Yes"}</span>
+          </div>
+          <div role="img" aria-label={r.area+": "+r.yes+" yes, "+r.sometimes+" sometimes, "+r.no+" no"} style={{height:13,background:"#e5ece9",display:"flex",overflow:"hidden",borderRadius:99}}>
+            <div style={{width:(r.yes/r.total*100)+"%",background:"#079756"}}/>
+            <div style={{width:(r.sometimes/r.total*100)+"%",background:"#eea23e"}}/>
+            <div style={{width:(r.no/r.total*100)+"%",background:"#9aaec4"}}/>
+          </div>
+        </div>)}
+        <div style={{display:"flex",gap:15,flexWrap:"wrap",fontSize:11,color:"#51666b"}}>
+          <span>🟢 {malayalam?"അതെ":"Yes"}</span><span>🟠 {malayalam?"ചിലപ്പോൾ":"Sometimes"}</span><span>🔵 {malayalam?"ഇല്ല":"No"}</span>
+        </div>
+      </section>
+      <section style={panel}>
+        <h3 style={{margin:"0 0 7px",fontSize:20,color:"#0b3056"}}>{malayalam?"☆ കുട്ടിയുടെ മികവുകളും സാധ്യതകളും":"☆ Child Strengths & Potential"}</h3>
+        <p style={{fontSize:12,color:"#667a74",margin:"0 0 13px"}}>{malayalam?"അഞ്ച് മേഖലകളിലെ രക്ഷിതാവിന്റെ നിരീക്ഷണങ്ങൾ. ശതമാനം അനുകൂല ഉത്തരങ്ങളുടെ അനുപാതമാണ്.":"Five reported strength areas. Rings show the proportion of Yes answers within each area, not standardized ability scores."}</p>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(105px,1fr))",gap:14}}>
+          {strengths.map(r=><div key={r.area} style={{textAlign:"center"}}>
+            <div style={{height:91,width:91,margin:"0 auto 9px",borderRadius:"50%",background:"conic-gradient(#078d50 "+(r.yes/r.total*100)+"%,#e5e7e7 0)",display:"grid",placeItems:"center"}}>
+              <div style={{width:65,height:65,borderRadius:"50%",background:"#fff",display:"grid",placeItems:"center",fontWeight:800,fontSize:18,color:"#0e3e36"}}>{r.yes}/{r.total}</div>
+            </div>
+            <div style={{fontSize:12,fontWeight:750,lineHeight:1.3}}>{malayalam?ML_AREAS[r.area]:r.area}</div>
+          </div>)}
+        </div>
+      </section>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,410px),1fr))",gap:14}}>
+      <section style={panel}>
+        <h3 style={{margin:"0 0 14px",fontSize:20,color:"#0b3056"}}>{malayalam?"♧ രക്ഷിതാക്കൾക്കുള്ള ലളിതമായ നിർദേശങ്ങൾ":"♧ Parent-friendly insights"}</h3>
+        <div style={{display:"grid",gap:10}}>
+          <div style={{background:"#ecf9f1",borderRadius:11,padding:14,fontSize:13,lineHeight:1.65}}>
+            <strong>{malayalam?"മികവുകൾ തിരിച്ചറിയുക":"Recognize strengths"}</strong>
+            <div>{malayalam?"കുട്ടി താൽപര്യവും കഴിവും കാണിക്കുന്ന മേഖലകളെ പ്രോത്സാഹിപ്പിക്കുക.":"Encourage activities in areas where you report confidence or interest."}</div>
+          </div>
+          <div style={{background:"#fff3e7",borderRadius:11,padding:14,fontSize:13,lineHeight:1.65}}>
+            <strong>{malayalam?"സഹായം ആവശ്യമായ മേഖലകൾ":"Areas to explore"}</strong>
+            <div>{discuss.length?(malayalam?"ചിലപ്പോൾ അല്ലെങ്കിൽ ഇല്ല എന്ന ഉത്തരങ്ങളുള്ള "+discuss.length+" വികസന മേഖലകളെക്കുറിച്ച് അധ്യാപകനുമായി സംസാരിക്കുക.":"Discuss the "+discuss.length+" development areas with Sometimes or No responses with an educator."):(malayalam?"ഈ ഉത്തരങ്ങളിൽ പ്രത്യേക ബുദ്ധിമുട്ടുകളൊന്നും രേഖപ്പെടുത്തിയിട്ടില്ല.":"No particular development difficulties were flagged in these responses.")}</div>
+          </div>
+          <div style={{background:"#ebf6ff",borderRadius:11,padding:14,fontSize:13,lineHeight:1.65}}>
+            <strong>{malayalam?"വീട്ടിലെ പിന്തുണ":"Support at home"}</strong>
+            <div>{malayalam?"ചെറിയ പഠന പ്രവർത്തനങ്ങൾ, ഇടവേളകൾ, കളികൾ എന്നിവ കുട്ടിയുടെ താൽപര്യത്തിനനുസരിച്ച് ആസൂത്രണം ചെയ്യാം.":"Try short age-appropriate learning activities, play, positive feedback and regular breaks."}</div>
+          </div>
+        </div>
+      </section>
+      <section style={panel}>
+        <h3 style={{margin:"0 0 14px",fontSize:20,color:"#0b3056"}}>{malayalam?"♧ നിർദേശിക്കുന്ന അടുത്ത ഘട്ടങ്ങൾ":"♧ Recommended next steps"}</h3>
+        {([
+          ["1",malayalam?"അധ്യാപകനുമായി സംസാരിക്കുക":"Book a guidance discussion",malayalam?"കുട്ടിയുടെ ഉത്തരങ്ങൾ സാഹചര്യത്തിനനുസരിച്ച് വിലയിരുത്താം.":"Discuss the screening in context with a Swastha educator."],
+          ["2",malayalam?"അനുയോജ്യമായ പഠന പിന്തുണ കണ്ടെത്തുക":"Explore a suitable learning program",malayalam?"താൽപര്യമുള്ളവർക്ക് ആവശ്യമായ പഠന സഹായ പരിപാടികൾ അന്വേഷിക്കാം.":"Ask which optional learning activities or courses may be helpful."],
+          ["3",malayalam?"പുരോഗതി വീണ്ടും വിലയിരുത്തുക":"Review progress again",malayalam?"കുറച്ച് കാലത്തിനു ശേഷം തുടർ നിരീക്ഷണങ്ങളുമായി താരതമ്യം ചെയ്യാം.":"Discuss a later follow-up to compare parent observations."]
+        ] as const).map(([number,heading,body])=><div key={number} style={{padding:13,background:"#f1f8f4",border:"1px solid #dce8e1",borderRadius:10,marginBottom:9}}>
+          <div style={{fontWeight:800,color:"#0b4f3f",marginBottom:5,fontSize:13}}>{number}. {heading}</div>
+          <div style={{fontSize:12,lineHeight:1.6,color:"#546b6c"}}>{body}</div>
+        </div>)}
+        <p style={{fontSize:12,color:"#667a74"}}>{malayalam?"ഒരു കോഴ്സിനും ഫീസ് നൽകേണ്ട നിർബന്ധമില്ല.":"Courses and further assessments are optional. No purchase is required."}</p>
+      </section>
+    </div>
     <section style={panel}>
-     <div style={{fontSize:12,fontWeight:750,color:"#176b58"}}>{malayalam?"ചോദ്യാവലി പൂർത്തിയായി · 25/25":"QUESTIONNAIRE COMPLETED · 25/25"}</div>
-     <h2 style={{fontSize:26,margin:"9px 0 6px"}}>{malayalam?`${details.child} – സ്ക്രീനിംഗ് സംഗ്രഹം`:`${details.child}\u0027s Screening Summary`}</h2>
-     <p style={{color:"#667a74",fontSize:13}}>{malayalam?"നിങ്ങൾ നൽകിയ ഉത്തരങ്ങളുടെ അടിസ്ഥാനത്തിലുള്ള സംഗ്രഹമാണിത്. ഇത് രക്ഷിതാവിന്റെ നിരീക്ഷണങ്ങൾ മാത്രമാണ്; വിശദമായി മനസ്സിലാക്കാൻ സ്വാസ്ഥ അധ്യാപകന്റെ സഹായം ലഭിക്കും.":"Here is what your responses indicate. The summary reflects parent observations only; a Swastha educator can help you interpret them in context."}</p>
-     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10,marginTop:16}}>
-      <div style={{padding:16,background:"#eaf4ef",borderRadius:10}}><strong style={{color:"#176b58",fontSize:26}}>{strengths.filter(x=>x.yes>0).length}/5</strong><div style={{fontSize:13}}>{malayalam?"അതെ എന്നു രേഖപ്പെടുത്തിയ മികവിന്റെ മേഖലകൾ":"Strength areas with a Yes response"}</div></div>
-      <div style={{padding:16,background:"#fff2e5",borderRadius:10}}><strong style={{color:"#9c570f",fontSize:26}}>{discuss.length}/10</strong><div style={{fontSize:13}}>{malayalam?"കൂടുതൽ ചർച്ച ചെയ്യാവുന്ന വികസന മേഖലകൾ":"Development areas to discuss"}</div></div>
-     </div>
+      <h3 style={{margin:"0 0 12px",fontSize:19,color:"#0b3056"}}>{malayalam?"റിപ്പോർട്ടും തുടർനടപടികളും":"Your report & follow-up"}</h3>
+      <div role="status" style={{padding:14,borderRadius:10,background:"#eaf4ef",color:"#075c44",fontSize:13,lineHeight:1.7}}>
+        {malayalam?"25 ഉത്തരങ്ങളും വിജയകരമായി സംരക്ഷിച്ചു.":"All 25 responses were saved successfully."}
+        <strong style={{display:"block",fontSize:16,marginTop:5}}>{malayalam?"വിദ്യാർത്ഥി ഐഡി: ":"Student ID: "}{studentCode}</strong>
+        <span>{malayalam?"ഞങ്ങളുടെ ടീം രജിസ്റ്റർ ചെയ്ത നമ്പറിൽ ബന്ധപ്പെടും. ഇത് സ്ഥിരീകരിച്ച അപ്പോയിന്റ്മെന്റല്ല.":"Our team can follow up using the registered contact number. This does not confirm an appointment."}</span>
+      </div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:14}}>
+        <button type="button" style={primary} onClick={()=>window.print()}>{malayalam?"റിപ്പോർട്ട് പ്രിന്റ് / PDF ആയി സംരക്ഷിക്കുക":"Download / Print Report (PDF)"}</button>
+        <a href="https://swasthalearning.com/#appointment" style={{...primary,background:"#e9f4ee",color:"#075d47",textDecoration:"none",display:"inline-flex",alignItems:"center"}}>{malayalam?"ക്ലിനിക്കുമായി ബന്ധപ്പെടുക":"Contact Swastha Clinic"}</a>
+      </div>
     </section>
-    <section style={panel}><h3 style={{margin:"0 0 14px"}}>{malayalam?"വികസന മേഖലകൾ":"Development areas"}</h3>
-     {development.map(r=><div key={r.area} style={{marginBottom:17}}><div style={{display:"flex",justifyContent:"space-between",gap:12,fontSize:13,fontWeight:700}}><span>{malayalam?ML_AREAS[r.area]:r.area}</span><span>{r.yes} {malayalam?"അതെ":"Yes"} · {r.sometimes} {malayalam?"ചിലപ്പോൾ":"Sometimes"} · {r.no} {malayalam?"ഇല്ല":"No"}</span></div><div style={{height:11,display:"flex",borderRadius:20,overflow:"hidden",marginTop:8,background:"#e4eee7"}}><div style={{width:r.yes/r.total*100+"%",background:"#1b9865"}}/><div style={{width:r.sometimes/r.total*100+"%",background:"#eea23e"}}/><div style={{width:r.no/r.total*100+"%",background:"#9fb2c2"}}/></div></div>)}
-     <p style={{fontSize:12,color:"#667a74"}}>{malayalam?"പച്ച = അതെ, ഓറഞ്ച് = ചിലപ്പോൾ, ചാരനീല = ഇല്ല. ഇവ ഉത്തരങ്ങളുടെ എണ്ണമാണ്; രോഗനിർണ്ണയ ശതമാനമോ റാങ്കിംഗോ അല്ല.":"Green = Yes, orange = Sometimes, grey-blue = No. These are response counts, not diagnostic percentages or rankings."}</p>
-    </section>
-    <section style={panel}><h3 style={{margin:"0 0 13px"}}>{malayalam?"മികവുകളും സാധ്യതകളും":"Strengths & potential"}</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10}}>
-     {strengths.map(r=><div key={r.area} style={{padding:14,background:"#f4faf6",borderRadius:11,border:"1px solid #dce8e1"}}><div style={{fontSize:13,fontWeight:700}}>{malayalam?ML_AREAS[r.area]:r.area}</div><div style={{marginTop:10,fontSize:13,color:"#176b58"}}>{r.yes?(malayalam?"കണ്ടെത്തിയ മികവ്":"Reported strength"):r.sometimes?(malayalam?"ചിലപ്പോൾ കാണപ്പെടുന്നു":"Sometimes observed"):(malayalam?"കൂടുതൽ അന്വേഷിക്കുക":"Explore together")}</div></div>)}
-    </div></section>
-    <section style={panel}><h3 style={{fontSize:20,marginTop:0}}>Your next step: free guidance discussion</h3>
-     <p style={{lineHeight:1.65,fontSize:14}}>You may request a conversation with a Swastha educator. The clinic can review the screening with you, suggest home activities and discuss whether a suitable support course or an in-person assessment would be useful. No purchase is required.</p>
-     <div role="status" style={{padding:16,background:"#eaf4ef",borderRadius:10,color:"#176b58",fontWeight:700}}>
-      Your free assessment and all 25 answers have been submitted for clinic follow-up.
-      {studentCode&&<div style={{marginTop:6}}>Student ID: <strong>{studentCode}</strong></div>}
-      <div style={{fontSize:12,fontWeight:400,marginTop:6}}>The clinic will contact you using your registered number. This is not a confirmed appointment.</div>
-     </div>
-     {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:15}}><button type="button" style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>window.print()}>Print / Save Screening Summary</button></div>
-    </section>
+    <p style={{margin:"0",fontSize:11,color:"#61716c",lineHeight:1.6}}>{malayalam?"ഇത് രക്ഷിതാവിന്റെ നിരീക്ഷണങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള വിദ്യാഭ്യാസപരമായ സ്ക്രീനിംഗാണ്; മെഡിക്കൽ രോഗനിർണ്ണയമോ മാനദണ്ഡപ്പെടുത്തിയ ക്ലിനിക്കൽ പരിശോധനയോ അല്ല.":"This is an educational parent-report screening, not a medical diagnosis or standardized clinical assessment. Visuals represent response counts rather than validated diagnostic percentages."}</p>
    </div>}
   </div>
  </main>;
