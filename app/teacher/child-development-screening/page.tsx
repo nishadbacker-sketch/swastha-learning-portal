@@ -7,31 +7,31 @@ import {supabase} from "../../../lib/supabase";
 type Answer="yes"|"sometimes"|"no";
 type Item={id:number;area:string;question:string;positive?:boolean};
 const items:Item[]=[
-{id:1,area:"Academic Skills",question:"Does your child understand age-appropriate reading materials?",positive:true},
-{id:2,area:"Academic Skills",question:"Can your child understand and complete school lessons?",positive:true},
-{id:3,area:"Attention & Concentration",question:"Can your child stay focused while studying?",positive:true},
-{id:4,area:"Attention & Concentration",question:"Can your child finish an activity without being easily distracted?",positive:true},
-{id:5,area:"Memory & Cognitive Skills",question:"Can your child remember things they have learned?",positive:true},
-{id:6,area:"Memory & Cognitive Skills",question:"Can your child find solutions to small everyday problems?",positive:true},
-{id:7,area:"Language & Communication",question:"Can your child understand what others are saying?",positive:true},
-{id:8,area:"Language & Communication",question:"Can your child express their thoughts and needs clearly?",positive:true},
-{id:9,area:"Emotional Regulation",question:"Can your child manage emotions such as anger, sadness or disappointment?",positive:true},
-{id:10,area:"Emotional Regulation",question:"Can your child cope with unexpected changes calmly?",positive:true},
+{id:1,area:"Academic Skills",question:"Does your child have difficulty reading at the level expected for their class?",positive:false},
+{id:2,area:"Academic Skills",question:"Does your child find it difficult to understand school lessons?",positive:false},
+{id:3,area:"Attention & Concentration",question:"Does your child find it difficult to maintain attention while studying?",positive:false},
+{id:4,area:"Attention & Concentration",question:"Can your child complete an activity while staying focused?",positive:true},
+{id:5,area:"Memory & Cognitive Skills",question:"Does your child find it difficult to recall what they have learned?",positive:false},
+{id:6,area:"Memory & Cognitive Skills",question:"Can your child solve small everyday problems independently?",positive:true},
+{id:7,area:"Language & Communication",question:"Can your child understand what others say and the instructions they give?",positive:true},
+{id:8,area:"Language & Communication",question:"Can your child clearly express their own needs and ideas?",positive:true},
+{id:9,area:"Emotional Regulation",question:"Can your child manage anger, sadness and disappointment?",positive:true},
+{id:10,area:"Emotional Regulation",question:"Can your child adapt to unexpected changes?",positive:true},
 {id:11,area:"Social Skills",question:"Can your child interact comfortably with other children?",positive:true},
-{id:12,area:"Social Skills",question:"Can your child cooperate with others in group activities?",positive:true},
-{id:13,area:"Digital Habits",question:"Does your child follow reasonable limits on mobile phone and TV use?",positive:true},
-{id:14,area:"Digital Habits",question:"Does your child show interest in activities beyond digital screens?",positive:true},
-{id:15,area:"Responsibility & Independence",question:"Can your child do age-appropriate daily tasks independently?",positive:true},
-{id:16,area:"Responsibility & Independence",question:"Can your child finish tasks without constant reminders?",positive:true},
-{id:17,area:"Learning Motivation",question:"Does your child try to learn without frequent pressure?",positive:true},
-{id:18,area:"Learning Motivation",question:"Does your child show enthusiasm for learning something new?",positive:true},
-{id:19,area:"Self-Confidence",question:"Does your child approach new activities with confidence?",positive:true},
-{id:20,area:"Self-Confidence",question:"Is your child willing to speak or participate in front of others?",positive:true},
-{id:21,area:"Creativity",question:"Does your child create new ideas or try activities creatively?",positive:true},
-{id:22,area:"Special Talents",question:"Does your child show a particular talent in arts, music, dance, sports or another area?",positive:true},
-{id:23,area:"Curiosity & Exploration",question:"Does your child ask questions, explore and seek new knowledge?",positive:true},
-{id:24,area:"Leadership & Initiative",question:"Does your child take initiative and help lead activities?",positive:true},
-{id:25,area:"Empathy & Helping Skills",question:"Does your child notice others' feelings and offer help?",positive:true}
+{id:12,area:"Social Skills",question:"Can your child cooperate with others during group activities?",positive:true},
+{id:13,area:"Digital Habits",question:"Does your child follow limits on mobile phone and TV usage?",positive:true},
+{id:14,area:"Digital Habits",question:"Does your child enthusiastically join activities beyond digital devices?",positive:true},
+{id:15,area:"Responsibility & Independence",question:"Can your child do daily age-appropriate tasks independently?",positive:true},
+{id:16,area:"Responsibility & Independence",question:"Can your child finish responsibilities without constant reminders?",positive:true},
+{id:17,area:"Learning Motivation",question:"Does your child show interest in learning independently without pressure?",positive:true},
+{id:18,area:"Learning Motivation",question:"Does your child show enthusiasm for learning and understanding new things?",positive:true},
+{id:19,area:"Self-Confidence",question:"Does your child show confidence in trying new activities?",positive:true},
+{id:20,area:"Self-Confidence",question:"Does your child speak up when faced with mistakes or failures?",positive:true},
+{id:21,area:"Creativity",question:"Does your child generate new ideas or approach things creatively?",positive:true},
+{id:22,area:"Special Talents",question:"Does your child show a special talent in an area such as art, music, dance, sport or craft?",positive:true},
+{id:23,area:"Curiosity & Exploration",question:"Does your child ask questions, explore and seek answers about new things?",positive:true},
+{id:24,area:"Leadership & Initiative",question:"Does your child take initiative and help others during activities?",positive:true},
+{id:25,area:"Empathy & Helping Skills",question:"Does your child understand the feelings of others and offer help?",positive:true}
 ];
 const areas=[...new Set(items.map(x=>x.area))];
 const demo=[{name:"Student A",stage:"Baseline completed",action:"Guidance meeting"},{name:"Student B",stage:"Course ongoing",action:"Post-course check"},{name:"Student C",stage:"Follow-up complete",action:"Discuss progress"}];
@@ -59,7 +59,7 @@ export default function ChildDevelopmentScreeningPreview(){
   setAllowed(true);setChecking(false);
  }void check();return()=>{active=false;};},[router]);
  const answered=items.filter(x=>answers[x.id]).length;
- const summary=useMemo(()=>areas.map(area=>{const group=items.filter(x=>x.area===area);const selected=group.filter(x=>answers[x.id]);const score=selected.length?Math.round(selected.reduce((n,x)=>n+({yes:2,sometimes:1,no:0}[answers[x.id]]),0)/(selected.length*2)*100):null;return{area,score,count:selected.length,total:group.length};}),[answers]);
+ const summary=useMemo(()=>areas.map(area=>{const group=items.filter(x=>x.area===area);const selected=group.filter(x=>answers[x.id]);const score=selected.length?Math.round(selected.reduce((n,x)=>n+(x.positive ? ({yes:2,sometimes:1,no:0}[answers[x.id]]) : ({yes:0,sometimes:1,no:2}[answers[x.id]])),0)/(selected.length*2)*100):null;return{area,score,count:selected.length,total:group.length};}),[answers]);
  const complete=answered===items.length;
  if(checking)return <main style={{padding:32}}>Checking staff access…</main>;
  if(!allowed)return <main style={{padding:32}} role="alert">{error||"Access denied."}</main>;
