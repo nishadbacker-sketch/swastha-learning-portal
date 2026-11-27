@@ -23,10 +23,10 @@ test("One Staff Workspace contains role-scoped tools and navigation without lega
 
 test("Teacher preserves working tabs but removes duplicate analytics and summary metrics",()=>{
  assert.match(teacher,/<StaffToolsMenu role="teacher" name=\{teacherName\}/);
- // The intentionally removed Overview sidebar button must not reappear.
- assert.doesNotMatch(teacher,/activeSection=\\{activeTab\\}/);
- assert.doesNotMatch(teacher,/onSectionChange=\\{id=>setActiveTab/);
- assert.doesNotMatch(teacher,/sections=\\{\\[/);
+ // The approved Overview sidebar button was removed; preserve that decision.
+ assert.ok(!teacher.includes("activeSection={activeTab}"));
+ assert.ok(!teacher.includes("onSectionChange={id=>setActiveTab"));
+ assert.ok(!teacher.includes("sections={["));
  // Only sidebar links are removed: existing tab views and their actions stay intact.
  for(const tab of ["students","assessments","activities"])assert.match(teacher,new RegExp('activeTab === "'+tab+'"'));
  assert.doesNotMatch(teacher,/<nav aria-label="Teacher dashboard sections"/);
