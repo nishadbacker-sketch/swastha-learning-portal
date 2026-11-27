@@ -53,10 +53,14 @@ export default function FreeChildDevelopmentAssessment(){
  const [embedded,setEmbedded]=useState(false);
  useEffect(()=>{
   const allowed=new Set(["https://swasthalearning.com","https://www.swasthalearning.com"]);
-  if(window.parent===window) return;
+  // A main-site button opens this page in a new tab with a trusted opener.
+  // Embedded mode remains supported when the main site uses an iframe.
+  const sender = window.opener && window.opener !== window
+    ? window.opener : window.parent !== window ? window.parent : null;
+  if(!sender) return;
   setEmbedded(true);
   const onMessage=(event:MessageEvent)=>{
-   if(!allowed.has(event.origin)||event.source!==window.parent) return;
+   if(!allowed.has(event.origin)||event.source!==sender) return;
    const payload=event.data;
    if(!payload||payload.type!=="swastha:free-assessment:details")return;
    const d=payload.details;
@@ -74,8 +78,8 @@ export default function FreeChildDevelopmentAssessment(){
    setStep("questions");
   };
   window.addEventListener("message",onMessage);
-  window.parent.postMessage({type:"swastha:free-assessment:ready"},"https://swasthalearning.com");
-  window.parent.postMessage({type:"swastha:free-assessment:ready"},"https://www.swasthalearning.com");
+  sender.postMessage({type:"swastha:free-assessment:ready"},"https://swasthalearning.com");
+  sender.postMessage({type:"swastha:free-assessment:ready"},"https://www.swasthalearning.com");
   return()=>window.removeEventListener("message",onMessage);
  },[]);
  const count=Object.keys(answers).length;
@@ -153,7 +157,7 @@ export default function FreeChildDevelopmentAssessment(){
     </section>)}
     <section style={panel}><label style={{fontWeight:700,fontSize:14,display:"grid",gap:9}}>Additional parent observations<textarea rows={3} maxLength={700} value={details.notes} onChange={e=>update("notes",e.target.value)} style={{...field,fontFamily:"inherit"}} placeholder="What do you consider your child's strongest ability?"/></label>
      {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-     <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>embedded?window.parent.postMessage({type:"swastha:free-assessment:back"},"*"):setStep("details")}>Back</button><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>void requestGuidance()}>{saving?"Saving assessment…":"Submit Assessment & View Summary →"}</button></div>
+     <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>embedded?window.close():setStep("details")}>Back</button><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>void requestGuidance()}>{saving?"Saving assessment…":"Submit Assessment & View Summary →"}</button></div>
     </section>
    </div>}
    {step==="results"&&<div style={{display:"grid",gap:16}}>
