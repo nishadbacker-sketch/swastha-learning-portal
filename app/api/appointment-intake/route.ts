@@ -152,12 +152,22 @@ export async function POST(request: NextRequest) {
     if(screenError){
       if(submissionKey && screenError.code==="23505"){
         const {data:duplicate}=await db.from("appointment_enquiries").select("id").eq("submission_key",submissionKey).maybeSingle();
-        if(duplicate)return NextResponse.json({ok:true,message:"Assessment already received."},{status:200,headers:cors(origin)});
+        if(duplicate){
+          const {data:saved,error:savedError}=await db.from("child_screening_submissions").select("student_id").eq("appointment_enquiry_id",duplicate.id).maybeSingle();
+          if(savedError||!saved)return fail("We could not verify the saved assessment.",503,origin);
+          const {data:student,error:studentError}=await db.from("students").select("student_code").eq("id",saved.student_id).maybeSingle();
+          if(studentError||!student?.student_code)return fail("We could not verify the student ID.",503,origin);
+          return NextResponse.json({ok:true,message:"Assessment already received.",student_code:student.student_code},{status:200,headers:cors(origin)});
+        }
       }
       console.error("Screening intake failed:",screenError.code);
       return fail("We could not save the assessment. Please try again.",503,origin);
     }
-    return NextResponse.json({ok:true,message:"Free assessment saved.",student_code:stored?.student_code||null},{status:201,headers:cors(origin)});
+    if(typeof stored?.student_code!=="string"||!stored.student_code.trim()){
+      console.error("Screening intake returned no student code");
+      return fail("The assessment was recorded but its student ID could not be confirmed. Please retry using the same page.",503,origin);
+    }
+    return NextResponse.json({ok:true,message:"Free assessment saved.",student_code:stored.student_code},{status:201,headers:cors(origin)});
   }
   const { error } = await db.from("appointment_enquiries").insert({
     submission_key: submissionKey, guardian_name, whatsapp_number, contact_differs, contact_number, child_name, date_of_birth, age_range, current_class,
