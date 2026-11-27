@@ -54,7 +54,7 @@ begin
     p_request->>'child_name',(p_request->>'date_of_birth')::date,nullif(p_request->>'age_range',''),
     p_request->>'current_class',nullif(p_request->>'preferred_date','')::date,
     nullif(p_request->>'preferred_time',''),p_request->>'reason',true,
-    p_request->>'source'
+    'website_appointment'
   ) returning id into v_enquiry;
   insert into public.students (full_name,date_of_birth,current_class,preferred_language,status)
   values (p_request->>'child_name',(p_request->>'date_of_birth')::date,p_request->>'current_class','en','pending')
