@@ -55,14 +55,16 @@ export default function FreeChildDevelopmentAssessment(){
  const [website,setWebsite]=useState("");
  const key=useRef<string|null>(null);
  const [embedded,setEmbedded]=useState(false);
+ const [handoffMode,setHandoffMode]=useState<"checking"|"standalone"|"embedded">("checking");
  useEffect(()=>{
   const allowed=new Set(["https://swasthalearning.com","https://www.swasthalearning.com"]);
   // A main-site button opens this page in a new tab with a trusted opener.
   // Embedded mode remains supported when the main site uses an iframe.
   const sender = window.opener && window.opener !== window
     ? window.opener : window.parent !== window ? window.parent : null;
-  if(!sender) return;
+  if(!sender){setHandoffMode("standalone");return;}
   setEmbedded(true);
+  setHandoffMode("embedded");
   const onMessage=(event:MessageEvent)=>{
    if(!allowed.has(event.origin)||event.source!==sender) return;
    const payload=event.data;
@@ -100,13 +102,12 @@ export default function FreeChildDevelopmentAssessment(){
  function update<K extends keyof Details>(name:K,value:Details[K]){setDetails(p=>({...p,[name]:value}));key.current=null;}
  async function requestGuidance(){
   setError("");
+  if(Object.keys(answers).length!==25){setError("Please answer all 25 questions before submitting.");return;}
   if(!details.guardian.trim()||!details.child.trim()||!details.phone.trim()||!details.dob||!details.grade||!details.consent){
-    if(embedded){
-      setError("We could not receive the parent and child details from the main website. Close this assessment and select Go to Free Assessment again. Your answers have not been submitted.");
-    }else{
-      setStep("details");
-      setError("Please complete your child details and consent before submitting.");
-    }
+    setError(embedded
+      ? "Your child details were not received from the main website. Close this assessment and open it again using Go to Free Assessment."
+      : "Please complete the child details and consent at the top of this page before submitting.");
+    if(!embedded)document.getElementById("screening-details")?.scrollIntoView({behavior:"smooth",block:"start"});
     return;
   }
   if(website){setError("Invalid submission.");return;}
@@ -152,10 +153,10 @@ export default function FreeChildDevelopmentAssessment(){
    <nav aria-label="Assessment steps" style={{display:"flex",flexWrap:"wrap",gap:8,margin:"18px 0"}}>
     {(["questions","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="questions"?(malayalam?"ചോദ്യാവലി":"Questionnaire"):(malayalam?"ഫലവും മാർഗനിർദേശവും":"Summary & guidance")}</span>)}
    </nav>
-   {!embedded&&step==="details"&&<section style={panel}>
-    <h2 style={{fontSize:23,margin:"0 0 8px"}}>{malayalam?"പൂർത്തിയാക്കിയ വിലയിരുത്തൽ സംരക്ഷിക്കുക":"Save your completed screening"}</h2>
-    <p style={{fontSize:13,color:"#667a74",marginBottom:18}}>{malayalam?"25 ചോദ്യങ്ങൾക്കുള്ള ഉത്തരങ്ങൾ തയ്യാറായി. അവ സ്വാസ്ഥ വിദ്യാർത്ഥി ഐഡിയുമായി ബന്ധപ്പെടുത്തി സൂക്ഷിക്കാൻ കുട്ടിയുടെ വിവരങ്ങൾ നൽകുക.":"Your 25 responses are ready. Please provide your child details so we can save the answers under a Swastha student ID."}</p>
-    <form onSubmit={e=>{e.preventDefault();void requestGuidance();}}>
+   {handoffMode==="standalone"&&step==="questions"&&<section id="screening-details" style={panel}>
+    <h2 style={{fontSize:23,margin:"0 0 8px"}}>{malayalam?"സൗജന്യ വിലയിരുത്തലിനുള്ള കുട്ടിയുടെ വിവരങ്ങൾ":"Child details for your free screening"}</h2>
+    <p style={{fontSize:13,color:"#667a74",marginBottom:18}}>{malayalam?"താഴെയുള്ള ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകുന്നതിന് മുമ്പ് കുട്ടിയുടെ വിവരങ്ങൾ ഒരിക്കൽ മാത്രം നൽകൂ. വിലയിരുത്തൽ സമർപ്പിക്കുമ്പോൾ മാത്രമേ ഈ വിവരങ്ങൾ ഉപയോഗിക്കൂ.":"Enter these details once before answering the questions below. They are used only when you submit the screening."}</p>
+    <div>
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,280px),1fr))",gap:16}}>
       {([["guardian","Parent / guardian name","text"],["phone","Contact number","tel"],["child","Child's name","text"],["dob","Date of birth","date"],["grade","Current class","text"]] as const).map(([name,label,type])=><label key={name} style={{display:"grid",gap:7,fontWeight:700,fontSize:13}}>{label} *<input required type={type} style={field} max={type==="date"?new Date().toISOString().slice(0,10):undefined} value={details[name]} onChange={e=>update(name,e.target.value)}/></label>)}
      </div>
@@ -163,8 +164,7 @@ export default function FreeChildDevelopmentAssessment(){
      <label style={{display:"flex",alignItems:"flex-start",gap:9,marginTop:18,fontSize:12,lineHeight:1.6}}><input type="checkbox" required checked={details.consent} onChange={e=>update("consent",e.target.checked)}/> {malayalam?"എന്റെ കുട്ടിയുടെ ഉത്തരങ്ങൾ സ്വാസ്ഥ വിദ്യാർത്ഥി ഐഡിയോട് ബന്ധപ്പെടുത്തി സൂക്ഷിക്കുന്നതിനും ഈ സൗജന്യ വിലയിരുത്തലുമായി ബന്ധപ്പെട്ട് ക്ലിനിക്ക് എന്നെ ബന്ധപ്പെടുന്നതിനും ഞാൻ സമ്മതിക്കുന്നു. *":"I consent to saving my child\u0027s answers under a Swastha student ID and allow the clinic to contact me about this free screening. *"}</label>
      <p style={{marginTop:18,fontSize:12,color:"#667a74"}}>{malayalam?"ഇത് രക്ഷിതാവിന്റെ നിരീക്ഷണങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള വിദ്യാഭ്യാസപരമായ സ്ക്രീനിംഗാണ്; മെഡിക്കൽ രോഗനിർണ്ണയമോ മാനദണ്ഡപ്പെടുത്തിയ ക്ലിനിക്കൽ പരിശോധനയോ അല്ല.":"This is an educational parent-report screening, not a medical diagnosis or a standardized clinical assessment."}</p>
      {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-     <div style={{display:"flex",gap:10,flexWrap:"wrap"}}><button type="button" style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>{setError("");setStep("questions");}}>{malayalam?"ഉത്തരങ്ങൾ പരിശോധിക്കുക":"Review answers"}</button><button type="submit" disabled={saving} style={{...primary,opacity:saving?.6:1}}>{saving?(malayalam?"സംരക്ഷിക്കുന്നു…":"Saving screening…"):(malayalam?"വിലയിരുത്തൽ സംരക്ഷിച്ച് ഫലം കാണുക →":"Save Assessment & View Summary →")}</button></div>
-    </form>
+    </div>
    </section>}
    {step==="questions"&&<div style={{display:"grid",gap:14}}>
     <section style={panel}><h2 style={{fontSize:22,margin:"0 0 6px"}}>{malayalam?"കുട്ടികളുടെ വികസന ചോദ്യാവലി":"Child Development Questionnaire"}</h2><p style={{color:"#667a74",fontSize:13}}>{malayalam?"കുട്ടിയിൽ സാധാരണയായി നിങ്ങൾ കാണുന്ന കാര്യങ്ങളെ അടിസ്ഥാനമാക്കി ഉത്തരം നൽകുക. ശരിയോ തെറ്റോ ആയ ഉത്തരങ്ങളില്ല.":"Answer according to what you usually observe. There are no right or wrong answers."}</p>
@@ -178,7 +178,7 @@ export default function FreeChildDevelopmentAssessment(){
     </section>)}
     <section style={panel}><label style={{fontWeight:700,fontSize:14,display:"grid",gap:9}}>{malayalam?"രക്ഷിതാവിന്റെ അധിക നിരീക്ഷണങ്ങൾ":"Additional parent observations"}<textarea rows={3} maxLength={700} value={details.notes} onChange={e=>update("notes",e.target.value)} style={{...field,fontFamily:"inherit"}} placeholder={malayalam?"നിങ്ങളുടെ കുട്ടിയുടെ ഏറ്റവും വലിയ കഴിവ് എന്താണെന്ന് നിങ്ങൾ കരുതുന്നു?":"What do you consider your child\u0027s strongest ability?"}/></label>
      {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-     <div style={{display:"flex",justifyContent:"flex-end",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>{if(details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent){void requestGuidance();}else if(embedded){setError("Your child details were not transferred from the main website. Close this assessment, return to the main website, and click Go to Free Assessment again.");}else{setError("");setStep("details");window.scrollTo({top:0,behavior:"smooth"});}}}>{saving?(malayalam?"സംരക്ഷിക്കുന്നു…":"Saving assessment…"):details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent?(malayalam?"വിലയിരുത്തൽ സമർപ്പിച്ച് ഫലം കാണുക →":"Submit Assessment & View Summary →"):(embedded?"Complete form handoff to submit":"Continue to save screening →")}</button></div>
+     <div style={{display:"flex",justifyContent:"flex-end",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>void requestGuidance()}>{saving?(malayalam?"സംരക്ഷിക്കുന്നു…":"Saving assessment…"):(malayalam?"വിലയിരുത്തൽ സമർപ്പിച്ച് ഫലം കാണുക →":"Submit Assessment & View Summary →")}</button></div>
     </section>
    </div>}
    {step==="results"&&<div style={{display:"grid",gap:16}}>
