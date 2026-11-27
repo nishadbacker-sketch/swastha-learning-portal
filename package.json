@@ -19,8 +19,8 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "@supabase/supabase-js": "^2.57.4",
-    "nodemailer": "^7.0.10",
-    "jspdf": "^3.0.3",
+    "nodemailer": "10.6.0",
+    "jspdf": "4.2.1",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
