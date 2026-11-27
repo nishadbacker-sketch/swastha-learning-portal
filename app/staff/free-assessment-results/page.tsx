@@ -140,7 +140,7 @@ export default function FreeAssessmentResultsStaff(){
     </section>
     <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:11}}>
      <div style={panel}><strong style={{fontSize:24,color:"#0d6c52"}}>{answered}/25</strong><p style={{margin:"5px 0",fontSize:12}}>Questions answered</p></div>
-     <div style={panel}><strong style={{fontSize:24,color:"#0d6c52"}}>{AREAS.filter(a=>a===AREAS[0]||a).length}</strong><p style={{margin:"5px 0",fontSize:12}}>Development and strength areas</p></div>
+     <div style={panel}><strong style={{fontSize:24,color:"#0d6c52"}}>{AREAS.length}</strong><p style={{margin:"5px 0",fontSize:12}}>Development and strength areas</p></div>
      <div style={panel}><strong style={{fontSize:17,color:"#0d6c52"}}>{selected.reviewed_at?"Reviewed":"Awaiting staff review"}</strong><p style={{margin:"5px 0",fontSize:12}}>Screening status</p></div>
     </section>
     <section style={panel}>
