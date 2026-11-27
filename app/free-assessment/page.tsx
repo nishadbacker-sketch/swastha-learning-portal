@@ -178,7 +178,7 @@ export default function FreeChildDevelopmentAssessment(){
    {step==="results"&&sent&&studentCode&&<div style={{display:"grid",gap:16}} id="screening-dashboard">
     <section style={{...panel,background:"linear-gradient(125deg,#07553f,#086b51)",color:"#fff"}}>
       <div style={{fontSize:11,fontWeight:800,letterSpacing:1.6,color:"#baf2d6"}}>{malayalam?"കുട്ടികളുടെ പഠന-വികസന റിപ്പോർട്ട്":"CHILD LEARNING & DEVELOPMENT REPORT"}</div>
-      <h2 style={{margin:"9px 0 5px",fontSize:"clamp(22px,4vw,30px)",color:"white"}}>{malayalam?details.child+" – വിലയിരുത്തൽ ഡാഷ്‌ബോർഡ്":details.child+"'s Screening Dashboard"}</h2>
+      <h2 style={{margin:"9px 0 5px",fontSize:"clamp(22px,4vw,30px)",color:"white"}}>{malayalam?"ഡാഷ്‌ബോർഡ്":"Dashboard"}</h2>
       <p style={{margin:"5px 0 14px",fontSize:13,color:"#d9f4e9"}}>{malayalam?"നിങ്ങൾ നൽകിയ 25 ഉത്തരങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള റിപ്പോർട്ട്":"Your personalized parent-reported screening summary, based on all 25 answers"}</p>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:10}}>
         <div style={{border:"1px solid #ffffff55",background:"#ffffff18",padding:16,borderRadius:12}}>
