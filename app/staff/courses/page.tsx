@@ -80,6 +80,11 @@ export default function Courses(){
   <button type="button" style={button} onClick={()=>router.push(role==="teacher"?"/teacher/dashboard":role==="clinic_admin"?"/clinic-admin/dashboard":role==="owner"?"/owner/dashboard":"/admin/dashboard")}>Back to Staff Tools</button>
   <h1>Courses &amp; Assessments</h1>
   <p>All assessments now share the same card layout and Open assessment button. Previews are read-only; student assignment and teacher review remain in their existing workflows.</p>
+  {role&&<section style={{border:"1px solid #b9dac6",background:"#eef9f2",borderRadius:12,padding:17,marginBottom:18}}>
+   <h2 style={{margin:"0 0 6px",fontSize:19}}>Free Assessment</h2>
+   <p style={{margin:"0 0 12px",fontSize:13}}>Staff-only results of the public 25-question child development screening, including Student ID, full responses and parent-report dashboard.</p>
+   <button type="button" style={button} onClick={()=>router.push("/staff/free-assessment-results")}>Open Free Assessment Results</button>
+  </section>}
   <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
    <input aria-label="Search catalogue" placeholder="Search courses and assessments" value={search} onChange={e=>setSearch(e.target.value)} style={{padding:10,flex:1,minWidth:180,border:"1px solid #dce8e1",borderRadius:8}}/>
    <button type="button" style={button} onClick={()=>void load()}>Refresh</button>
