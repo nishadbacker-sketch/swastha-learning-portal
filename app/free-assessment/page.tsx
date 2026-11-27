@@ -1,6 +1,6 @@
 "use client";
 
-import {useMemo,useRef,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import BrandLogo from "../components/brand-logo";
 
 type Response = "yes"|"sometimes"|"no";
@@ -38,8 +38,8 @@ const choices:[Response,string][]=[["yes","Yes"],["sometimes","Sometimes"],["no"
 const field:React.CSSProperties={width:"100%",padding:"12px",border:"1px solid #cadfd6",borderRadius:9,background:"#fff",fontSize:15,color:"#183a35",boxSizing:"border-box"};
 const panel:React.CSSProperties={background:"#fff",padding:22,borderRadius:16,border:"1px solid #dce8e1",boxShadow:"0 4px 24px #153b2810"};
 const primary:React.CSSProperties={border:0,borderRadius:9,background:"#176b58",color:"#fff",padding:"13px 20px",fontSize:14,fontWeight:750,cursor:"pointer"};
-type Details={guardian:string;phone:string;child:string;dob:string;grade:string;notes:string;preferred_date:string;preferred_time:string;consent:boolean};
-const initial:Details={guardian:"",phone:"",child:"",dob:"",grade:"",notes:"",preferred_date:"",preferred_time:"",consent:false};
+type Details={guardian:string;phone:string;contact_differs:boolean;contact_number:string;child:string;dob:string;grade:string;notes:string;preferred_date:string;preferred_time:string;consent:boolean};
+const initial:Details={guardian:"",phone:"",contact_differs:false,contact_number:"",child:"",dob:"",grade:"",notes:"",preferred_date:"",preferred_time:"",consent:false};
 export default function FreeChildDevelopmentAssessment(){
  const [details,setDetails]=useState<Details>(initial);
  const [answers,setAnswers]=useState<AnswerKey>({});
@@ -50,6 +50,38 @@ export default function FreeChildDevelopmentAssessment(){
  const [error,setError]=useState("");
  const [website,setWebsite]=useState("");
  const key=useRef<string|null>(null);
+ const [embedded,setEmbedded]=useState(false);
+ useEffect(()=>{
+  const allowed=new Set(["https://swasthalearning.com","https://www.swasthalearning.com"]);
+  // A main-site button opens this page in a new tab with a trusted opener.
+  // Embedded mode remains supported when the main site uses an iframe.
+  const sender = window.opener && window.opener !== window
+    ? window.opener : window.parent !== window ? window.parent : null;
+  if(!sender) return;
+  setEmbedded(true);
+  const onMessage=(event:MessageEvent)=>{
+   if(!allowed.has(event.origin)||event.source!==sender) return;
+   const payload=event.data;
+   if(!payload||payload.type!=="swastha:free-assessment:details")return;
+   const d=payload.details;
+   if(!d||typeof d!=="object")return;
+   const get=(name:string)=>typeof d[name]==="string"?d[name].trim():"";
+   const next:Details={
+    guardian:get("guardian"),phone:get("phone"),contact_differs:d.contact_differs===true,contact_number:get("contact_number"),child:get("child"),
+    dob:get("dob"),grade:get("grade"),notes:get("notes"),
+    preferred_date:get("preferred_date"),preferred_time:get("preferred_time"),
+    consent:d.consent===true
+   };
+   if(next.guardian.length<2||next.child.length<2||!/^[+\\d\\s()-]{8,20}$/.test(next.phone)||
+     !/^\\d{4}-\\d{2}-\\d{2}$/.test(next.dob)||!next.grade||!next.consent)return;
+   setDetails(next);
+   setStep("questions");
+  };
+  window.addEventListener("message",onMessage);
+  sender.postMessage({type:"swastha:free-assessment:ready"},"https://swasthalearning.com");
+  sender.postMessage({type:"swastha:free-assessment:ready"},"https://www.swasthalearning.com");
+  return()=>window.removeEventListener("message",onMessage);
+ },[]);
  const count=Object.keys(answers).length;
  const rows=useMemo(()=>AREAS.map(area=>{
   const qq=QUESTIONS.filter(x=>x.area===area);
@@ -70,7 +102,7 @@ export default function FreeChildDevelopmentAssessment(){
   const reason=("Online Child Development Screening (25 parent responses). Areas for discussion: "+brief+". Parent notes: "+details.notes).slice(0,1450);
   try{
    const response=await fetch("/api/appointment-intake",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-    submission_key:key.current,guardian_name:details.guardian,whatsapp_number:details.phone,
+    submission_key:key.current,guardian_name:details.guardian,whatsapp_number:details.phone,contact_differs:details.contact_differs,contact_number:details.contact_differs?details.contact_number:null,
     child_name:details.child,date_of_birth:details.dob,current_class:details.grade,
     preferred_date:details.preferred_date||null,preferred_time:details.preferred_time||null,
     reason,consent:true,website:website,screening_answers:answers
@@ -98,9 +130,10 @@ export default function FreeChildDevelopmentAssessment(){
     <span style={{fontSize:12,color:"#f4f6eb"}}>About 5–10 minutes · 25 questions · No payment</span>
    </section>
    <nav aria-label="Assessment steps" style={{display:"flex",flexWrap:"wrap",gap:8,margin:"18px 0"}}>
-    {(["details","questions","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="details"?"Child details":x==="questions"?"Questionnaire":"Summary & guidance"}</span>)}
+    {(embedded?["questions","results"] as const:["details","questions","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="details"?"Child details":x==="questions"?"Questionnaire":"Summary & guidance"}</span>)}
    </nav>
-   {step==="details"&&<section style={panel}>
+   {embedded&&step==="details"&&<section role="status" style={panel}><h2>Continue your free assessment</h2><p>Complete the child details on the Swastha website to begin the questionnaire. Your details will be transferred only for this submission.</p></section>}
+   {!embedded&&step==="details"&&<section style={panel}>
     <h2 style={{fontSize:23,margin:"0 0 8px"}}>Tell us a little about your child</h2>
     <p style={{fontSize:13,color:"#667a74",marginBottom:18}}>These details are needed only when you request a follow-up. Nothing is sent to the clinic until you choose to submit the guidance request.</p>
     <form onSubmit={e=>{e.preventDefault();setError("");setStep("questions");}}>
@@ -124,7 +157,7 @@ export default function FreeChildDevelopmentAssessment(){
     </section>)}
     <section style={panel}><label style={{fontWeight:700,fontSize:14,display:"grid",gap:9}}>Additional parent observations<textarea rows={3} maxLength={700} value={details.notes} onChange={e=>update("notes",e.target.value)} style={{...field,fontFamily:"inherit"}} placeholder="What do you consider your child's strongest ability?"/></label>
      {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-     <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>setStep("details")}>Back</button><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>void requestGuidance()}>{saving?"Saving assessment…":"Submit Assessment & View Summary →"}</button></div>
+     <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>embedded?window.close():setStep("details")}>Back</button><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>void requestGuidance()}>{saving?"Saving assessment…":"Submit Assessment & View Summary →"}</button></div>
     </section>
    </div>}
    {step==="results"&&<div style={{display:"grid",gap:16}}>
