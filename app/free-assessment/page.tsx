@@ -55,16 +55,20 @@ export default function FreeChildDevelopmentAssessment(){
  const [website,setWebsite]=useState("");
  const key=useRef<string|null>(null);
  const [embedded,setEmbedded]=useState(false);
- const [handoffMode,setHandoffMode]=useState<"checking"|"standalone"|"embedded">("checking");
+
  useEffect(()=>{
   const allowed=new Set(["https://swasthalearning.com","https://www.swasthalearning.com"]);
   // A main-site button opens this page in a new tab with a trusted opener.
   // Embedded mode remains supported when the main site uses an iframe.
   const sender = window.opener && window.opener !== window
     ? window.opener : window.parent !== window ? window.parent : null;
-  if(!sender){setHandoffMode("standalone");return;}
+  if(!sender){
+    // All parent/guardian information is collected once on the main site.
+    // Opening the portal URL directly should never display a second copy.
+    window.location.replace("https://swasthalearning.com/#appointment");
+    return;
+  }
   setEmbedded(true);
-  setHandoffMode("embedded");
   const onMessage=(event:MessageEvent)=>{
    if(!allowed.has(event.origin)||event.source!==sender) return;
    const payload=event.data;
@@ -104,10 +108,9 @@ export default function FreeChildDevelopmentAssessment(){
   setError("");
   if(Object.keys(answers).length!==25){setError("Please answer all 25 questions before submitting.");return;}
   if(!details.guardian.trim()||!details.child.trim()||!details.phone.trim()||!details.dob||!details.grade||!details.consent){
-    setError(embedded
-      ? "Your child details were not received from the main website. Close this assessment and open it again using Go to Free Assessment."
-      : "Please complete the child details and consent at the top of this page before submitting.");
-    if(!embedded)document.getElementById("screening-details")?.scrollIntoView({behavior:"smooth",block:"start"});
+    setError(malayalam
+      ? "പ്രധാന വെബ്സൈറ്റിൽ നൽകിയ കുട്ടിയുടെ വിവരങ്ങൾ ലഭിച്ചിട്ടില്ല. വിലയിരുത്തൽ അടച്ച് പ്രധാന വെബ്സൈറ്റിൽ നിന്ന് വീണ്ടും തുറക്കുക."
+      : "Your child details were not transferred from the Swastha main website. Close the assessment and open it again using Go to Free Assessment.");
     return;
   }
   if(website){setError("Invalid submission.");return;}
@@ -157,19 +160,6 @@ export default function FreeChildDevelopmentAssessment(){
    <nav aria-label="Assessment steps" style={{display:"flex",flexWrap:"wrap",gap:8,margin:"18px 0"}}>
     {(["questions","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="questions"?(malayalam?"ചോദ്യാവലി":"Questionnaire"):(malayalam?"ഫലവും മാർഗനിർദേശവും":"Summary & guidance")}</span>)}
    </nav>
-   {handoffMode==="standalone"&&step==="questions"&&<section id="screening-details" style={panel}>
-    <h2 style={{fontSize:23,margin:"0 0 8px"}}>{malayalam?"സൗജന്യ വിലയിരുത്തലിനുള്ള കുട്ടിയുടെ വിവരങ്ങൾ":"Child details for your free screening"}</h2>
-    <p style={{fontSize:13,color:"#667a74",marginBottom:18}}>{malayalam?"താഴെയുള്ള ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകുന്നതിന് മുമ്പ് കുട്ടിയുടെ വിവരങ്ങൾ ഒരിക്കൽ മാത്രം നൽകൂ. വിലയിരുത്തൽ സമർപ്പിക്കുമ്പോൾ മാത്രമേ ഈ വിവരങ്ങൾ ഉപയോഗിക്കൂ.":"Enter these details once before answering the questions below. They are used only when you submit the screening."}</p>
-    <div>
-     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,280px),1fr))",gap:16}}>
-      {([["guardian","Parent / guardian name","text"],["phone","Contact number","tel"],["child","Child's name","text"],["dob","Date of birth","date"],["grade","Current class","text"]] as const).map(([name,label,type])=><label key={name} style={{display:"grid",gap:7,fontWeight:700,fontSize:13}}>{label} *<input required type={type} style={field} max={type==="date"?new Date().toISOString().slice(0,10):undefined} value={details[name]} onChange={e=>update(name,e.target.value)}/></label>)}
-     </div>
-     <label style={{display:"grid",gap:7,fontWeight:700,fontSize:13,marginTop:14,maxWidth:300}}>{malayalam?"ലിംഗം":"Gender"} *<select required style={field} value={details.gender} onChange={e=>update("gender",e.target.value)}><option value="">{malayalam?"ലിംഗം തിരഞ്ഞെടുക്കുക":"Select gender"}</option><option value="male">{malayalam?"ആൺകുട്ടി":"Male"}</option><option value="female">{malayalam?"പെൺകുട്ടി":"Female"}</option></select></label>
-     <label style={{display:"flex",alignItems:"flex-start",gap:9,marginTop:18,fontSize:12,lineHeight:1.6}}><input type="checkbox" required checked={details.consent} onChange={e=>update("consent",e.target.checked)}/> {malayalam?"എന്റെ കുട്ടിയുടെ ഉത്തരങ്ങൾ സ്വാസ്ഥ വിദ്യാർത്ഥി ഐഡിയോട് ബന്ധപ്പെടുത്തി സൂക്ഷിക്കുന്നതിനും ഈ സൗജന്യ വിലയിരുത്തലുമായി ബന്ധപ്പെട്ട് ക്ലിനിക്ക് എന്നെ ബന്ധപ്പെടുന്നതിനും ഞാൻ സമ്മതിക്കുന്നു. *":"I consent to saving my child\u0027s answers under a Swastha student ID and allow the clinic to contact me about this free screening. *"}</label>
-     <p style={{marginTop:18,fontSize:12,color:"#667a74"}}>{malayalam?"ഇത് രക്ഷിതാവിന്റെ നിരീക്ഷണങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള വിദ്യാഭ്യാസപരമായ സ്ക്രീനിംഗാണ്; മെഡിക്കൽ രോഗനിർണ്ണയമോ മാനദണ്ഡപ്പെടുത്തിയ ക്ലിനിക്കൽ പരിശോധനയോ അല്ല.":"This is an educational parent-report screening, not a medical diagnosis or a standardized clinical assessment."}</p>
-     {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-    </div>
-   </section>}
    {step==="questions"&&<div style={{display:"grid",gap:14}}>
     <section style={panel}><h2 style={{fontSize:22,margin:"0 0 6px"}}>{malayalam?"കുട്ടികളുടെ വികസന ചോദ്യാവലി":"Child Development Questionnaire"}</h2><p style={{color:"#667a74",fontSize:13}}>{malayalam?"കുട്ടിയിൽ സാധാരണയായി നിങ്ങൾ കാണുന്ന കാര്യങ്ങളെ അടിസ്ഥാനമാക്കി ഉത്തരം നൽകുക. ശരിയോ തെറ്റോ ആയ ഉത്തരങ്ങളില്ല.":"Answer according to what you usually observe. There are no right or wrong answers."}</p>
      <strong style={{fontSize:13}}>{malayalam?`25 ചോദ്യങ്ങളിൽ ${count} എണ്ണത്തിന് ഉത്തരം നൽകി`:`${count} of 25 answered`}</strong><div style={{marginTop:8,height:9,background:"#eaf4ef",borderRadius:20,overflow:"hidden"}}><div style={{height:"100%",width:(count/25*100)+"%",background:"#176b58"}}/></div></section>
