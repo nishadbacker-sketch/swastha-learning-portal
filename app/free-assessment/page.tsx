@@ -38,8 +38,8 @@ const choices:[Response,string][]=[["yes","Yes"],["sometimes","Sometimes"],["no"
 const field:React.CSSProperties={width:"100%",padding:"12px",border:"1px solid #cadfd6",borderRadius:9,background:"#fff",fontSize:15,color:"#183a35",boxSizing:"border-box"};
 const panel:React.CSSProperties={background:"#fff",padding:22,borderRadius:16,border:"1px solid #dce8e1",boxShadow:"0 4px 24px #153b2810"};
 const primary:React.CSSProperties={border:0,borderRadius:9,background:"#176b58",color:"#fff",padding:"13px 20px",fontSize:14,fontWeight:750,cursor:"pointer"};
-type Details={guardian:string;phone:string;child:string;dob:string;grade:string;notes:string;preferred_date:string;preferred_time:string;consent:boolean};
-const initial:Details={guardian:"",phone:"",child:"",dob:"",grade:"",notes:"",preferred_date:"",preferred_time:"",consent:false};
+type Details={guardian:string;phone:string;contact_differs:boolean;contact_number:string;child:string;dob:string;grade:string;notes:string;preferred_date:string;preferred_time:string;consent:boolean};
+const initial:Details={guardian:"",phone:"",contact_differs:false,contact_number:"",child:"",dob:"",grade:"",notes:"",preferred_date:"",preferred_time:"",consent:false};
 export default function FreeChildDevelopmentAssessment(){
  const [details,setDetails]=useState<Details>(initial);
  const [answers,setAnswers]=useState<AnswerKey>({});
@@ -63,7 +63,7 @@ export default function FreeChildDevelopmentAssessment(){
    if(!d||typeof d!=="object")return;
    const get=(name:string)=>typeof d[name]==="string"?d[name].trim():"";
    const next:Details={
-    guardian:get("guardian"),phone:get("phone"),child:get("child"),
+    guardian:get("guardian"),phone:get("phone"),contact_differs:d.contact_differs===true,contact_number:get("contact_number"),child:get("child"),
     dob:get("dob"),grade:get("grade"),notes:get("notes"),
     preferred_date:get("preferred_date"),preferred_time:get("preferred_time"),
     consent:d.consent===true
@@ -98,7 +98,7 @@ export default function FreeChildDevelopmentAssessment(){
   const reason=("Online Child Development Screening (25 parent responses). Areas for discussion: "+brief+". Parent notes: "+details.notes).slice(0,1450);
   try{
    const response=await fetch("/api/appointment-intake",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-    submission_key:key.current,guardian_name:details.guardian,whatsapp_number:details.phone,
+    submission_key:key.current,guardian_name:details.guardian,whatsapp_number:details.phone,contact_differs:details.contact_differs,contact_number:details.contact_differs?details.contact_number:null,
     child_name:details.child,date_of_birth:details.dob,current_class:details.grade,
     preferred_date:details.preferred_date||null,preferred_time:details.preferred_time||null,
     reason,consent:true,website:website,screening_answers:answers
