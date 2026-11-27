@@ -43,7 +43,7 @@ const initial:Details={guardian:"",phone:"",contact_differs:false,contact_number
 export default function FreeChildDevelopmentAssessment(){
  const [details,setDetails]=useState<Details>(initial);
  const [answers,setAnswers]=useState<AnswerKey>({});
- const [step,setStep]=useState<"details"|"questions"|"results">("details");
+ const [step,setStep]=useState<"details"|"questions"|"results">("questions");
  const [saving,setSaving]=useState(false);
  const [sent,setSent]=useState(false);
  const [studentCode,setStudentCode]=useState("");
@@ -73,7 +73,7 @@ export default function FreeChildDevelopmentAssessment(){
     consent:d.consent===true
    };
    if(next.guardian.length<2||next.child.length<2||!/^[+\\d\\s()-]{8,20}$/.test(next.phone)||
-     !/^\\d{4}-\\d{2}-\\d{2}$/.test(next.dob)||!next.grade||!["male","female"].includes(next.gender)||!next.consent)return;
+     !/^\\d{4}-\\d{2}-\\d{2}$/.test(next.dob)||!next.grade||!next.consent)return;
    setDetails(next);
    setStep("questions");
   };
@@ -94,7 +94,7 @@ export default function FreeChildDevelopmentAssessment(){
  function update<K extends keyof Details>(name:K,value:Details[K]){setDetails(p=>({...p,[name]:value}));key.current=null;}
  async function requestGuidance(){
   setError("");
-  if(!details.consent){setError("Please consent to the clinic contacting you.");return;}
+  if(!details.guardian.trim()||!details.child.trim()||!details.phone.trim()||!details.dob||!details.grade||!details.consent){setStep("details");setError("Please complete your child details and consent before submitting.");return;}
   if(website){setError("Invalid submission.");return;}
   setSaving(true);
   if(!key.current)key.current=crypto.randomUUID();
@@ -130,20 +130,20 @@ export default function FreeChildDevelopmentAssessment(){
     <span style={{fontSize:12,color:"#f4f6eb"}}>About 5–10 minutes · 25 questions · No payment</span>
    </section>
    <nav aria-label="Assessment steps" style={{display:"flex",flexWrap:"wrap",gap:8,margin:"18px 0"}}>
-    {(embedded?["questions","results"] as const:["details","questions","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="details"?"Child details":x==="questions"?"Questionnaire":"Summary & guidance"}</span>)}
+    {(["questions","details","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="details"?"Child details & consent":x==="questions"?"Questionnaire":"Summary & guidance"}</span>)}
    </nav>
-   {embedded&&step==="details"&&<section role="status" style={panel}><h2>Continue your free assessment</h2><p>Complete the child details on the Swastha website to begin the questionnaire. Your details will be transferred only for this submission.</p></section>}
-   {!embedded&&step==="details"&&<section style={panel}>
-    <h2 style={{fontSize:23,margin:"0 0 8px"}}>Tell us a little about your child</h2>
-    <p style={{fontSize:13,color:"#667a74",marginBottom:18}}>These details are needed only when you request a follow-up. Nothing is sent to the clinic until you choose to submit the guidance request.</p>
-    <form onSubmit={e=>{e.preventDefault();setError("");setStep("questions");}}>
+   {step==="details"&&<section style={panel}>
+    <h2 style={{fontSize:23,margin:"0 0 8px"}}>Save your completed screening</h2>
+    <p style={{fontSize:13,color:"#667a74",marginBottom:18}}>Your 25 responses are ready. Please provide your child details so we can save the answers under a Swastha student ID.</p>
+    <form onSubmit={e=>{e.preventDefault();void requestGuidance();}}>
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,280px),1fr))",gap:16}}>
       {([["guardian","Parent / guardian name","text"],["phone","Contact number","tel"],["child","Child's name","text"],["dob","Date of birth","date"],["grade","Current class","text"]] as const).map(([name,label,type])=><label key={name} style={{display:"grid",gap:7,fontWeight:700,fontSize:13}}>{label} *<input required type={type} style={field} max={type==="date"?new Date().toISOString().slice(0,10):undefined} value={details[name]} onChange={e=>update(name,e.target.value)}/></label>)}
      </div>
      <label style={{display:"grid",gap:7,fontWeight:700,fontSize:13,marginTop:14,maxWidth:300}}>Gender *<select required style={field} value={details.gender} onChange={e=>update("gender",e.target.value)}><option value="">Select gender</option><option value="male">Male</option><option value="female">Female</option></select></label>
      <label style={{display:"flex",alignItems:"flex-start",gap:9,marginTop:18,fontSize:12,lineHeight:1.6}}><input type="checkbox" required checked={details.consent} onChange={e=>update("consent",e.target.checked)}/> I consent to saving my child\'s answers under a Swastha student ID and allow the clinic to contact me about this free screening. *</label>
      <p style={{marginTop:18,fontSize:12,color:"#667a74"}}>This is an educational parent-report screening, not a medical diagnosis or a standardized clinical assessment.</p>
-     <button type="submit" style={primary}>Start Free Screening →</button>
+     {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
+     <div style={{display:"flex",gap:10,flexWrap:"wrap"}}><button type="button" style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>{setError("");setStep("questions");}}>Review answers</button><button type="submit" disabled={saving} style={{...primary,opacity:saving?.6:1}}>{saving?"Saving screening…":"Save Assessment & View Summary →"}</button></div>
     </form>
    </section>}
    {step==="questions"&&<div style={{display:"grid",gap:14}}>
@@ -158,7 +158,7 @@ export default function FreeChildDevelopmentAssessment(){
     </section>)}
     <section style={panel}><label style={{fontWeight:700,fontSize:14,display:"grid",gap:9}}>Additional parent observations<textarea rows={3} maxLength={700} value={details.notes} onChange={e=>update("notes",e.target.value)} style={{...field,fontFamily:"inherit"}} placeholder="What do you consider your child's strongest ability?"/></label>
      {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-     <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,background:"#eaf4ef",color:"#176b58"}} onClick={()=>embedded?window.close():setStep("details")}>Back</button><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>void requestGuidance()}>{saving?"Saving assessment…":"Submit Assessment & View Summary →"}</button></div>
+     <div style={{display:"flex",justifyContent:"flex-end",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>{if(details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent){void requestGuidance();}else{setError("");setStep("details");window.scrollTo({top:0,behavior:"smooth"});}}}>{saving?"Saving assessment…":details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent?"Submit Assessment & View Summary →":"Continue to Child Details →"}</button></div>
     </section>
    </div>}
    {step==="results"&&<div style={{display:"grid",gap:16}}>
