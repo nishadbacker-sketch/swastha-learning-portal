@@ -68,3 +68,23 @@ end;
 $$;
 revoke execute on function public.swastha_record_public_screening(jsonb) from public,anon,authenticated;
 grant execute on function public.swastha_record_public_screening(jsonb) to service_role;
+
+-- When a clinic staff member verifies and links an enquiry to an established
+-- parent/student record, move the screening to that permanent student ID.
+-- Do not delete or overwrite either student's historical records.
+create or replace function public.swastha_relink_screening_after_verified_appointment()
+returns trigger language plpgsql security definer set search_path = ''
+as $$
+begin
+  update public.child_screening_submissions
+     set student_id = NEW.student_id
+   where appointment_enquiry_id = NEW.enquiry_id
+     and student_id is distinct from NEW.student_id;
+  return NEW;
+end;
+$$;
+revoke execute on function public.swastha_relink_screening_after_verified_appointment() from public,anon,authenticated;
+drop trigger if exists swastha_verified_appointment_screening_relink on public.appointment_registration_links;
+create trigger swastha_verified_appointment_screening_relink
+after insert or update of student_id on public.appointment_registration_links
+for each row execute function public.swastha_relink_screening_after_verified_appointment();
