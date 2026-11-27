@@ -5,36 +5,38 @@ import BrandLogo from "../components/brand-logo";
 
 type Response = "yes"|"sometimes"|"no";
 type AnswerKey=Record<number,Response>;
-type Question={id:number;area:string;en:string};
+type Question={id:number;area:string;en:string;ml:string};
 const QUESTIONS:Question[]=[
- {id:1,area:"Academic Skills",en:"Does your child have reading skills appropriate for their age or class?"},
- {id:2,area:"Academic Skills",en:"Can your child understand the lessons taught at school?"},
- {id:3,area:"Attention & Concentration",en:"Can your child concentrate while studying?"},
- {id:4,area:"Attention & Concentration",en:"Can your child finish an activity without being easily distracted?"},
- {id:5,area:"Memory & Cognitive Skills",en:"Can your child remember things they have learned?"},
- {id:6,area:"Memory & Cognitive Skills",en:"Can your child independently solve small everyday problems?"},
- {id:7,area:"Language & Communication",en:"Can your child understand what others say and the instructions given?"},
- {id:8,area:"Language & Communication",en:"Can your child clearly express their own needs and ideas?"},
- {id:9,area:"Emotional Regulation",en:"Can your child manage emotions such as anger, sadness or disappointment?"},
- {id:10,area:"Emotional Regulation",en:"Can your child adapt to unexpected changes?"},
- {id:11,area:"Social Skills",en:"Can your child interact comfortably with other children?"},
- {id:12,area:"Social Skills",en:"Can your child cooperate with others in group activities?"},
- {id:13,area:"Digital Habits",en:"Does your child follow agreed limits for mobile phone and television use?"},
- {id:14,area:"Digital Habits",en:"Does your child participate enthusiastically in activities other than digital device use?"},
- {id:15,area:"Responsibility & Independence",en:"Does your child independently do age-appropriate everyday tasks?"},
- {id:16,area:"Responsibility & Independence",en:"Can your child complete responsibilities without constant reminders?"},
- {id:17,area:"Learning Motivation",en:"Does your child try to learn independently without being pressured?"},
- {id:18,area:"Learning Motivation",en:"Does your child show interest in learning new things and understanding them?"},
- {id:19,area:"Self-Confidence",en:"Does your child show confidence in taking part in new activities?"},
- {id:20,area:"Self-Confidence",en:"Can your child speak openly about mistakes or challenges?"},
- {id:21,area:"Creativity",en:"Does your child come up with new ideas or do things creatively?"},
- {id:22,area:"Special Talents",en:"Does your child show special ability in art, music, dance, sport or another area?"},
- {id:23,area:"Curiosity & Exploration",en:"Does your child ask questions and explore new things to find answers?"},
- {id:24,area:"Leadership & Initiative",en:"Does your child take initiative and help guide others in activities?"},
- {id:25,area:"Empathy & Helping Skills",en:"Does your child understand others' feelings and willingly offer help?"}
+ {id:1,area:"Academic Skills",en:"Does your child have reading skills appropriate for their age or class?",ml:"നിങ്ങളുടെ കുട്ടിക്ക് പ്രായത്തിനോ പഠിക്കുന്ന ക്ലാസിനോ അനുയോജ്യമായ വായനാകഴിവുണ്ടോ?"},
+ {id:2,area:"Academic Skills",en:"Can your child understand the lessons taught at school?",ml:"സ്കൂളിൽ പഠിപ്പിക്കുന്ന പാഠങ്ങൾ നിങ്ങളുടെ കുട്ടിക്ക് മനസ്സിലാക്കാൻ കഴിയുന്നുണ്ടോ?"},
+ {id:3,area:"Attention & Concentration",en:"Can your child concentrate while studying?",ml:"പഠിക്കുമ്പോൾ നിങ്ങളുടെ കുട്ടിക്ക് ശ്രദ്ധ കേന്ദ്രീകരിക്കാൻ കഴിയുന്നുണ്ടോ?"},
+ {id:4,area:"Attention & Concentration",en:"Can your child finish an activity without being easily distracted?",ml:"എളുപ്പത്തിൽ ശ്രദ്ധ തിരിയാതെ ഒരു പ്രവർത്തനം പൂർത്തിയാക്കാൻ നിങ്ങളുടെ കുട്ടിക്ക് കഴിയുമോ?"},
+ {id:5,area:"Memory & Cognitive Skills",en:"Can your child remember things they have learned?",ml:"പഠിച്ച കാര്യങ്ങൾ നിങ്ങളുടെ കുട്ടിക്ക് ഓർത്തെടുക്കാൻ കഴിയുന്നുണ്ടോ?"},
+ {id:6,area:"Memory & Cognitive Skills",en:"Can your child independently solve small everyday problems?",ml:"ദൈനംദിന ജീവിതത്തിലെ ചെറിയ പ്രശ്നങ്ങൾ നിങ്ങളുടെ കുട്ടിക്ക് സ്വയം പരിഹരിക്കാൻ കഴിയുമോ?"},
+ {id:7,area:"Language & Communication",en:"Can your child understand what others say and the instructions given?",ml:"മറ്റുള്ളവർ പറയുന്നതും നൽകുന്ന നിർദേശങ്ങളും നിങ്ങളുടെ കുട്ടിക്ക് മനസ്സിലാക്കാൻ കഴിയുമോ?"},
+ {id:8,area:"Language & Communication",en:"Can your child clearly express their own needs and ideas?",ml:"സ്വന്തം ആവശ്യങ്ങളും ആശയങ്ങളും വ്യക്തമായി പ്രകടിപ്പിക്കാൻ നിങ്ങളുടെ കുട്ടിക്ക് കഴിയുമോ?"},
+ {id:9,area:"Emotional Regulation",en:"Can your child manage emotions such as anger, sadness or disappointment?",ml:"ദേഷ്യം, സങ്കടം, നിരാശ തുടങ്ങിയ വികാരങ്ങൾ നിയന്ത്രിക്കാൻ നിങ്ങളുടെ കുട്ടിക്ക് കഴിയുമോ?"},
+ {id:10,area:"Emotional Regulation",en:"Can your child adapt to unexpected changes?",ml:"പ്രതീക്ഷിക്കാത്ത മാറ്റങ്ങളുമായി പൊരുത്തപ്പെടാൻ നിങ്ങളുടെ കുട്ടിക്ക് കഴിയുമോ?"},
+ {id:11,area:"Social Skills",en:"Can your child interact comfortably with other children?",ml:"മറ്റ് കുട്ടികളുമായി സൗകര്യപ്രദമായി ഇടപഴകാൻ നിങ്ങളുടെ കുട്ടിക്ക് കഴിയുമോ?"},
+ {id:12,area:"Social Skills",en:"Can your child cooperate with others in group activities?",ml:"കൂട്ടായ പ്രവർത്തനങ്ങളിൽ മറ്റുള്ളവരുമായി സഹകരിക്കാൻ നിങ്ങളുടെ കുട്ടിക്ക് കഴിയുമോ?"},
+ {id:13,area:"Digital Habits",en:"Does your child follow agreed limits for mobile phone and television use?",ml:"മൊബൈൽ ഫോണിന്റെയും ടെലിവിഷന്റെയും ഉപയോഗത്തിന് നിശ്ചയിച്ച പരിധികൾ നിങ്ങളുടെ കുട്ടി പാലിക്കാറുണ്ടോ?"},
+ {id:14,area:"Digital Habits",en:"Does your child participate enthusiastically in activities other than digital device use?",ml:"ഡിജിറ്റൽ ഉപകരണങ്ങളുടെ ഉപയോഗം ഒഴികെയുള്ള പ്രവർത്തനങ്ങളിൽ നിങ്ങളുടെ കുട്ടി താൽപര്യത്തോടെ പങ്കെടുക്കാറുണ്ടോ?"},
+ {id:15,area:"Responsibility & Independence",en:"Does your child independently do age-appropriate everyday tasks?",ml:"പ്രായത്തിന് അനുയോജ്യമായ ദൈനംദിന കാര്യങ്ങൾ നിങ്ങളുടെ കുട്ടി സ്വയം ചെയ്യാറുണ്ടോ?"},
+ {id:16,area:"Responsibility & Independence",en:"Can your child complete responsibilities without constant reminders?",ml:"നിരന്തരം ഓർമ്മിപ്പിക്കാതെ ഉത്തരവാദിത്വങ്ങൾ പൂർത്തിയാക്കാൻ നിങ്ങളുടെ കുട്ടിക്ക് കഴിയുമോ?"},
+ {id:17,area:"Learning Motivation",en:"Does your child try to learn independently without being pressured?",ml:"നിർബന്ധിക്കാതെ തന്നെ സ്വയം പഠിക്കാൻ നിങ്ങളുടെ കുട്ടി ശ്രമിക്കാറുണ്ടോ?"},
+ {id:18,area:"Learning Motivation",en:"Does your child show interest in learning new things and understanding them?",ml:"പുതിയ കാര്യങ്ങൾ പഠിക്കാനും മനസ്സിലാക്കാനും നിങ്ങളുടെ കുട്ടി താൽപര്യം കാണിക്കാറുണ്ടോ?"},
+ {id:19,area:"Self-Confidence",en:"Does your child show confidence in taking part in new activities?",ml:"പുതിയ പ്രവർത്തനങ്ങളിൽ പങ്കെടുക്കുമ്പോൾ നിങ്ങളുടെ കുട്ടി ആത്മവിശ്വാസം പ്രകടിപ്പിക്കാറുണ്ടോ?"},
+ {id:20,area:"Self-Confidence",en:"Can your child speak openly about mistakes or challenges?",ml:"തെറ്റുകളെക്കുറിച്ചോ ബുദ്ധിമുട്ടുകളെക്കുറിച്ചോ തുറന്നു സംസാരിക്കാൻ നിങ്ങളുടെ കുട്ടിക്ക് കഴിയുമോ?"},
+ {id:21,area:"Creativity",en:"Does your child come up with new ideas or do things creatively?",ml:"പുതിയ ആശയങ്ങൾ കണ്ടെത്തുകയോ കാര്യങ്ങൾ സർഗാത്മകമായി ചെയ്യുകയോ നിങ്ങളുടെ കുട്ടി ചെയ്യാറുണ്ടോ?"},
+ {id:22,area:"Special Talents",en:"Does your child show special ability in art, music, dance, sport or another area?",ml:"കല, സംഗീതം, നൃത്തം, കായികം അല്ലെങ്കിൽ മറ്റേതെങ്കിലും മേഖലയിൽ നിങ്ങളുടെ കുട്ടി പ്രത്യേക കഴിവ് പ്രകടിപ്പിക്കാറുണ്ടോ?"},
+ {id:23,area:"Curiosity & Exploration",en:"Does your child ask questions and explore new things to find answers?",ml:"ഉത്തരങ്ങൾ കണ്ടെത്താൻ നിങ്ങളുടെ കുട്ടി ചോദ്യങ്ങൾ ചോദിക്കുകയും പുതിയ കാര്യങ്ങൾ അന്വേഷിക്കുകയും ചെയ്യാറുണ്ടോ?"},
+ {id:24,area:"Leadership & Initiative",en:"Does your child take initiative and help guide others in activities?",ml:"പ്രവർത്തനങ്ങളിൽ മുൻകൈ എടുക്കാനും മറ്റുള്ളവരെ നയിക്കാൻ സഹായിക്കാനും നിങ്ങളുടെ കുട്ടിക്ക് കഴിയുമോ?"},
+ {id:25,area:"Empathy & Helping Skills",en:"Does your child understand others' feelings and willingly offer help?",ml:"മറ്റുള്ളവരുടെ വികാരങ്ങൾ മനസ്സിലാക്കി മനസ്സോടെ സഹായിക്കാൻ നിങ്ങളുടെ കുട്ടി തയ്യാറാകാറുണ്ടോ?"}
 ];
 const AREAS=Array.from(new Set(QUESTIONS.map(q=>q.area)));
-const choices:[Response,string][]=[["yes","Yes"],["sometimes","Sometimes"],["no","No"]];
+const choices:Response[]=["yes","sometimes","no"];
+const ML_AREAS:Record<string,string>={"Academic Skills":"അക്കാദമിക് കഴിവുകൾ","Attention & Concentration":"ശ്രദ്ധയും ഏകാഗ്രതയും","Memory & Cognitive Skills":"ഓർമ്മശക്തിയും ബൗദ്ധിക കഴിവുകളും","Language & Communication":"ഭാഷയും ആശയവിനിമയവും","Emotional Regulation":"വികാരനിയന്ത്രണം","Social Skills":"സാമൂഹിക കഴിവുകൾ","Digital Habits":"ഡിജിറ്റൽ ശീലങ്ങൾ","Responsibility & Independence":"ഉത്തരവാദിത്വവും സ്വയംപര്യാപ്തതയും","Learning Motivation":"പഠനതാൽപര്യം","Self-Confidence":"ആത്മവിശ്വാസം","Creativity":"സർഗാത്മകത","Special Talents":"പ്രത്യേക കഴിവുകൾ","Curiosity & Exploration":"ജിജ്ഞാസയും അന്വേഷണവും","Leadership & Initiative":"നേതൃത്വവും മുൻകൈയും","Empathy & Helping Skills":"സഹാനുഭൂതിയും സഹായമനോഭാവവും"};
+const ML_OPTIONS:Record<Response,string>={yes:"അതെ",sometimes:"ചിലപ്പോൾ",no:"ഇല്ല"};
 const field:React.CSSProperties={width:"100%",padding:"12px",border:"1px solid #cadfd6",borderRadius:9,background:"#fff",fontSize:15,color:"#183a35",boxSizing:"border-box"};
 const panel:React.CSSProperties={background:"#fff",padding:22,borderRadius:16,border:"1px solid #dce8e1",boxShadow:"0 4px 24px #153b2810"};
 const primary:React.CSSProperties={border:0,borderRadius:9,background:"#176b58",color:"#fff",padding:"13px 20px",fontSize:14,fontWeight:750,cursor:"pointer"};
@@ -43,6 +45,8 @@ const initial:Details={guardian:"",phone:"",contact_differs:false,contact_number
 export default function FreeChildDevelopmentAssessment(){
  const [details,setDetails]=useState<Details>(initial);
  const [answers,setAnswers]=useState<AnswerKey>({});
+ const [language,setLanguage]=useState<"en"|"ml">("en");
+ const malayalam=language==="ml";
  const [step,setStep]=useState<"details"|"questions"|"results">("questions");
  const [saving,setSaving]=useState(false);
  const [sent,setSent]=useState(false);
@@ -127,18 +131,24 @@ export default function FreeChildDevelopmentAssessment(){
   <header style={{background:"#fff",borderBottom:"1px solid #dce8e1",padding:"14px 5%"}}>
    <div style={{maxWidth:1040,margin:"auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}>
     <a href="https://swasthalearning.com/" aria-label="Swastha Learning Clinic home"><BrandLogo/></a>
-    <span style={{fontSize:12,fontWeight:750,color:"#176b58",background:"#eaf4ef",padding:"8px 12px",borderRadius:100}}>FREE ONLINE SCREENING</span>
+    <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+     <label htmlFor="screening-language" style={{fontSize:12,fontWeight:700,color:"#176b58"}}>Language / ഭാഷ</label>
+     <select id="screening-language" aria-label="Select questionnaire language" value={language} onChange={e=>setLanguage(e.target.value==="ml"?"ml":"en")} style={{...field,width:"auto",minWidth:142,padding:"8px 10px"}}>
+      <option value="en">English</option><option value="ml">മലയാളം</option>
+     </select>
+     <span style={{fontSize:12,fontWeight:750,color:"#176b58",background:"#eaf4ef",padding:"8px 12px",borderRadius:100}}>FREE ONLINE SCREENING</span>
+    </div>
    </div>
   </header>
   <div style={{maxWidth:1040,margin:"auto",padding:"30px 16px 70px"}}>
    <section style={{...panel,background:"linear-gradient(115deg,#075b4d,#176b58)",color:"#fff"}}>
     <div style={{color:"#c8f1df",fontWeight:800,letterSpacing:2,fontSize:11}}>SWASTHA LEARNING CLINIC</div>
-    <h1 style={{color:"#fff",fontSize:"clamp(26px,4vw,37px)",margin:"9px 0"}}>Every child has a special way to grow.</h1>
-    <p style={{color:"#ebf6f0",lineHeight:1.65,margin:"0 0 12px"}}>Complete a free parent questionnaire and discover your child's reported strengths and areas that may benefit from a conversation with our team. No WhatsApp is required.</p>
-    <span style={{fontSize:12,color:"#f4f6eb"}}>About 5–10 minutes · 25 questions · No payment</span>
+    <h1 style={{color:"#fff",fontSize:"clamp(26px,4vw,37px)",margin:"9px 0"}}>{malayalam?"ഓരോ കുട്ടിക്കും വളരാൻ തനതായ വഴിയുണ്ട്.":"Every child has a special way to grow."}</h1>
+    <p style={{color:"#ebf6f0",lineHeight:1.65,margin:"0 0 12px"}}>{malayalam?"ഈ സൗജന്യ രക്ഷിതൃ ചോദ്യാവലി പൂർത്തിയാക്കി നിങ്ങളുടെ കുട്ടിയുടെ മികവുകളും കൂടുതൽ പിന്തുണ ആവശ്യമായ മേഖലകളും മനസ്സിലാക്കൂ. വാട്സാപ്പ് ആവശ്യമില്ല.":"Complete a free parent questionnaire and discover your child\u0027s reported strengths and areas that may benefit from a conversation with our team. No WhatsApp is required."}</p>
+    <span style={{fontSize:12,color:"#f4f6eb"}}>{malayalam?"ഏകദേശം 5–10 മിനിറ്റ് · 25 ചോദ്യങ്ങൾ · സൗജന്യം":"About 5–10 minutes · 25 questions · No payment"}</span>
    </section>
    <nav aria-label="Assessment steps" style={{display:"flex",flexWrap:"wrap",gap:8,margin:"18px 0"}}>
-    {(["questions","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="questions"?"Questionnaire":"Summary & guidance"}</span>)}
+    {(["questions","results"] as const).map((x,i)=><span key={x} style={{borderRadius:99,padding:"9px 15px",background:step===x?"#176b58":"#eaf4ef",color:step===x?"white":"#176b58",fontSize:13,fontWeight:700}}>{i+1}. {x==="questions"?(malayalam?"ചോദ്യാവലി":"Questionnaire"):(malayalam?"ഫലവും മാർഗനിർദേശവും":"Summary & guidance")}</span>)}
    </nav>
    {!embedded&&step==="details"&&<section style={panel}>
     <h2 style={{fontSize:23,margin:"0 0 8px"}}>Save your completed screening</h2>
@@ -155,16 +165,16 @@ export default function FreeChildDevelopmentAssessment(){
     </form>
    </section>}
    {step==="questions"&&<div style={{display:"grid",gap:14}}>
-    <section style={panel}><h2 style={{fontSize:22,margin:"0 0 6px"}}>Child Development Questionnaire</h2><p style={{color:"#667a74",fontSize:13}}>Answer according to what you usually observe. There are no right or wrong answers.</p>
-     <strong style={{fontSize:13}}>{count} of 25 answered</strong><div style={{marginTop:8,height:9,background:"#eaf4ef",borderRadius:20,overflow:"hidden"}}><div style={{height:"100%",width:(count/25*100)+"%",background:"#176b58"}}/></div></section>
+    <section style={panel}><h2 style={{fontSize:22,margin:"0 0 6px"}}>{malayalam?"കുട്ടികളുടെ വികസന ചോദ്യാവലി":"Child Development Questionnaire"}</h2><p style={{color:"#667a74",fontSize:13}}>{malayalam?"കുട്ടിയിൽ സാധാരണയായി നിങ്ങൾ കാണുന്ന കാര്യങ്ങളെ അടിസ്ഥാനമാക്കി ഉത്തരം നൽകുക. ശരിയോ തെറ്റോ ആയ ഉത്തരങ്ങളില്ല.":"Answer according to what you usually observe. There are no right or wrong answers."}</p>
+     <strong style={{fontSize:13}}>{malayalam?`25 ചോദ്യങ്ങളിൽ ${count} എണ്ണത്തിന് ഉത്തരം നൽകി`:`${count} of 25 answered`}</strong><div style={{marginTop:8,height:9,background:"#eaf4ef",borderRadius:20,overflow:"hidden"}}><div style={{height:"100%",width:(count/25*100)+"%",background:"#176b58"}}/></div></section>
     {AREAS.map((area,i)=><section key={area} style={panel}>
-     <h3 style={{fontSize:18,color:"#176b58",margin:"0 0 16px"}}><span style={{color:"#d97706",marginRight:10}}>{String(i+1).padStart(2,"0")}</span>{area}</h3>
+     <h3 style={{fontSize:18,color:"#176b58",margin:"0 0 16px"}}><span style={{color:"#d97706",marginRight:10}}>{String(i+1).padStart(2,"0")}</span>{malayalam?ML_AREAS[area]:area}</h3>
      {QUESTIONS.filter(q=>q.area===area).map(q=><fieldset key={q.id} style={{border:0,borderTop:"1px solid #e5eee9",padding:"14px 0 9px",margin:0}}>
-      <legend style={{fontSize:14,fontWeight:700,paddingTop:12}}>{q.id}. {q.en}</legend>
-      <div style={{display:"flex",gap:18,flexWrap:"wrap",marginTop:12}}>{choices.map(([value,label])=><label key={value} style={{display:"flex",gap:6,alignItems:"center",cursor:"pointer",fontSize:14}}><input type="radio" name={"answer-"+q.id} checked={answers[q.id]===value} onChange={()=>setAnswers(a=>({...a,[q.id]:value}))}/>{label}</label>)}</div>
+      <legend style={{fontSize:14,fontWeight:700,paddingTop:12}}>{q.id}. {malayalam?q.ml:q.en}</legend>
+      <div style={{display:"flex",gap:18,flexWrap:"wrap",marginTop:12}}>{choices.map(value=><label key={value} style={{display:"flex",gap:6,alignItems:"center",cursor:"pointer",fontSize:14}}><input type="radio" name={"answer-"+q.id} checked={answers[q.id]===value} onChange={()=>setAnswers(a=>({...a,[q.id]:value}))}/>{malayalam?ML_OPTIONS[value]:value==="yes"?"Yes":value==="sometimes"?"Sometimes":"No"}</label>)}</div>
      </fieldset>)}
     </section>)}
-    <section style={panel}><label style={{fontWeight:700,fontSize:14,display:"grid",gap:9}}>Additional parent observations<textarea rows={3} maxLength={700} value={details.notes} onChange={e=>update("notes",e.target.value)} style={{...field,fontFamily:"inherit"}} placeholder="What do you consider your child's strongest ability?"/></label>
+    <section style={panel}><label style={{fontWeight:700,fontSize:14,display:"grid",gap:9}}>{malayalam?"രക്ഷിതാവിന്റെ അധിക നിരീക്ഷണങ്ങൾ":"Additional parent observations"}<textarea rows={3} maxLength={700} value={details.notes} onChange={e=>update("notes",e.target.value)} style={{...field,fontFamily:"inherit"}} placeholder="What do you consider your child's strongest ability?"/></label>
      {error&&<p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
      <div style={{display:"flex",justifyContent:"flex-end",flexWrap:"wrap",gap:10,marginTop:18}}><button style={{...primary,opacity:count===25?1:.45}} disabled={count!==25||saving} onClick={()=>{if(details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent){void requestGuidance();}else if(embedded){setError("Your child details were not transferred from the main website. Close this assessment, return to the main website, and click Go to Free Assessment again.");}else{setError("");setStep("details");window.scrollTo({top:0,behavior:"smooth"});}}}>{saving?"Saving assessment…":details.guardian&&details.child&&details.phone&&details.dob&&details.grade&&details.consent?"Submit Assessment & View Summary →":(embedded?"Complete form handoff to submit":"Continue to save screening →")}</button></div>
     </section>
