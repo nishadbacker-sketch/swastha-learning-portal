@@ -54,6 +54,7 @@ export default function FreeChildDevelopmentAssessment(){
  const [sent,setSent]=useState(false);
  const [certificate,setCertificate]=useState<AssessmentCertificate|null>(null);
  const [certificateError,setCertificateError]=useState("");
+ const [downloading,setDownloading]=useState(false);
  const [studentCode,setStudentCode]=useState("");
  const [error,setError]=useState("");
  const [website,setWebsite]=useState("");
@@ -108,7 +109,7 @@ export default function FreeChildDevelopmentAssessment(){
  const strengths=rows.slice(10);
  const discuss=development.filter(x=>x.sometimes+x.no>0);
  function update<K extends keyof Details>(name:K,value:Details[K]){setDetails(p=>({...p,[name]:value}));key.current=null;}
- async function requestGuidance(){
+ async function requestGuidance():Promise<AssessmentCertificate|null|undefined>{
   setError("");
   if(Object.keys(answers).length!==25){setError("Please answer all 25 questions before submitting.");return;}
   if(!details.guardian.trim()||!details.child.trim()||!details.phone.trim()||!details.dob||!details.grade||!details.consent){
@@ -139,6 +140,7 @@ export default function FreeChildDevelopmentAssessment(){
    setStudentCode(returnedCode);
    setSent(true);
    setStep("results");
+   return body?.certificate||null;
   }catch(e){setError(e instanceof Error?e.message:"Unable to submit the request. Please try again.");}
   finally{setSaving(false);}
  }
@@ -217,7 +219,7 @@ export default function FreeChildDevelopmentAssessment(){
       </div>
       <div id="screening-report-actions" style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:14}}>
         <button type="button" style={primary} onClick={()=>window.print()}>{malayalam?"റിപ്പോർട്ട് പ്രിന്റ് / PDF ആയി സംരക്ഷിക്കുക":"Download / Print Report (PDF)"}</button>
-        <button type="button" style={primary} onClick={async()=>{setCertificateError("");try{if(!certificate){await requestGuidance();return;}await downloadAssessmentCertificatePDF(certificate);}catch{setCertificateError("Certificate download failed. Please try again.");}}}>{certificate?(malayalam?"സർട്ടിഫിക്കറ്റ് ഡൗൺലോഡ് ചെയ്യുക":"Download Certificate (PDF)"):"Retry certificate preparation"}</button>
+        <button type="button" style={primary} disabled={downloading} onClick={async()=>{setCertificateError("");setDownloading(true);try{const ready=certificate||await requestGuidance();if(!ready)throw new Error("Certificate unavailable");await downloadAssessmentCertificatePDF(ready);}catch{setCertificateError("Certificate download failed. Please try again.");}finally{setDownloading(false);}}}>{downloading?"Preparing certificate…":(malayalam?"സർട്ടിഫിക്കറ്റ് ഡൗൺലോഡ് ചെയ്യുക":"Download Certificate (PDF)")}</button>
         <a href="https://swasthalearning.com/" target="_top" style={{...primary,background:"#e9f4ee",color:"#075d47",textDecoration:"none"}}>{malayalam?"വെബ്സൈറ്റിലേക്ക് മടങ്ങുക":"← Back to Swastha Website"}</a>
         {certificateError&&<p role="alert">{certificateError}</p>}
       </div>
