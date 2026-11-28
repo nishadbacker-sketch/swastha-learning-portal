@@ -1,6 +1,7 @@
 "use client";
 import {useCallback,useEffect,useMemo,useState,type CSSProperties} from "react";
 import {useRouter} from "next/navigation";
+import ScreeningResultsDashboard from "../../components/screening-results-dashboard";
 import BrandLogo from "../../components/brand-logo";
 import {supabase} from "../../../lib/supabase";
 
@@ -140,21 +141,8 @@ export default function FreeAssessmentResultsStaff(){
       <div><small>SUBMITTED</small><strong style={{display:"block",fontSize:15}}>{displayDate(selected.completed_at)}</strong></div>
      </div>
     </section>
-    <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:11}}>
-     <div style={panel}><strong style={{fontSize:24,color:"#0d6c52"}}>{answered}/25</strong><p style={{margin:"5px 0",fontSize:12}}>Questions answered</p></div>
-     <div style={panel}><strong style={{fontSize:24,color:"#0d6c52"}}>{AREAS.length}</strong><p style={{margin:"5px 0",fontSize:12}}>Development and strength areas</p></div>
-     <div style={panel}><strong style={{fontSize:17,color:"#0d6c52"}}>{selected.reviewed_at?"Reviewed":"Awaiting staff review"}</strong><p style={{margin:"5px 0",fontSize:12}}>Screening status</p></div>
-    </section>
-    <section style={panel}>
-     <h3 style={{margin:"0 0 12px",fontSize:19}}>Development areas</h3>
-     {AREAS.slice(0,10).map(area=><SummaryBar key={area} area={area} responses={selected.responses||{}}/>)}
-    </section>
-    <section style={panel}>
-     <h3 style={{margin:"0 0 12px",fontSize:19}}>Strengths & potential</h3>
-     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:14}}>
-      {AREAS.slice(10).map(area=><SummaryBar key={area} area={area} responses={selected.responses||{}}/>)}
-     </div>
-    </section>
+    <section style={panel}><div style={{display:"flex",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}><strong>{answered}/25 responses · {selected.reviewed_at?"Reviewed":"Awaiting staff review"}</strong><label>Language <select value={language} onChange={e=>setLanguage(e.target.value as "en"|"ml")}><option value="en">English</option><option value="ml">മലയാളം</option></select></label></div></section>
+    <ScreeningResultsDashboard malayalam={language==="ml"} rows={AREAS.map(area=>{const qq=QUESTIONS.filter(q=>q.area===area);const r=qq.map(q=>selected.responses?.[String(q.id)]);return {area,total:qq.length,yes:r.filter(x=>x==="yes").length,sometimes:r.filter(x=>x==="sometimes").length,no:r.filter(x=>x==="no").length};})}/>
     <section style={panel}>
      <h3 style={{margin:"0 0 10px",fontSize:19}}>Parent / guardian information</h3>
      <p style={{fontSize:13,lineHeight:1.7,margin:0}}><strong>Guardian:</strong> {selected.guardian?.guardian_name||"Not recorded"}<br/>
