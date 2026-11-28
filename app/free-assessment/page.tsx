@@ -50,6 +50,15 @@ export default function FreeChildDevelopmentAssessment(){
  const [language,setLanguage]=useState<"en"|"ml">("en");
  const malayalam=language==="ml";
  const [step,setStep]=useState<"details"|"questions"|"results">("questions");
+ useEffect(()=>{
+  if(step!=="results")return;
+  const frame=requestAnimationFrame(()=>{
+   window.scrollTo({top:0,left:0,behavior:"instant"});
+   document.documentElement.scrollTop=0;
+   document.body.scrollTop=0;
+  });
+  return ()=>cancelAnimationFrame(frame);
+ },[step]);
  const [saving,setSaving]=useState(false);
  const [sent,setSent]=useState(false);
  const [certificate,setCertificate]=useState<AssessmentCertificate|null>(null);
