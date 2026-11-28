@@ -102,6 +102,13 @@ export async function POST(request: NextRequest) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return fail("Appointment intake is unavailable.", 503, origin);
   const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  async function certificateFor(enquiryId:string) {
+    const {data:saved,error}=await db.from("child_screening_submissions").select("id,student_id,completed_at").eq("appointment_enquiry_id",enquiryId).maybeSingle();
+    if(error||!saved) return null;
+    const {data:student}=await db.from("students").select("full_name,student_code").eq("id",saved.student_id).maybeSingle();
+    if(!student?.student_code||!saved.completed_at) return null;
+    return {id:saved.id,assignment_id:saved.id,student_id:saved.student_id,student_name:student.full_name,student_code:student.student_code,assessment_title:"Free Child Development Assessment",assessment_level:"Free screening",completion_date:new Date(saved.completed_at).toISOString().slice(0,10),issued_at:saved.completed_at,reference_code:"SLF-"+saved.id.replace(/-/g,"").toUpperCase(),programme_coordinator:"Sareena Banu",approving_director:"Hasunnul Banna"};
+  }
   // A replay of a previously saved browser request is a successful no-op.
   // This check runs before throttling, so an ordinary network retry is safe.
   if (submissionKey) {
@@ -114,7 +121,7 @@ export async function POST(request: NextRequest) {
         if(lookupError||!saved) return fail("We could not verify the saved assessment.",503,origin);
         const {data:student,error:studentError}=await db.from("students").select("student_code").eq("id",saved.student_id).maybeSingle();
         if(studentError||!student) return fail("We could not verify the student ID.",503,origin);
-        return NextResponse.json({ok:true,message:"Assessment already received.",student_code:student.student_code},{status:200,headers:cors(origin)});
+        return NextResponse.json({ok:true,message:"Assessment already received.",student_code:student.student_code,certificate:await certificateFor(existing.id)},{status:200,headers:cors(origin)});
       }
       return NextResponse.json({ ok: true, message: "Appointment request already received." }, { status: 200, headers: cors(origin) });
     }
@@ -157,7 +164,7 @@ export async function POST(request: NextRequest) {
           if(savedError||!saved)return fail("We could not verify the saved assessment.",503,origin);
           const {data:student,error:studentError}=await db.from("students").select("student_code").eq("id",saved.student_id).maybeSingle();
           if(studentError||!student?.student_code)return fail("We could not verify the student ID.",503,origin);
-          return NextResponse.json({ok:true,message:"Assessment already received.",student_code:student.student_code},{status:200,headers:cors(origin)});
+          return NextResponse.json({ok:true,message:"Assessment already received.",student_code:student.student_code,certificate:await certificateFor(duplicate.id)},{status:200,headers:cors(origin)});
         }
       }
       console.error("Screening intake failed:",screenError.code);
@@ -167,7 +174,8 @@ export async function POST(request: NextRequest) {
       console.error("Screening intake returned no student code");
       return fail("The assessment was recorded but its student ID could not be confirmed. Please retry using the same page.",503,origin);
     }
-    return NextResponse.json({ok:true,message:"Free assessment saved.",student_code:stored.student_code},{status:201,headers:cors(origin)});
+    const {data:enquiry}=await db.from("appointment_enquiries").select("id").eq("submission_key",submissionKey).maybeSingle();
+    return NextResponse.json({ok:true,message:"Free assessment saved.",student_code:stored.student_code,certificate:enquiry?await certificateFor(enquiry.id):null},{status:201,headers:cors(origin)});
   }
   const { error } = await db.from("appointment_enquiries").insert({
     submission_key: submissionKey, guardian_name, whatsapp_number, contact_differs, contact_number, child_name, date_of_birth, age_range, current_class,
