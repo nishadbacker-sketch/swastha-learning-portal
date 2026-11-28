@@ -1,4 +1,5 @@
 "use client";
+import {downloadAssessmentCertificatePDF,type AssessmentCertificate} from "../../lib/course-certificate-pdf";
 
 import {useEffect,useMemo,useRef,useState} from "react";
 import ScreeningResultsDashboard from "../components/screening-results-dashboard";
@@ -51,6 +52,8 @@ export default function FreeChildDevelopmentAssessment(){
  const [step,setStep]=useState<"details"|"questions"|"results">("questions");
  const [saving,setSaving]=useState(false);
  const [sent,setSent]=useState(false);
+ const [certificate,setCertificate]=useState<AssessmentCertificate|null>(null);
+ const [certificateError,setCertificateError]=useState("");
  const [studentCode,setStudentCode]=useState("");
  const [error,setError]=useState("");
  const [website,setWebsite]=useState("");
@@ -132,6 +135,7 @@ export default function FreeChildDevelopmentAssessment(){
    if(!/^SWA-[0-9]{4}-[0-9]{6,}$/.test(returnedCode)){
      throw new Error("Your answers may have been saved, but the student ID could not be confirmed. Please retry without changing the answers.");
    }
+   setCertificate(body?.certificate||null);
    setStudentCode(returnedCode);
    setSent(true);
    setStep("results");
@@ -213,7 +217,9 @@ export default function FreeChildDevelopmentAssessment(){
       </div>
       <div id="screening-report-actions" style={{display:"flex",flexWrap:"wrap",gap:10,marginTop:14}}>
         <button type="button" style={primary} onClick={()=>window.print()}>{malayalam?"റിപ്പോർട്ട് പ്രിന്റ് / PDF ആയി സംരക്ഷിക്കുക":"Download / Print Report (PDF)"}</button>
-        <a href="https://swasthalearning.com/#appointment" style={{...primary,background:"#e9f4ee",color:"#075d47",textDecoration:"none",display:"inline-flex",alignItems:"center"}}>{malayalam?"ക്ലിനിക്കുമായി ബന്ധപ്പെടുക":"Contact Swastha Clinic"}</a>
+        <button type="button" style={primary} onClick={async()=>{setCertificateError("");try{if(!certificate){await requestGuidance();return;}await downloadAssessmentCertificatePDF(certificate);}catch{setCertificateError("Certificate download failed. Please try again.");}}}>{certificate?(malayalam?"സർട്ടിഫിക്കറ്റ് ഡൗൺലോഡ് ചെയ്യുക":"Download Certificate (PDF)"):"Retry certificate preparation"}</button>
+        <a href="https://swasthalearning.com/" target="_top" style={{...primary,background:"#e9f4ee",color:"#075d47",textDecoration:"none"}}>{malayalam?"വെബ്സൈറ്റിലേക്ക് മടങ്ങുക":"← Back to Swastha Website"}</a>
+        {certificateError&&<p role="alert">{certificateError}</p>}
       </div>
     </section>
     <p style={{margin:"0",fontSize:11,color:"#61716c",lineHeight:1.6}}>{malayalam?"ഇത് രക്ഷിതാവിന്റെ നിരീക്ഷണങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള വിദ്യാഭ്യാസപരമായ സ്ക്രീനിംഗാണ്; മെഡിക്കൽ രോഗനിർണ്ണയമോ മാനദണ്ഡപ്പെടുത്തിയ ക്ലിനിക്കൽ പരിശോധനയോ അല്ല.":"This is an educational parent-report screening, not a medical diagnosis or standardized clinical assessment. Visuals represent response counts rather than validated diagnostic percentages."}</p>
