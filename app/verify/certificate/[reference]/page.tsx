@@ -14,6 +14,9 @@ export default function VerifyCertificate(){
  useEffect(()=>{
   let active=true;
   async function verify(){
+   if(/^SLF-[A-F0-9]{32}$/.test(code)){
+    try{const response=await fetch("/api/free-certificate?reference="+encodeURIComponent(code),{cache:"no-store"});if(!active)return;if(response.ok)setCertificate(await response.json());else if(response.status!==404)setError("Verification service unavailable.");}catch{if(active)setError("Verification service unavailable.");}finally{if(active)setLoading(false);}return;
+   }
    if(!supabase){setError("Verification service unavailable.");setLoading(false);return;}
    if(!/^SL[CA]-[A-F0-9]{32}$/.test(code)){setLoading(false);return;}
    const {data,error:verifyError}=code.startsWith("SLA-")
@@ -36,9 +39,9 @@ export default function VerifyCertificate(){
     certificate?.valid?
      <section role="status" style={{background:"#edf7ef",border:"1px solid #b8dbc4",padding:18,borderRadius:10}}>
       <h2 style={{color:"#176b58"}}>Verified Certificate</h2>
-      <p>This completion certificate was issued by Swastha Learning Clinic after an authorised review.</p>
+      <p>{code.startsWith("SLF-")?"This certificate confirms completion of the free parent-reported screening, not teacher review or clinical diagnosis.":"This completion certificate was issued by Swastha Learning Clinic after an authorised review."}</p>
       <p><strong>Reference:</strong> {certificate.reference_code}</p>
-      <p><strong>{code.startsWith("SLA-")?"Assessment":"Course"}:</strong> {certificate.assessment_title||certificate.course_title}</p>
+      <p><strong>{code.startsWith("SLC-")?"Course":"Assessment"}:</strong> {certificate.assessment_title||certificate.course_title}</p>
       <p><strong>Student:</strong> {certificate.student_initials} (abbreviated for child privacy)</p>
       <p><strong>Completion date:</strong> {certificate.completion_date}</p>
       <p><strong>Issued:</strong> {new Date(certificate.issued_at).toLocaleDateString("en-IN")}</p>
